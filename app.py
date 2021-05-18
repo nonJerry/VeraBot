@@ -12,7 +12,7 @@ from core import create_core
 
 ### Setup data
 # Set variable to true for local testing
-local = True
+local = False
 
 token, data = create_core(local)
 
