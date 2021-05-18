@@ -61,7 +61,7 @@ async def on_guild_join(guild):
     print("Joined new Guild: " + str(guild.id))
 
     dbnames = db_cluster.list_database_names()
-    if 'mydbname' in dbnames:
+    if not str(guild.id) in dbnames:
         new_guild_db = db_cluster[str(guild.id)]
         settings = new_guild_db["settings"]
 
