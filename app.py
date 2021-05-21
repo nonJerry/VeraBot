@@ -200,7 +200,7 @@ async def set_idol(ctx, vtuber_name: str):
     print("New Vtuber added: " + vtuber_name)
 
 
-@bot.command(aliases=["memberRole", "setMemberRole"],
+@bot.command(name="memberRole", aliases=["setMemberRole"],
     help="Sets the role that should be given to a member who has proven that he has valid access to membership content.\nRequires the ID not the role name or anything else!",
 	brief="Sets the role for membership content")
 @commands.has_permissions(administrator=True)
@@ -214,7 +214,7 @@ async def set_member_role(ctx, id: int):
         await ctx.send("ID does not refer to a legit role")
 
 
-@bot.command(aliases=["logChannel", "setLogChannel"],
+@bot.command(name="logChannel", aliases=["setLogChannel"],
     help="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!",
 	brief="Sets the channel in which the logs should be sent")
 @commands.has_permissions(administrator=True)
@@ -237,7 +237,7 @@ async def set_mod_role(ctx, id: int):
         await ctx.send("ID does not refer to a legit role")
 
 
-@bot.command(aliases=["picture", "setPicture"],
+@bot.command(name="picture", aliases=["setPicture"],
     help="Sets the image that is sent when a membership is about to expire.\n" +
     "It supports link that end with png, jpg or jpeg.",
 	brief="Set image for expiration message.")
@@ -252,7 +252,7 @@ async def set_mod_role(ctx, link: str):
     else:
         await ctx.send("Please send a legit link. Only jpg, jpeg and png are accepted.")
 
-@bot.command(aliases=["auto", "setAuto", "setAutoRole", "setAutomaticRole"],
+@bot.command(name="setAuto", aliases=["auto", "setAutoRole", "setAutomaticRole"],
     help = "Sets whether the bot is allowed to automatically add the membership role.",
     brief = "Set flag for automatic role handling")
 @commands.has_permissions(administrator=True)
@@ -269,7 +269,7 @@ async def set_automatic_role(ctx, flag: str):
     await ctx.send("Flag for automatic role handling set to " + str(flag))
 
 
-@bot.command(aliases=["members", "viewMembers","member", "viewMember"],
+@bot.command(name="viewMembers", aliases=["members","member", "viewMember"],
     help = "Shows all user with the membership role. Or if a id is given this users data.",
     brief = "Show membership(s)")
 @commands.has_permissions(manage_messages=True)
@@ -281,7 +281,7 @@ async def view_members(ctx, *id: int):
     else:
         await membership.view_membership(ctx.message, None)
 
-@bot.command(aliases=["addMember", "setMember"],
+@bot.command(name="addMember", aliases=["set_membership", "setMember"],
     help="Gives the membership role to the user whose ID was given.\n" + 
     "<date> has to be in the format dd/mm/yyyy.\n" +
     "It equals the date shown on the sent screenshot",
