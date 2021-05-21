@@ -285,6 +285,16 @@ async def set_membership(res, member_id, date):
     else:
         db_cluster[str(res.guild.id)]['members'].update_one({"id": member_id}, {"$set": {"last_membership": db_date}})
 
+    server_db = db_cluster[str(res.guild.id)]
+
+    automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
+    
+    if not automatic_role:
+        target_member = bot.get_member(member_id)
+        role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
+        role = res.guild.get_role(role_id)
+        target_member.add_roles(role)
+
     await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(DATE_FORMAT)))
     
 
