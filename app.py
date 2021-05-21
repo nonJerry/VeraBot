@@ -39,6 +39,8 @@ async def on_command_error(ctx, error):
 
     if isinstance(error, CommandNotFound):
         await ctx.send("This command does not exist!")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("You are not allowed to use this command!")
     elif error_text:
         await ctx.send(error_text)
         error_text = None
@@ -61,6 +63,7 @@ async def on_guild_join(guild):
     print("Joined new Guild: " + str(guild.id))
 
     dbnames = db_cluster.list_database_names()
+    
     if not str(guild.id) in dbnames:
         new_guild_db = db_cluster[str(guild.id)]
         settings = new_guild_db["settings"]
@@ -79,6 +82,9 @@ async def on_guild_join(guild):
         settings.insert_one(json)
 
         json = {"kind": "picture_link", "value" : "https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg"} #hololive logo
+        settings.insert_one(json)
+
+        json = {"kind": "automatic_role", "value" : True}
         settings.insert_one(json)
 
 
@@ -117,6 +123,12 @@ async def verify(ctx, *vtuber):
             await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
     else:
         await membership.verify_membership_with_server_detection(ctx.message)
+
+@verify.error
+async def verify_error(ctx, error):
+    global error_text
+    if isinstance(error, commands.PrivateMessageOnly):
+        error_text = "This command only works in DMs!"
 
 
 @bot.command(name="prefix",
@@ -184,7 +196,7 @@ async def set_idol(ctx, vtuber_name: str):
     print("New Vtuber added: " + vtuber_name)
 
 
-@bot.command(name="memberRole",
+@bot.command(aliases=["memberRole", "setMemberRole"],
     help="Sets the role that should be given to a member who has proven that he has valid access to membership content.\nRequires the ID not the role name or anything else!",
 	brief="Sets the role for membership content")
 @commands.has_permissions(administrator=True)
@@ -198,7 +210,7 @@ async def set_member_role(ctx, id: int):
         await ctx.send("ID does not refer to a legit role")
 
 
-@bot.command(name="logChannel",
+@bot.command(aliases=["logChannel", "setLogChannel"],
     help="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!",
 	brief="Sets the channel in which the logs should be sent")
 @commands.has_permissions(administrator=True)
@@ -221,7 +233,7 @@ async def set_mod_role(ctx, id: int):
         await ctx.send("ID does not refer to a legit role")
 
 
-@bot.command(hidden = True, name="picture",
+@bot.command(aliases=["picture", "setPicture"],
     help="Sets the image that is sent when a membership is about to expire.\n" +
     "It supports link that end with png, jpg or jpeg.",
 	brief="Set image for expiration message.")
@@ -236,17 +248,44 @@ async def set_mod_role(ctx, link: str):
     else:
         await ctx.send("Please send a legit link. Only jpg, jpeg and png are accepted.")
 
+@bot.command(aliases=["auto", "setAuto", "setAutoRole", "setAutomaticRole"],
+    help = "Sets whether the bot is allowed to automatically add the membership role.",
+    brief = "Set flag for automatic role handling")
+@commands.has_permissions(administrator=True)
+@commands.guild_only()
+async def set_automatic_role(ctx, flag: str):
+    if flag in ['True', 'true']:
+        flag = True
+    elif flag in [ 'False', 'false']:
+        flag = False
+    else:
+        ctx.send("Please do only use True or False")
+        return
+    set_value_in_server_settings(ctx, "automatic_role", flag)
+    await ctx.send("Flag for automatic role handling set to " + str(flag))
 
-@bot.command(name="addMember",
+
+@bot.command(aliases=["members", "viewMembers","member", "viewMember"],
+    help = "Shows all user with the membership role. Or if a id is given this users data.",
+    brief = "Show membership(s)")
+@commands.has_permissions(manage_messages=True)
+@commands.guild_only()
+async def view_members(ctx, *id: int):
+    # always only one id at max
+    if id:
+        await membership.view_membership(ctx.message, id[0])
+    else:
+        await membership.view_membership(ctx.message, None)
+
+@bot.command(aliases=["addMember", "setMember"],
     help="Gives the membership role to the user whose ID was given.\n" + 
-    "<adjustment> can be either a normal number or a date in the format dd/mm/yyyy.\n" +
-    "If given a number it adds as many days to the last proven membership.\n" + 
-    "If given a date it sets this as last proven date.",
+    "<date> has to be in the format dd/mm/yyyy.\n" +
+    "It equals the date shown on the sent screenshot",
 	brief="Gives the membership role to a user")
 @commands.has_permissions(manage_messages=True)
 @commands.guild_only()
-async def set_membership(ctx, member_id: int, adjustment):
-    await membership.set_membership(ctx.message, member_id, adjustment)
+async def set_membership(ctx, member_id: int, date):
+    await membership.set_membership(ctx.message, member_id, date)
 
 @set_membership.error
 async def set_membership_error(ctx, error):
@@ -272,6 +311,8 @@ async def del_membership(ctx, member_id: int, *text):
 @del_membership.error
 @set_prefix.error
 @remove_prefix.error
+@set_automatic_role.error
+@view_members.error
 async def id_error(ctx, error):
     global error_text
     if isinstance(error, commands.BadArgument):
@@ -298,7 +339,45 @@ async def force_member_check(ctx):
 	brief="Sends a DM to the user")
 async def send_dm(ctx):
     await ctx.author.send("Hi")
+
+@send_dm.error
+async def dm_error(ctx, error):
+    global error_text
+    if isinstance(error, discord.errors.Forbidden):
+        error_text = "You need to allow DMs!"
+
+@bot.command(name="proof",
+    help = "Allows to send additional proof. Requires the name of the vtuber. Only available in DMs",
+    brief = "Send additional proof")
+@commands.dm_only()
+async def send_proof(ctx, vtuber: str):
+    if not ctx.message.attachments:
+        ctx.send("Please include a screenshot of the proof!")
+        return
+    server_id = map_vtuber_to_server(vtuber)
+    member_veri_ch =bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+
+    # Send attachment and message to membership verification channel
+    desc = "{}\n{}".format(str(ctx.author), "Additional proof")
+    title = ctx.author.id
+    embed = discord.Embed(title = title, description = None, colour = embed_color)
+    embed.set_image(url = ctx.message.attachments[0].url)
+    await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
+
+    #send confirmation
+    await ctx.send("Your additional proof was delivered safely!")
+
+@send_proof.error
+async def proof_error(ctx, error):
+    global error_text
+    if isinstance(error, commands.BadArgument):
+        error_text = "Please do only send a valid name"
+    elif isinstance(error, commands.MissingRequiredArgument):
+        error_text = "Please include the server name!"
+    embed = create_supported_vtuber_embed()
+    ctx.send(content=None, embed=embed)
     
+
 
 def check_role_integrity(ctx, id: int):
     if ctx.guild.get_role(id):
