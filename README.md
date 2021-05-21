@@ -4,6 +4,7 @@
 <br>
 **VeraBot** manages the awarding of a role for membership-only content. <br>
 For this it uses OCR to verify the valid access with a sent screenshot.
+This bot is only available for the VTuber fanserver network.
 
 ## Getting started
 
