@@ -188,6 +188,10 @@ async def remove_prefix(ctx):
 async def set_idol(ctx, vtuber_name: str):
     settings = db_cluster["settings"]["general"]
     # always only one entry
+    for element in settings.find_one({}, {'supported_idols'})['supported_idols']:
+        if vtuber_name in element['name']:
+            await ctx.send("This Vtuber is already mapped to a server!")
+            return
     if settings.find_one( { 'supported_idols.guild_id': ctx.guild.id}):
         settings.update_one({'supported_idols.guild_id': ctx.guild.id}, {'$set': {'supported_idols.$': {"name": vtuber_name, "guild_id": ctx.guild.id}}})
     else:
