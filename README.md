@@ -17,6 +17,8 @@ If you run into problems or have any suggestions, contact me on Discord at nonJe
 
 It is important that the highest role of the bot is above the membership role because it won't be able to give or remove the role otherwise!
 
+The following commands can only be used by someone with Administrator permissions.
+
 It is required the following attributes using the given commands before the bot will work for your server:
 - VTuber Name using `$setVTuber <name>`
 - Membership Role using `$MemberRole <role id>`
@@ -30,9 +32,9 @@ By default this is set to True but if it is not wanted it can be set to false by
 
 ## Other commands
 
-The bot has a fully functional help command. So if you want to know what commands exists just use `$help`. If it is still unclear what a command does or how to use it, please contact me.
+The bot has a fully functional help command. So if you want to know what commands exists just use `$help`. It will only show those commands that the user is able to use. If it is still unclear what a command does or how to use it, please contact me.
 
-There are two commands for the management of the memberships.
+There are two commands for the management of the memberships, they all require the user to have the manage_channel permission.
 1. addMember / setMember
 This command requires the id and the date of the screenshot as arguments. It will then give the user the role and start managing the membership.
 
