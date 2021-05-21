@@ -279,7 +279,7 @@ async def set_membership(res, member_id, date):
             #needs to be date for new entry
             await res.channel.send("Creating new entry!")
             member_collection.insert_one({
-                "id": res.author.id,
+                "id": member_id,
                 "last_membership": db_date
             })
     else:
