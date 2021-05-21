@@ -4,6 +4,7 @@ import discord
 import asyncio
 from datetime import datetime as dtime, tzinfo
 from datetime import timezone, timedelta
+from dateutil.relativedelta import relativedelta
 #Internal
 import utility
 from ocr import detect_image_date, detect_image_text
@@ -25,7 +26,7 @@ async def _check_membership_dates(server, res = None, msg = None):
 
     
     expired_memberships = []
-    expired_start_date = dtime.now(tz = timezone.utc) - timedelta(days = 31)
+    expired_start_date = dtime.now(tz = timezone.utc) - relativedelta(months=1)
 
     message_title = idol + " Membership Expired"
     message_desc = "Your access to " + idol + "'s members-only channel has just expired!"
@@ -58,15 +59,16 @@ async def _check_membership_dates(server, res = None, msg = None):
     return expired_memberships
 
 
-async def view_membership(res):
+async def view_membership(res, member_id=None):
     # if msg is empty, show all members
-    msg = res.content
     db = db_cluster[str(res.guild.id)]
-    if not msg:
+
+    if not member_id:
         m = ""
         for member in db["members"].find():
             member_id = member["id"]
-            membership_date = member["last_membership"].replace(tzinfo = timezone.utc).strftime("%d/%m/%Y")
+            membership_date = member["last_membership"].replace(tzinfo = timezone.utc) + relativedelta(months=1)
+            membership_date = membership_date.strftime("%d/%m/%Y")
             new_line = "{}: {}\n".format(member_id, membership_date)
             if len(m) + len(new_line) > 2000:
                 await res.channel.send(m)
@@ -75,16 +77,6 @@ async def view_membership(res):
         await res.channel.send(m)
         return
 
-    # if msg is not empty
-    member_id = msg
-
-    # Check if msg is numeric
-    if not member_id.isnumeric():
-        await res.channel.send("Please provide a valid id!")
-        return
-    
-    member_id = int(member_id)
-
     # Check if zoopass in database and delete
     target_membership = db["members"].find_one({"id": member_id})
     if not target_membership:
@@ -92,19 +84,19 @@ async def view_membership(res):
         return
     
     # Send information about membership
-    guild = bot.get_guild(str(res.guild.id))
+    guild = bot.get_guild(res.guild.id)
     target_member = guild.get_member(member_id)
 
     membership_date = target_membership["last_membership"].replace(tzinfo = timezone.utc)
-    expiration_date = membership_date + timedelta(days = 30)
+    expiration_date = membership_date + relativedelta(months=1)
 
     ## change dates to strings
     membership_date = membership_date.strftime(DATE_FORMAT)
     expiration_date = expiration_date.strftime(DATE_FORMAT)
 
-    m = "Name: {}\nID: {}\nMembership Date: {}\nMembership End Date: {}"
+    m = "Name: {}\nID: {}\nLast Renewal Date: {}\nMembership End Date: {}"
     m = m.format(str(target_member), member_id, membership_date, expiration_date)
-    embed = discord.Embed(title = "Zoopass Membership", description = m)
+    embed = discord.Embed(title = "Membership", description = m)
 
     await res.channel.send(content=None, embed = embed)
     
@@ -114,11 +106,14 @@ async def view_membership(res):
     "last_membership": datetime
 }
 """
+
+NO_PICTURE_TEXT = "I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)"
+
 async def verify_membership_with_server_detection(res):
     
     # Check if there is a valid attachment
     if not res.attachments:
-        await res.channel.send("I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)".format(res.author))
+        await res.channel.send(NO_PICTURE_TEXT.format(res.author))
         return
 
     if res.content:
@@ -172,10 +167,15 @@ async def detect_membership_date(res):
         print("date detection fail!!")
 
     if img_date:
-        return (img_date - timedelta(days = 30))
+        return (img_date)
 
 
 async def verify_membership(res, server_id):
+
+    if not res.attachments:
+        await res.channel.send(NO_PICTURE_TEXT.format(res.author))
+        return
+
     guild = bot.get_guild(server_id)
     server_db = db_cluster[str(server_id)]
     member_collection = server_db["members"]
@@ -190,9 +190,17 @@ async def verify_membership(res, server_id):
         m = "I am sorry, I could not detect a date on the image you sent. Please wait for manual confirmation from the staff.\n"
         m+= "If you do not get your role within the next day, please contact the staff."
         await res.channel.send(m)
-        desc = "Date not detected"
+        desc = "{}\n{}".format(str(res.author), "Date not detected")
     else:
+        if not utility.check_date(new_membership_date):
+            await res.channel.send("The date must not be in the past or more than 1 month in the future")
+            return
+
         desc = "{}\n{}".format(str(res.author), new_membership_date.strftime(DATE_FORMAT))
+        #substract month for db
+        new_membership_date = new_membership_date  - relativedelta(months=1)
+
+    
 
     #verification channel of the server
     member_veri_ch =bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
@@ -202,6 +210,7 @@ async def verify_membership(res, server_id):
     if not member_veri_ch:
         res.channel.send(FORGOTTEN_SETTINGS_TEXT)
         return
+
     # Send attachment and message to membership verification channel
     title = res.author.id
     embed = discord.Embed(title = title, description = None, colour = embed_color)
@@ -212,6 +221,14 @@ async def verify_membership(res, server_id):
     if not new_membership_date:
         return
 
+    automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
+
+    # automatic role not allowed
+    if not automatic_role:
+        m = "The staff is checking your proof now. You will gain access if they deem the proof as appropriate"
+        await res.channel.send(m)
+        return
+
     if member:
         last_membership = member["last_membership"].replace(tzinfo = timezone.utc)
         member_collection.update_one({"id": res.author.id}, {"$set": {"last_membership": max(new_membership_date, last_membership)}})
@@ -220,7 +237,7 @@ async def verify_membership(res, server_id):
     else:
         member_collection.insert_one({
             "id": res.author.id,
-            "last_membership": new_membership_date
+            "last_membership": new_membership_date - relativedelta(months=1)
         })
     # add role
     author = guild.get_member(res.author.id)
@@ -241,35 +258,32 @@ async def verify_membership(res, server_id):
     await res.channel.send(m)
 
 
-async def set_membership(res, member_id, adjustment):
+async def set_membership(res, member_id, date):
     
     member_collection = db_cluster[str(res.guild.id)]['members']
     # Check if id exists
     target_membership = member_collection.find_one({"id": member_id})
-    if not target_membership:
-        if not utility.is_integer(adjustment):
-            #needs to be date for new entry
-            await res.channel.send("Creating new entry!")
-            dates = adjustment.split("/")
-            new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
-            member_collection.insert_one({
-                "id": res.author.id,
-                "last_membership": new_date
-            })
-        else:
-            await res.channel.send("A new entry needs a date in the format dd/mm/yyyy!")
-            return
-    
-    # Adjust membership date
-    if utility.is_integer(adjustment):
-        new_date = target_membership["last_membership"].replace(tzinfo = timezone.utc) + timedelta(days = int(adjustment))
-    else:
-        dates = adjustment.split("/")
-        if len(dates)!=3 or any(not utility.is_integer(date) for date in dates):
+    dates = date.split("/")
+
+    if len(dates)!=3 or any(not utility.is_integer(date) for date in dates):
             await res.channel.send("Please provide a valid date (dd/mm/yyyy) or integer days (+/- integer).")
             return
-        new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
-    db_cluster[str(res.guild.id)]['members'].update_one({"id": member_id}, {"$set": {"last_membership": new_date}})
+    new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
+
+    if not utility.check_date(new_date):
+        await res.channel.send("The date must not be in the past or more than 1 month in the future")
+        return
+
+    db_date = new_date - relativedelta(months=1)
+    if not target_membership:
+            #needs to be date for new entry
+            await res.channel.send("Creating new entry!")
+            member_collection.insert_one({
+                "id": res.author.id,
+                "last_membership": db_date
+            })
+    else:
+        db_cluster[str(res.guild.id)]['members'].update_one({"id": member_id}, {"$set": {"last_membership": db_date}})
 
     await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(DATE_FORMAT)))
     
@@ -296,13 +310,16 @@ async def del_membership(res, member_id: int, text):
     role = guild.get_role(role_id)
 
     await target_member.remove_roles(role)
+
+
     
     await res.channel.send("Membership successfully deleted.")
 
     # If msg has extra lines, send dm to target user to notify the zoopass deletion
     if text:
-        target_user = bot.get_user(member_id)
-        await target_user.send(" ".join(text))
+        await target_member.send(" ".join(text))
+    else:
+        await target_member.send("Your membership for " + utility.get_vtuber(res.guild.id) + " was deleted!")
 
 async def delete_expired_memberships(forced=False):
     
