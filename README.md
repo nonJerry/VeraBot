@@ -44,10 +44,16 @@ This command requires the id and the date of the screenshot as arguments. It wil
 This command only requires the id of the user. However you can also write some text which will be sent to the user in DMs.
 If no text is written the user will just be notified that their membership was deleted.
 
-![image](https://user-images.githubusercontent.com/79670160/119178160-9f322f80-ba6d-11eb-9169-66d0fed4057d.png)
+![Proof command in DMs](https://user-images.githubusercontent.com/79670160/119178160-9f322f80-ba6d-11eb-9169-66d0fed4057d.png)
+![Proof in log channel](https://user-images.githubusercontent.com/79670160/119181659-339e9100-ba72-11eb-8f94-f8703d76d2fb.png)
+
 
 Additionally there is the command `$viewMember` which will show all users who have a membership and their expiration date.
 It is also possible to just view one membership by using `$viewMenber <user id>`.
+
+If you want your user to submit further proof through the bot please ask them to use the `$proof <server>` command with a screenshot of your wanted proof. This will sent this screenshot to the same channel as the usual verify messages.
+![image](https://user-images.githubusercontent.com/79670160/119181613-208bc100-ba72-11eb-9756-45f14a417232.png)
+
 
 ## How to verify
 A user can verify himself by sending the bot a DM containing the command `$verify` with a screenshot attached to it. <br>
