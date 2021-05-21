@@ -293,7 +293,7 @@ async def set_membership(res, member_id, date):
         target_member = res.guild.get_member(member_id)
         role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
         role = res.guild.get_role(role_id)
-        target_member.add_roles(role)
+        await target_member.add_roles(role)
 
     await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(DATE_FORMAT)))
     
