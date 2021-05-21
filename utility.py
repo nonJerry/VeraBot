@@ -1,4 +1,5 @@
 #External
+from dateutil.relativedelta import relativedelta
 import discord
 from dateparser.search import search_dates
 #Python
@@ -52,6 +53,23 @@ async def confirm_action(res, actor):
         return False
 
     return True
+
+def check_date(date):
+    date = date.replace(tzinfo = timezone.utc)
+    now = dtime.now().replace(tzinfo = timezone.utc)
+    if date < now:
+        return False
+    if date > now + relativedelta(months=1):
+        return False
+    return True
+
+def get_vtuber(guild_id):
+    settings_db = db_cluster["settings"]["general"]
+    result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'guild_id' : guild_id}}})
+    if 'supported_idols' in result:
+        return result['supported_idols'][0]['name']
+    else:
+        return "not supported server"
 
 def create_supported_vtuber_embed():
     settings = db_cluster['settings']['general']
