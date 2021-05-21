@@ -290,7 +290,7 @@ async def set_membership(res, member_id, date):
     automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
     
     if not automatic_role:
-        target_member = bot.get_member(member_id)
+        target_member = res.guild.get_member(member_id)
         role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
         role = res.guild.get_role(role_id)
         target_member.add_roles(role)
