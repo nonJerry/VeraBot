@@ -193,7 +193,7 @@ async def verify_membership(res, server_id):
         desc = "{}\n{}".format(str(res.author), "Date not detected")
     else:
         if not utility.check_date(new_membership_date):
-            await res.channel.send("The date must not be in the past or more than 1 month in the future")
+            await res.channel.send("The date must not be in the past or too far in the future")
             return
 
         desc = "{}\n{}".format(str(res.author), new_membership_date.strftime(DATE_FORMAT))
@@ -271,7 +271,7 @@ async def set_membership(res, member_id, date):
     new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
 
     if not utility.check_date(new_date):
-        await res.channel.send("The date must not be in the past or more than 1 month in the future")
+        await res.channel.send("The date must not be in the past or too far in the future")
         return
 
     db_date = new_date - relativedelta(months=1)

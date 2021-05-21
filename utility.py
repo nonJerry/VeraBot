@@ -59,7 +59,7 @@ def check_date(date):
     now = dtime.now().replace(tzinfo = timezone.utc)
     if date < now:
         return False
-    if date > now + relativedelta(months=1):
+    if date > now + relativedelta(months=2):
         return False
     return True
 
