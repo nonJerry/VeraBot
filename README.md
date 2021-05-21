@@ -15,6 +15,8 @@ If you run into problems or have any suggestions, contact me on Discord at nonJe
 
 ## Setup at the beginning
 
+It is important that the highest role of the bot is above the membership role because it won't be able to give or remove the role otherwise!
+
 It is required the following attributes using the given commands before the bot will work for your server:
 - VTuber Name using `$setVTuber <name>`
 - Membership Role using `$MemberRole <role id>`
