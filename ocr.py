@@ -16,6 +16,12 @@ bot, local = data.bot, data.local
 
 async def detect_image_date(img_url):
     text, inverted_text = await asyncio.wait_for(detect_image_text(img_url), timeout = 60)
+    try:
+        text = text[100:]
+        inverted_text = inverted_text[100:]
+    except IndexError:
+            text = text[50:]
+            inverted_text = inverted_text[50:]
     img_date = date_from_txt(text) or date_from_txt(inverted_text)
     return img_date
 
