@@ -191,12 +191,15 @@ async def verify_membership(res, server_id):
         m+= "If you do not get your role within the next day, please contact the staff."
         await res.channel.send(m)
         desc = "{}\n{}".format(str(res.author), "Date not detected")
+        membership_date_text = "None"
     else:
         if not utility.check_date(new_membership_date):
             await res.channel.send("The date must not be in the past or too far in the future")
             return
 
-        desc = "{}\n{}".format(str(res.author), new_membership_date.strftime(DATE_FORMAT))
+        membership_date_text = new_membership_date.strftime(DATE_FORMAT)
+        desc = "{}\n{}".format(str(res.author), membership_date_text)
+
         #substract month for db
         new_membership_date = new_membership_date  - relativedelta(months=1)
 
@@ -213,13 +216,16 @@ async def verify_membership(res, server_id):
 
     # Send attachment and message to membership verification channel
     title = res.author.id
-    embed = discord.Embed(title = title, description = None, colour = embed_color)
+    embed = discord.Embed(title = title, colour = embed_color)
+    embed.add_field(name="Recognized Date", value = membership_date_text)
     embed.set_image(url = res.attachments[0].url)
-    await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
+    message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
+
 
     # should not get the role yet
     if not new_membership_date:
         return
+
 
     automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
 
