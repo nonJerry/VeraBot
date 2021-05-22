@@ -208,15 +208,34 @@ async def verify_membership(res, server_id):
     #verification channel of the server
     member_veri_ch =bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
     
-    FORGOTTEN_SETTINGS_TEXT = "Please contact the staff of your server, the forgot to set some settings"
+    FORGOTTEN_SETTINGS_TEXT = "Please contact the staff of your server, they forgot to set some settings"
     
     if not member_veri_ch:
         res.channel.send(FORGOTTEN_SETTINGS_TEXT)
         return
 
-    # Send attachment and message to membership verification channel
+    automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
+
+    require_additional_proof = True
+
     title = res.author.id
     embed = discord.Embed(title = title, colour = embed_color)
+
+    if require_additional_proof:
+        m = "This server requires you to send additional proof.\n"
+        m += "Please send a screenshot as specified by them."
+        await res.channel.send(m)
+
+        def check(m):
+            return hasattr(m, "attachments")
+
+        proof_msg = await bot.wait_for('message', check=check)
+        embed.description = "Additional proof"
+        embed.set_image(url = proof_msg.attachments[0].url)
+        await member_veri_ch.send(content=None, embed = embed)
+
+    # Send attachment and message to membership verification channel
+    
     embed.add_field(name="Recognized Date", value = membership_date_text)
     embed.set_image(url = res.attachments[0].url)
     message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
@@ -225,9 +244,6 @@ async def verify_membership(res, server_id):
     # should not get the role yet
     if not new_membership_date:
         return
-
-
-    automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
 
     # automatic role not allowed
     if not automatic_role:
