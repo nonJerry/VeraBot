@@ -366,7 +366,21 @@ async def check(ctx):
 async def force_member_check(ctx):
     await membership.delete_expired_memberships(True)
 
+@bot.command(hidden = True, name = "broadcast")
+@commands.is_owner()
+async def broadcast(ctx, title, text):
+    serverlist = db_cluster["settings"]['general'].find_one({'name': "supported_idols"})['supported_idols']
 
+    #create Embed
+    embed = discord.Embed(title = title, description = text, colour = embed_color)
+
+    #send to every server
+    for server in serverlist:
+        server_db = db_cluster[str(server['guild_id'])]
+        lg_ch = bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
+
+        await lg_ch.send(content = None, embed = embed)
+    
 @bot.command(name = "dmMe",
     help="Sends a DM containg \"hi\" to the user using the command.",
 	brief="Sends a DM to the user")
