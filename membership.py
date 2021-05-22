@@ -91,17 +91,17 @@ async def view_membership(res, member_id=None):
     db = db_cluster[str(res.guild.id)]
 
     if not member_id:
-        m = None
+        m = ""
         for member in db["members"].find():
             member_id = member["id"]
             membership_date = member["last_membership"].replace(tzinfo = timezone.utc) + relativedelta(months=1)
             membership_date = membership_date.strftime("%d/%m/%Y")
             new_line = "{}: {}\n".format(member_id, membership_date)
-            if m and new_line and len(m) + len(new_line) > 2000:
+            if len(m) + len(new_line) > 2000:
                 await res.channel.send(m)
                 m = ""
             m += new_line
-        if m:
+        if m != "":
             await res.channel.send(m)
         else:
             await res.channel.send("No active memberships!")
