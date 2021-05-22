@@ -216,7 +216,7 @@ async def verify_membership(res, server_id):
 
     automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
 
-    require_additional_proof = True
+    require_additional_proof = False
 
     title = res.author.id
     embed = discord.Embed(title = title, colour = embed_color)
