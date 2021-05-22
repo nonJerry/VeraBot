@@ -24,36 +24,63 @@ async def _check_membership_dates(server, res = None, msg = None):
     server_db = db_cluster[str(server['guild_id'])]
     idol = server['name']
 
-    
-    expired_memberships = []
-    expired_start_date = dtime.now(tz = timezone.utc) - relativedelta(months=1)
+    inform_duration = server_db['settings'].find_one({"kind": "inform_duration"})['value']
+    tolerance_duration = server_db['settings'].find_one({"kind": "tolerance_duration"})['value']
 
-    message_title = idol + " Membership Expired"
-    message_desc = "Your access to " + idol + "'s members-only channel has just expired!"
-    message_desc += "\nYou may renew your membership by sending another updated verification photo using the ``verify`` command."
-    message_desc += " Thank you so much for your cotinued support!"
+    expired_memberships = []
+    expiry_date = dtime.now(tz = timezone.utc) - relativedelta(months=1)
+    notify_date = expiry_date + timedelta(days=inform_duration)
+    tolerance_date = expiry_date - timedelta(days=tolerance_duration)
+
+    message_title = idol + " Membership {}!"
+    end_text = "You may renew your membership by sending another updated verification photo using the ``$verify`` command."
+    end_text += "Thank you so much for your continued support!"
     message_image = server_db['settings'].find_one({'kind': "picture_link"})['value']
 
     for member in server_db['members'].find():
-        # For each bodan, if membership date ended (31 days) 30 days with one day buffer
-        if (not member["last_membership"]) or member["last_membership"].replace(tzinfo = timezone.utc) < expired_start_date:
+        # For each member
+        if member["last_membership"]:
+            last_membership = member["last_membership"].replace(tzinfo = timezone.utc)
+            # delete role
+            if last_membership <= tolerance_date:
+                title = message_title.format("channel access ended")
+                message_desc = "You lost your access to {}'s members-only channel!\n"
+                message_desc += end_text
+
+                # Delete from database
+                server_db['members'].delete_one(member)
+
+                # Remove member role from user
+                guild = bot.get_guild(server['guild_id'])
+                target_member = guild.get_member(member["id"])
+
+                role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
+                member_role = guild.get_role(role_id)
+
+                await target_member.remove_roles(member_role)
+                #send dm
+                await dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
+            # notify
+            elif last_membership <= notify_date and not member['informed']:
+                title = message_title.format("expires soon!")
+                message_desc = "Your membership to {} will expire in {} day(s).\n"
+                message_desc += "If you do not want to lose this membership please don't forget to anew it!"
+                await dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
+                server_db['members'].update_one({"id": member['id']}, {"$set": {"informed": True}})
+
+        if not last_membership or (last_membership <= expiry_date and not member['expiry_sent'] and tolerance_date > last_membership):
+            title = message_title.format("expired")
+            message_desc = "Your membership to {} has just expired!\n"
+            message_desc += "You will lose your access to the channel after {} day(s) if you do not renew your membership.\n"
+            message_desc += end_text
+           
             # Add to delete list
             expired_memberships.append(member)
 
-            # Delete from database
-            server_db['members'].delete_one(member)
-
-            # Remove member role from user
-            guild = bot.get_guild(server['guild_id'])
-            target_member = guild.get_member(member["id"])
-
-            role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
-            member_role = guild.get_role(role_id)
-
-            await target_member.remove_roles(member_role)
-
             # dm expired membership
-            await dm_member(member["id"], "{}\n{}".format(message_title, message_desc), embed = True, attachment_url = message_image)
+            await dm_member(member["id"], title, message_desc.format(idol, str(tolerance_duration)), embed = True, attachment_url = message_image)
+
+            server_db['members'].update_one({"id": member['id']}, {"$set": {"expiry_sent": True}})
 
     # Returns expired_memberships list
     return expired_memberships
@@ -64,7 +91,7 @@ async def view_membership(res, member_id=None):
     db = db_cluster[str(res.guild.id)]
 
     if not member_id:
-        m = ""
+        m = None
         for member in db["members"].find():
             member_id = member["id"]
             membership_date = member["last_membership"].replace(tzinfo = timezone.utc) + relativedelta(months=1)
@@ -74,7 +101,10 @@ async def view_membership(res, member_id=None):
                 await res.channel.send(m)
                 m = ""
             m += new_line
-        await res.channel.send(m)
+        if m:
+            await res.channel.send(m)
+        else:
+            await res.channel.send("No active memberships!")
         return
 
     # Check if zoopass in database and delete
@@ -194,7 +224,7 @@ async def verify_membership(res, server_id):
         membership_date_text = "None"
     else:
         if not utility.check_date(new_membership_date):
-            await res.channel.send("The date must not be in the past or too far in the future")
+            await res.channel.send("The date must not be in the past!")
             return
 
         membership_date_text = new_membership_date.strftime(DATE_FORMAT)
@@ -206,7 +236,7 @@ async def verify_membership(res, server_id):
     
 
     #verification channel of the server
-    member_veri_ch =bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
+    member_veri_ch = bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
     
     FORGOTTEN_SETTINGS_TEXT = "Please contact the staff of your server, they forgot to set some settings"
     
@@ -216,7 +246,7 @@ async def verify_membership(res, server_id):
 
     automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
 
-    require_additional_proof = False
+    require_additional_proof = server_db["settings"].find_one({"kind": "require_additional_proof"})["value"]
 
     title = res.author.id
     embed = discord.Embed(title = title, colour = embed_color)
@@ -227,9 +257,14 @@ async def verify_membership(res, server_id):
         await res.channel.send(m)
 
         def check(m):
-            return hasattr(m, "attachments")
+            return len(m.attachments) > 0
+        try:
+            proof_msg = await bot.wait_for('message', timeout=60, check=check)
+        except asyncio.TimeoutError:
+            await res.channel.send("I am sorry, you timed out. Please start the verify process again.")
+            return
 
-        proof_msg = await bot.wait_for('message', check=check)
+        # if overtime, send timeout message and return
         embed.description = "Additional proof"
         embed.set_image(url = proof_msg.attachments[0].url)
         await member_veri_ch.send(content=None, embed = embed)
@@ -255,13 +290,15 @@ async def verify_membership(res, server_id):
 
     if member:
         last_membership = member["last_membership"].replace(tzinfo = timezone.utc)
-        member_collection.update_one({"id": res.author.id}, {"$set": {"last_membership": max(new_membership_date, last_membership)}})
+        member_collection.update_one({"id": res.author.id}, {"$set": {"last_membership": max(new_membership_date, last_membership), "informed": False, "expiry_sent": False}})
 
     # if not, create data
     else:
         member_collection.insert_one({
             "id": res.author.id,
-            "last_membership": new_membership_date
+            "last_membership": new_membership_date,
+            "informed": False,
+            "expiry_sent": False
         })
     # add role
     author = guild.get_member(res.author.id)
@@ -295,7 +332,7 @@ async def set_membership(res, member_id, date):
     new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
 
     if not utility.check_date(new_date):
-        await res.channel.send("The date must not be in the past or too far in the future")
+        await res.channel.send("The date must not be in the past!")
         return
 
     db_date = new_date - relativedelta(months=1)
@@ -304,10 +341,12 @@ async def set_membership(res, member_id, date):
             await res.channel.send("Creating new entry!")
             member_collection.insert_one({
                 "id": member_id,
-                "last_membership": db_date
+                "last_membership": db_date,
+                "informed": False,
+                "expiry_sent": False
             })
     else:
-        db_cluster[str(res.guild.id)]['members'].update_one({"id": member_id}, {"$set": {"last_membership": db_date}})
+        db_cluster[str(res.guild.id)]['members'].update_one({"id": member_id}, {"$set": {"last_membership": db_date, "informed": False, "expiry_sent": False}})
 
     server_db = db_cluster[str(res.guild.id)]
 
