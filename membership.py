@@ -97,7 +97,7 @@ async def view_membership(res, member_id=None):
             membership_date = member["last_membership"].replace(tzinfo = timezone.utc) + relativedelta(months=1)
             membership_date = membership_date.strftime("%d/%m/%Y")
             new_line = "{}: {}\n".format(member_id, membership_date)
-            if len(m) + len(new_line) > 2000:
+            if m and new_line and len(m) + len(new_line) > 2000:
                 await res.channel.send(m)
                 m = ""
             m += new_line
