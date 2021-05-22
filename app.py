@@ -22,12 +22,13 @@ dev = data.dev
 embed_color = data.embed_color
 dm_log = data.dm_log
 db_cluster = data.db_cluster
+BOOLEAN_TEXT = "Please do only use True or False"
 
 
 #Late import to guarantee data is initialized
 #Internal
 import membership
-from utility import create_supported_vtuber_embed
+from utility import create_supported_vtuber_embed, is_integer, text_to_boolean
 
 error_text = None
 @bot.event
@@ -38,6 +39,7 @@ async def on_command_error(ctx, error):
     global error_text
 
     if isinstance(error, CommandNotFound):
+        # Ignore this error
         pass
     elif isinstance(error, commands.MissingPermissions):
         await ctx.send("You are not allowed to use this command!")
@@ -68,7 +70,7 @@ async def on_guild_join(guild):
         new_guild_db = db_cluster[str(guild.id)]
         settings = new_guild_db["settings"]
 
-    # Create base configuration
+        # Create base configuration
         json = { "kind": "prefixes", "values" : ['$']}
         settings.insert_one(json)
 
@@ -287,15 +289,44 @@ async def set_mod_role(ctx, link: str):
 @commands.has_permissions(administrator=True)
 @commands.guild_only()
 async def set_automatic_role(ctx, flag: str):
-    if flag in ['True', 'true']:
-        flag = True
-    elif flag in [ 'False', 'false']:
-        flag = False
-    else:
-        ctx.send("Please do only use True or False")
+    flag = text_to_boolean(flag)
+    if type(flag) != bool:
+        ctx.send()
         return
     set_value_in_server_settings(ctx, "automatic_role", flag)
     await ctx.send("Flag for automatic role handling set to " + str(flag))
+
+@bot.command(name="setAdditionalProof", aliases=["setProof", "setRequireProof", "additionalProof", "requireAdditionalProof"],
+    help = "Sets whether the bot will require additional proof from the user.",
+    brief = "Set flag for the inquiry of additional Proof")
+@commands.has_permissions(administrator=True)
+@commands.guild_only()
+async def set_require_additional_proof(ctx, flag: str):
+    flag = text_to_boolean(flag)
+    if type(flag) != bool:
+        ctx.send(BOOLEAN_TEXT)
+        return
+    set_value_in_server_settings(ctx, "require_additional_proof", flag)
+    await ctx.send("Flag for additional Proof set to " + str(flag))
+
+@bot.command(name="setTolerance", aliases=["tolerance", "toleranceDuration"],
+    help = "Sets the time that users will have access to the membership channel after their membership expired.",
+    brief = "Set tolerance time after membership expiry")
+@commands.has_permissions(administrator=True)
+@commands.guild_only()
+async def set_tolerance_duration(ctx, time: int):
+    set_value_in_server_settings(ctx, "tolerance_duration", time)
+    await ctx.send("Time that users will still have access to the channel after their membership expired set to " + str(time))
+
+@bot.command(name="setPriorNoticeDuration", aliases=["informDuration", "PriorNoticeDuration", "PriorNotice", "setPriorNotice"],
+    help = "Sets how many days before the expiry of their membership a user will be notified to renew their proof.",
+    brief = "Set time for notice before membership expiry")
+@commands.has_permissions(administrator=True)
+@commands.guild_only()
+async def set_inform_duration(ctx, time: int):
+    set_value_in_server_settings(ctx, "inform_duration", time)
+    await ctx.send("Users will be notified " + str(time) + " days before their membership ends.")
+
 
 
 @bot.command(name="viewMembers", aliases=["members","member", "viewMember"],
@@ -346,6 +377,8 @@ async def del_membership(ctx, member_id: int, *text):
 @remove_prefix.error
 @set_automatic_role.error
 @view_members.error
+@set_tolerance_duration.error
+@set_inform_duration.error
 async def id_error(ctx, error):
     global error_text
     if isinstance(error, commands.BadArgument):
@@ -380,6 +413,28 @@ async def broadcast(ctx, title, text):
         lg_ch = bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
 
         await lg_ch.send(content = None, embed = embed)
+
+@bot.command(hidden = True, name = "createNewSetting")
+@commands.is_owner()
+async def create_new_setting(ctx, kind, value):
+    if is_integer(value):
+        value = int(value)
+    else:
+        tmp = text_to_boolean(value)
+        if type(tmp) == bool:
+            value = tmp
+
+    dbnames = db_cluster.list_database_names()
+
+    for server in dbnames:
+        if is_integer(server):
+            server_db = db_cluster[str(server)]
+            settings = server_db["settings"]
+
+            # Create base configuration
+            json = { "kind": kind, "value" : value}
+            settings.insert_one(json)
+    await ctx.send("Added " + kind + " with default value " + str(value))
     
 @bot.command(name = "dmMe",
     help="Sends a DM containg \"hi\" to the user using the command.",
