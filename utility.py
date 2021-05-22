@@ -62,7 +62,7 @@ async def confirm_action(res, actor):
 
 def check_date(date):
     date = date.replace(tzinfo = timezone.utc)
-    now = dtime.now().replace(tzinfo = timezone.utc)
+    now = dtime.now(tz = timezone.utc)
     if date < now:
         return False
     return True

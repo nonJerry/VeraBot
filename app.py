@@ -247,7 +247,7 @@ async def set_member_role(ctx, id: int):
 
 @bot.command(name="logChannel", aliases=["setLogChannel"],
     help="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!",
-	brief="Sets the channel in which the logs should be sent")
+	brief="Sets the channel for logging")
 @commands.has_permissions(administrator=True)
 @commands.guild_only()
 async def set_log_channel(ctx, id: int):
@@ -283,6 +283,7 @@ async def set_mod_role(ctx, link: str):
     else:
         await ctx.send("Please send a legit link. Only jpg, jpeg and png are accepted.")
 
+
 @bot.command(name="setAuto", aliases=["auto", "setAutoRole", "setAutomaticRole"],
     help = "Sets whether the bot is allowed to automatically add the membership role.",
     brief = "Set flag for automatic role handling")
@@ -295,6 +296,7 @@ async def set_automatic_role(ctx, flag: str):
         return
     set_value_in_server_settings(ctx, "automatic_role", flag)
     await ctx.send("Flag for automatic role handling set to " + str(flag))
+
 
 @bot.command(name="setAdditionalProof", aliases=["setProof", "setRequireProof", "additionalProof", "requireAdditionalProof"],
     help = "Sets whether the bot will require additional proof from the user.",
@@ -309,6 +311,7 @@ async def set_require_additional_proof(ctx, flag: str):
     set_value_in_server_settings(ctx, "require_additional_proof", flag)
     await ctx.send("Flag for additional Proof set to " + str(flag))
 
+
 @bot.command(name="setTolerance", aliases=["tolerance", "toleranceDuration"],
     help = "Sets the time that users will have access to the membership channel after their membership expired.",
     brief = "Set tolerance time after membership expiry")
@@ -318,6 +321,7 @@ async def set_tolerance_duration(ctx, time: int):
     set_value_in_server_settings(ctx, "tolerance_duration", time)
     await ctx.send("Time that users will still have access to the channel after their membership expired set to " + str(time))
 
+
 @bot.command(name="setPriorNoticeDuration", aliases=["informDuration", "PriorNoticeDuration", "PriorNotice", "setPriorNotice"],
     help = "Sets how many days before the expiry of their membership a user will be notified to renew their proof.",
     brief = "Set time for notice before membership expiry")
@@ -326,7 +330,6 @@ async def set_tolerance_duration(ctx, time: int):
 async def set_inform_duration(ctx, time: int):
     set_value_in_server_settings(ctx, "inform_duration", time)
     await ctx.send("Users will be notified " + str(time) + " days before their membership ends.")
-
 
 
 @bot.command(name="viewMembers", aliases=["members","member", "viewMember"],
@@ -340,6 +343,7 @@ async def view_members(ctx, *id: int):
         await membership.view_membership(ctx.message, id[0])
     else:
         await membership.view_membership(ctx.message, None)
+
 
 @bot.command(name="addMember", aliases=["set_membership", "setMember"],
     help="Gives the membership role to the user whose ID was given.\n" + 
@@ -368,6 +372,7 @@ async def set_membership_error(ctx, error):
 @commands.guild_only()
 async def del_membership(ctx, member_id: int, *text):
     await membership.del_membership(ctx.message, member_id, text)
+
 
 @set_idol.error
 @set_log_channel.error
@@ -414,9 +419,10 @@ async def broadcast(ctx, title, text):
 
         await lg_ch.send(content = None, embed = embed)
 
+
 @bot.command(hidden = True, name = "createNewSetting")
 @commands.is_owner()
-async def create_new_setting(ctx, kind, value):
+async def create_new_setting(ctx, kind: str, value):
     if is_integer(value):
         value = int(value)
     else:
@@ -435,6 +441,27 @@ async def create_new_setting(ctx, kind, value):
             json = { "kind": kind, "value" : value}
             settings.insert_one(json)
     await ctx.send("Added " + kind + " with default value " + str(value))
+
+@bot.command(hidden = True, name = "newMemberSetting")
+@commands.is_owner()
+async def create_new_member_setting(ctx, kind: str, value):
+    if is_integer(value):
+        value = int(value)
+    else:
+        tmp = text_to_boolean(value)
+        if type(tmp) == bool:
+            value = tmp
+
+    dbnames = db_cluster.list_database_names()
+
+    for server in dbnames:
+        if is_integer(server):
+            server_db = db_cluster[str(server)]
+            for member in server_db['members'].find():
+                # Create base configuration
+                json = { "kind": kind, "value" : value}
+                server_db['members'].update_one({"id": member['id']}, {"$set": {kind: value}})
+    await ctx.send("Member: Added " + kind + " with default value " + str(value))
     
 @bot.command(name = "dmMe",
     help="Sends a DM containg \"hi\" to the user using the command.",
