@@ -274,6 +274,7 @@ async def verify_membership(res, server_id):
 
     # Send attachment and message to membership verification channel
     
+    embed.description = "Main Proof"
     embed.add_field(name="Recognized Date", value = membership_date_text)
     embed.set_image(url = res.attachments[0].url)
     message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
