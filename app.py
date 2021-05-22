@@ -459,7 +459,6 @@ async def create_new_member_setting(ctx, kind: str, value):
             server_db = db_cluster[str(server)]
             for member in server_db['members'].find():
                 # Create base configuration
-                json = { "kind": kind, "value" : value}
                 server_db['members'].update_one({"id": member['id']}, {"$set": {kind: value}})
     await ctx.send("Member: Added " + kind + " with default value " + str(value))
     
