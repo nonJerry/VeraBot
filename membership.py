@@ -237,7 +237,7 @@ async def verify_membership(res, server_id):
     else:
         member_collection.insert_one({
             "id": res.author.id,
-            "last_membership": new_membership_date - relativedelta(months=1)
+            "last_membership": new_membership_date
         })
     # add role
     author = guild.get_member(res.author.id)
