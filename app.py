@@ -38,7 +38,7 @@ async def on_command_error(ctx, error):
     global error_text
 
     if isinstance(error, CommandNotFound):
-        await ctx.send("This command does not exist!")
+        pass
     elif isinstance(error, commands.MissingPermissions):
         await ctx.send("You are not allowed to use this command!")
     elif error_text:
@@ -124,7 +124,7 @@ async def on_reaction_add(reaction, user):
         await msg.add_reaction(emoji='👌')
     elif reaction.emoji == u"\U0001F6AB":
         await msg.clear_reactions()
-        await reaction.add_reaction(emoji='👎')
+        await msg.add_reaction(emoji='👎')
 
 
 @bot.command(
