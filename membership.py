@@ -233,6 +233,8 @@ async def verify_membership(res, server_id):
     if not automatic_role:
         m = "The staff is checking your proof now. You will gain access if they deem the proof as appropriate"
         await res.channel.send(m)
+        await message.add_reaction(emoji='✅')
+        await message.add_reaction(emoji=u"\U0001F6AB")
         return
 
     if member:

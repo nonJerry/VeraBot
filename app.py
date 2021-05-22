@@ -97,6 +97,35 @@ async def on_guild_remove(guild):
     settings = db_cluster["settings"]["general"]
     settings.update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild.id}}})
 
+@bot.event
+async def on_reaction_add(reaction, user):
+    # only the first react by somebody else than the bot should be processed
+    if reaction.count != 2:
+        return
+    msg = reaction.message
+
+    # this handling is not for DMs
+    if isinstance(msg.channel, discord.DMChannel):
+        return
+    # Only process reactions that also were also made by the bot
+    if not reaction.me:
+        return
+    #TODO: externalize emoji as variable
+    if reaction.emoji == '✅':
+        embed = msg.embeds[0]
+        # always only the id
+        target_member_id = int(embed.title)
+        membership_date = embed.fields[0].value
+
+        # set membership
+        await membership.set_membership(msg, target_member_id, membership_date)
+
+        await msg.clear_reactions()
+        await msg.add_reaction(emoji='👌')
+    elif reaction.emoji == u"\U0001F6AB":
+        await msg.clear_reactions()
+        await reaction.add_reaction(emoji='👎')
+
 
 @bot.command(
     help="Can be called with just $verify but also with $verify <VTuber name>\n" +
