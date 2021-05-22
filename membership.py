@@ -179,7 +179,9 @@ async def detect_idol_server(url):
     # get list from db
     idols = db_cluster["settings"]['general'].find_one({'name': "supported_idols"})['supported_idols']
     
+    print("start detect server")
     text, inverted_text = await asyncio.wait_for(detect_image_text(url), timeout = 60)
+    print("after server")
     
     for idol in idols:
         if idol['name'] in text or idol['name'] in inverted_text:
@@ -223,10 +225,10 @@ async def verify_membership(res, server_id):
         await res.channel.send(m)
         desc = "{}\n{}".format(str(res.author), "Date not detected")
         membership_date_text = "None"
-    else:
-        if not utility.check_date(new_membership_date):
-            await res.channel.send("The date must not be in the past!")
-            return
+    #else:
+        #if not utility.check_date(new_membership_date):
+        #    await res.channel.send("The date must not be in the past!")
+        #    return
 
         membership_date_text = new_membership_date.strftime(DATE_FORMAT)
         desc = "{}\n{}".format(str(res.author), membership_date_text)
@@ -332,9 +334,9 @@ async def set_membership(res, member_id, date):
             return
     new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
 
-    if not utility.check_date(new_date):
-        await res.channel.send("The date must not be in the past!")
-        return
+    #if not utility.check_date(new_date):
+    #    await res.channel.send("The date must not be in the past!")
+    #    return
 
     db_date = new_date - relativedelta(months=1)
     if not target_membership:
