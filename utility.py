@@ -27,6 +27,12 @@ def date_from_txt(s):
     # needed because replace cannot be called on None
     if search_dates(s):
         return search_dates(s)[0][1].replace(tzinfo = timezone.utc)
+
+def text_to_boolean(flag):
+    if flag in ['True', 'true']:
+        return True
+    elif flag in [ 'False', 'false']:
+        return False
         
 async def confirm_action(res, actor):
 
