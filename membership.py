@@ -225,7 +225,7 @@ async def verify_membership(res, server_id):
         await res.channel.send(m)
         desc = "{}\n{}".format(str(res.author), "Date not detected")
         membership_date_text = "None"
-    #else:
+    else:
         #if not utility.check_date(new_membership_date):
         #    await res.channel.send("The date must not be in the past!")
         #    return
