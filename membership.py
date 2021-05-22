@@ -176,6 +176,7 @@ async def verify_membership_with_server_detection(res):
 
 
 async def detect_idol_server(url):
+    # get list from db
     idols = db_cluster["settings"]['general'].find_one({'name': "supported_idols"})['supported_idols']
     
     text, inverted_text = await asyncio.wait_for(detect_image_text(url), timeout = 60)
