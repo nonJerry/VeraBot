@@ -15,7 +15,7 @@ data = Core()
 bot, db_cluster, embed_color = data.bot, data.db_cluster, data.embed_color
 
 ID_NOT_FOUND_TEXT = "Can't find membership id in the database!"
-DATE_FORMAT = "%d/%m/%Y, %H:%M:%S"
+DATE_FORMAT = r"%d/%m/%Y"
 
 async def _check_membership_dates(server, res = None, msg = None):
     # Performs a mass check on membership dates and delete expired membership with a default message
