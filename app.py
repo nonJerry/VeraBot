@@ -145,32 +145,38 @@ async def on_raw_reaction_add(payload):
         return
     channel = bot.get_channel(payload.channel_id)
     msg = await channel.fetch_message(payload.message_id)
-    reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
+    try:
+        msg = await channel.fetch_message(payload.message_id)
+        reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
 
-    # only the first react by somebody else than the bot should be processed
-    if reaction:
-        if reaction.count != 2:
-            return
-        msg = reaction.message
+        # only the first react by somebody else than the bot should be processed
+        if reaction:
+            if reaction.count != 2:
+                return
+            msg = reaction.message
 
-        # this handling is not for DMs
-        # Only process reactions that also were also made by the bot
-        if not reaction.me:
-            return
-        if reaction.emoji == '✅':
-            embed = msg.embeds[0]
-            # always only the id
-            target_member_id = int(embed.title)
-            membership_date = embed.fields[0].value
+            # this handling is not for DMs
+            # Only process reactions that also were also made by the bot
+            if not reaction.me:
+                return
+            if reaction.emoji == '✅':
+                embed = msg.embeds[0]
+                # always only the id
+                target_member_id = int(embed.title)
+                membership_date = embed.fields[0].value
 
-            # set membership
-            await member_handler.set_membership(msg, target_member_id, membership_date)
+                # set membership
+                await member_handler.set_membership(msg, target_member_id, membership_date)
 
-            await msg.clear_reactions()
-            await msg.add_reaction(emoji='👌')
-        elif reaction.emoji == u"\U0001F6AB":
-            await msg.clear_reactions()
-            await msg.add_reaction(emoji='👎')
+                await msg.clear_reactions()
+                await msg.add_reaction(emoji='👌')
+            elif reaction.emoji == u"\U0001F6AB":
+                await msg.clear_reactions()
+                await msg.add_reaction(emoji='👎')
+    except discord.errors.Forbidden:
+        print(payload.channel_id)
+        print(payload.guild_id)
+
 
 
 @bot.command(
