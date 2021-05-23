@@ -141,12 +141,12 @@ async def on_guild_remove(guild):
 @bot.event
 async def on_raw_reaction_add(payload):
     # get reaction from payload
+    if not payload.guild_id:
+        return
     channel = bot.get_channel(payload.channel_id)
     msg = await channel.fetch_message(payload.message_id)
     reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
 
-    if isinstance(msg.channel, discord.DMChannel):
-        return
     # only the first react by somebody else than the bot should be processed
     if reaction:
         if reaction.count != 2:
