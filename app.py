@@ -145,31 +145,32 @@ async def on_raw_reaction_add(payload):
     msg = await channel.fetch_message(payload.message_id)
     reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
 
-    # only the first react by somebody else than the bot should be processed
-    if reaction.count != 2:
-        return
-    msg = reaction.message
-
-    # this handling is not for DMs
     if isinstance(msg.channel, discord.DMChannel):
         return
-    # Only process reactions that also were also made by the bot
-    if not reaction.me:
-        return
-    if reaction.emoji == '✅':
-        embed = msg.embeds[0]
-        # always only the id
-        target_member_id = int(embed.title)
-        membership_date = embed.fields[0].value
+    # only the first react by somebody else than the bot should be processed
+    if reaction:
+        if reaction.count != 2:
+            return
+        msg = reaction.message
 
-        # set membership
-        await member_handler.set_membership(msg, target_member_id, membership_date)
+        # this handling is not for DMs
+        # Only process reactions that also were also made by the bot
+        if not reaction.me:
+            return
+        if reaction.emoji == '✅':
+            embed = msg.embeds[0]
+            # always only the id
+            target_member_id = int(embed.title)
+            membership_date = embed.fields[0].value
 
-        await msg.clear_reactions()
-        await msg.add_reaction(emoji='👌')
-    elif reaction.emoji == u"\U0001F6AB":
-        await msg.clear_reactions()
-        await msg.add_reaction(emoji='👎')
+            # set membership
+            await member_handler.set_membership(msg, target_member_id, membership_date)
+
+            await msg.clear_reactions()
+            await msg.add_reaction(emoji='👌')
+        elif reaction.emoji == u"\U0001F6AB":
+            await msg.clear_reactions()
+            await msg.add_reaction(emoji='👎')
 
 
 @bot.command(
