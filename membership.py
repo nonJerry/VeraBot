@@ -61,7 +61,7 @@ async def _check_membership_dates(server, res = None, msg = None):
                 #send dm
                 await dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
             # notify
-            elif last_membership <= notify_date and not member['informed']:
+            elif inform_duration != 0 and last_membership <= notify_date and not member['informed']:
                 title = message_title.format("expires soon!")
                 message_desc = "Your membership to {} will expire in {} day(s).\n"
                 message_desc += "If you do not want to lose this membership please don't forget to anew it!"
