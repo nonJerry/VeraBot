@@ -8,44 +8,96 @@ from datetime import datetime as dtime
 from datetime import timezone, timedelta
 import re
 #Internal
-from core import create_core
+from membership_handling import MembershipHandler
+from settings import Settings
+from membership import Membership
+from utility import Utility
+from ocr import OCR
+from sending import Sending
+from pymongo import MongoClient
 
 ### Setup data
 # Set variable to true for local testing
 local = False
 
-token, data = create_core(local)
 
-bot = data.bot
-owner = data.owner
-dev = data.dev
-embed_color = data.embed_color
-dm_log = data.dm_log
-db_cluster = data.db_cluster
-BOOLEAN_TEXT = "Please do only use True or False"
+# Customizable Settings
+# For local testing
+if(local):
+    from decouple import config
+    import pytesseract as Tess
+    token = config("TOKEN")
+    owner_id = int(config("OWNER_ID"))
+    embed_color = int(config("EMBED_COLOR"), 16)
+    # Setting up the ocr
+    Tess.pytesseract.tesseract_cmd = config('TESS_PATH')
+    db_user = config("DB_USER")
+    db_pass = config("DB_PASS")
+    db_url = config("DB_LINK")
+    dm_log = int(config("DM_LOG"))
+# For server
+else:
+    import os
+    token = os.getenv("TOKEN")
+    owner_id = int(os.getenv("OWNER_ID"))
+    embed_color = int(os.getenv("EMBED_COLOR"), 16)
+    db_user = os.getenv("DB_USER")
+    db_pass = os.getenv("DB_PASS")
+    db_url = os.getenv("DB_LINK")
+    dm_log = int(os.getenv("DM_LOG"))
+
+# Intents
+intents = discord.Intents.default()
+intents.members = True
+intents.invites = False
+intents.emojis = False
+intents.typing = False
+intents.integrations = False
+intents.webhooks = False
+intents.voice_states = False
+intents.guild_typing = False
+
+async def determine_prefix(bot, message):
+    if isinstance(message.channel, discord.channel.DMChannel):
+        return "$"
+    guild = message.guild
+    if guild:
+        prefixes = db_cluster[str(guild.id)]["settings"].find_one({"kind": "prefixes"})["values"]
+        if prefixes:
+            return prefixes
+    return "$"
+
+# Set up bot
+bot = commands.Bot(command_prefix=determine_prefix, description='Bot to verify and manage Memberships.\nlogChannel, Vtuber name and memberRole need to be set!', intents=intents, case_insensitive=True, owner_id=owner_id)
 
 
-#Late import to guarantee data is initialized
-#Internal
-import membership
-from utility import create_supported_vtuber_embed, is_integer, text_to_boolean
+# database settings
+db_cluster = MongoClient(db_url.format(db_user, db_pass))
 
-error_text = None
+
+# set up classes
+member_handler = MembershipHandler(bot, db_cluster, embed_color)
+Utility.setup(bot, db_cluster, embed_color)
+OCR.setup(bot, local)
+Sending.setup(bot, embed_color)
+
+#add cogs
+bot.add_cog(Settings(bot, db_cluster))
+bot.add_cog(Membership(bot, member_handler))
+
+
 @bot.event
 async def on_command_error(ctx, error):
-    """
-    Rewrites on_command_error a not found command gets a respnse.
-    """
-    global error_text
-
     if isinstance(error, CommandNotFound):
         # Ignore this error
         pass
     elif isinstance(error, commands.MissingPermissions):
         await ctx.send("You are not allowed to use this command!")
-    elif error_text:
-        await ctx.send(error_text)
-        error_text = None
+    elif isinstance(error, commands.NoPrivateMessage):
+        await ctx.send("This command should not be used in the DMs")
+    elif hasattr(ctx.command, 'on_error'):
+        #skip already locally handled errors
+        pass
     else:
         raise error
     
@@ -120,7 +172,7 @@ async def on_reaction_add(reaction, user):
         membership_date = embed.fields[0].value
 
         # set membership
-        await membership.set_membership(msg, target_member_id, membership_date)
+        await member_handler.set_membership(msg, target_member_id, membership_date)
 
         await msg.clear_reactions()
         await msg.add_reaction(emoji='👌')
@@ -148,261 +200,30 @@ async def verify(ctx, *vtuber):
     if vtuber:
         server = map_vtuber_to_server(vtuber[0])
         if server:
-            await membership.verify_membership(ctx.message, server)
+            await member_handler.verify_membership(ctx.message, server)
         else:
-            embed = create_supported_vtuber_embed()
+            embed = Utility.create_supported_vtuber_embed()
             await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
     else:
-        await membership.verify_membership_with_server_detection(ctx.message)
+        await member_handler.verify_membership_with_server_detection(ctx.message)
 
 @verify.error
 async def verify_error(ctx, error):
-    global error_text
     if isinstance(error, commands.PrivateMessageOnly):
-        error_text = "This command only works in DMs!"
-
-
-@bot.command(name="prefix",
-    help="Adds the <prefix> that can be used for the bot on this server.",
-	brief="Adds an additional prefix")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_prefix(ctx, prefix: str):
-    settings = db_cluster[str(ctx.guild.id)]["settings"]
-    settings.update_one({"kind": "prefixes"}, {'$push': {'values': prefix}})
-    await ctx.send("Prefix " + prefix + " added")
-
-@set_prefix.error
-async def prefix_error(ctx, error):
-    await dm_error(ctx, error)
-    await invalid_argument_error(ctx, error)
-
-async def dm_error(ctx, error):
-    if isinstance(ctx.channel, discord.channel.DMChannel) and isinstance(error, commands.MissingPermissions):
-        await ctx.send("This command should not be used in the DMs")
-
-async def invalid_argument_error(ctx, error):
-    if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('The argument is invalid')
-
-
-@bot.command(name="removePrefix",
-    help="Removes the <prefix> so that it is not available as a prefix anymore for this server.",
-	brief="Removes an prefix")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def remove_prefix(ctx, prefix: str):
-    settings = db_cluster[str(ctx.guild.id)]["settings"]
-
-    if settings.update_one({"kind": "prefixes"}, {'$pull': {'values': prefix}}).matched_count == 0:
-        await ctx.send("Prefix not found")
-    else:
-        await ctx.send(prefix +" removed")
-
-
-@bot.command(name="showPrefix",
-    help="Shows all prefixes that are available to use commands of this bot on this server.",
-	brief="Shows all prefixes")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def remove_prefix(ctx):
-    settings = db_cluster[str(ctx.guild.id)]["settings"]
-
-    await ctx.send("Those prefixes are set: " + str(settings.find_one({"kind": "prefixes"})['values']))
-
-
-@bot.command(name="setVTuber",
-    help="Sets the name of the VTuber of this server.\nThe screenshot sent for the verification is scanned for this name. Therefore this name should be identical with the name in the membership tab.",
-	brief="Sets the name of the VTuber of this server")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_idol(ctx, vtuber_name: str):
-    settings = db_cluster["settings"]["general"]
-    # always only one entry
-    for element in settings.find_one({}, {'supported_idols'})['supported_idols']:
-        if vtuber_name in element['name']:
-            await ctx.send("This Vtuber is already mapped to a server!")
-            return
-    if settings.find_one( { 'supported_idols.guild_id': ctx.guild.id}):
-        settings.update_one({'supported_idols.guild_id': ctx.guild.id}, {'$set': {'supported_idols.$': {"name": vtuber_name, "guild_id": ctx.guild.id}}})
-    else:
-        settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": vtuber_name, "guild_id": ctx.guild.id}}})
-    await ctx.send("Set VTuber name to " + vtuber_name)
-    print("New Vtuber added: " + vtuber_name)
-
-
-@bot.command(name="memberRole", aliases=["setMemberRole"],
-    help="Sets the role that should be given to a member who has proven that he has valid access to membership content.\nRequires the ID not the role name or anything else!",
-	brief="Sets the role for membership content")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_member_role(ctx, id: int):
-    if check_role_integrity(ctx, id):
-        set_value_in_server_settings(ctx, "member_role", id)
-
-        await ctx.send("Member role id set to " + str(id))
-    else:
-        await ctx.send("ID does not refer to a legit role")
-
-
-@bot.command(name="logChannel", aliases=["setLogChannel"],
-    help="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!",
-	brief="Sets the channel for logging")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_log_channel(ctx, id: int):
-    set_value_in_server_settings(ctx, "log_channel", id)
-
-    await ctx.send("Log Channel id set to " + str(id))
-
-
-@bot.command(hidden = True, name="modRole")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_mod_role(ctx, id: int):
-    if check_role_integrity(ctx, id):
-        set_value_in_server_settings(ctx, "mod_role", id)
-
-        await ctx.send("Mod role id set to " + str(id))
-    else:
-        await ctx.send("ID does not refer to a legit role")
-
-
-@bot.command(name="picture", aliases=["setPicture"],
-    help="Sets the image that is sent when a membership is about to expire.\n" +
-    "It supports link that end with png, jpg or jpeg.",
-	brief="Set image for expiration message.")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_mod_role(ctx, link: str):
-    print(link)
-    match = re.search(r"http[s]?://[a-zA-Z0-9_\.]+/[a-zA-Z0-9_/]+\.(png|jpeg|jpg)", link)
-    if match:
-        set_value_in_server_settings(ctx, "picture_link", link)
-        await ctx.send("Image for expiration message set.")
-    else:
-        await ctx.send("Please send a legit link. Only jpg, jpeg and png are accepted.")
-
-
-@bot.command(name="setAuto", aliases=["auto", "setAutoRole", "setAutomaticRole"],
-    help = "Sets whether the bot is allowed to automatically add the membership role.",
-    brief = "Set flag for automatic role handling")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_automatic_role(ctx, flag: str):
-    flag = text_to_boolean(flag)
-    if type(flag) != bool:
-        ctx.send()
-        return
-    set_value_in_server_settings(ctx, "automatic_role", flag)
-    await ctx.send("Flag for automatic role handling set to " + str(flag))
-
-
-@bot.command(name="setAdditionalProof", aliases=["setProof", "setRequireProof", "additionalProof", "requireAdditionalProof"],
-    help = "Sets whether the bot will require additional proof from the user.",
-    brief = "Set flag for the inquiry of additional Proof")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_require_additional_proof(ctx, flag: str):
-    flag = text_to_boolean(flag)
-    if type(flag) != bool:
-        ctx.send(BOOLEAN_TEXT)
-        return
-    set_value_in_server_settings(ctx, "require_additional_proof", flag)
-    await ctx.send("Flag for additional Proof set to " + str(flag))
-
-
-@bot.command(name="setTolerance", aliases=["tolerance", "toleranceDuration"],
-    help = "Sets the time that users will have access to the membership channel after their membership expired.",
-    brief = "Set tolerance time after membership expiry")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_tolerance_duration(ctx, time: int):
-    set_value_in_server_settings(ctx, "tolerance_duration", time)
-    await ctx.send("Time that users will still have access to the channel after their membership expired set to " + str(time))
-
-
-@bot.command(name="setPriorNoticeDuration", aliases=["informDuration", "PriorNoticeDuration", "PriorNotice", "setPriorNotice"],
-    help = "Sets how many days before the expiry of their membership a user will be notified to renew their proof.",
-    brief = "Set time for notice before membership expiry")
-@commands.has_permissions(administrator=True)
-@commands.guild_only()
-async def set_inform_duration(ctx, time: int):
-    set_value_in_server_settings(ctx, "inform_duration", time)
-    await ctx.send("Users will be notified " + str(time) + " days before their membership ends.")
-
-
-@bot.command(name="viewMembers", aliases=["members","member", "viewMember"],
-    help = "Shows all user with the membership role. Or if a id is given this users data.",
-    brief = "Show membership(s)")
-@commands.has_permissions(manage_messages=True)
-@commands.guild_only()
-async def view_members(ctx, *id: int):
-    # always only one id at max
-    if id:
-        await membership.view_membership(ctx.message, id[0])
-    else:
-        await membership.view_membership(ctx.message, None)
-
-
-@bot.command(name="addMember", aliases=["set_membership", "setMember"],
-    help="Gives the membership role to the user whose ID was given.\n" + 
-    "<date> has to be in the format dd/mm/yyyy.\n" +
-    "It equals the date shown on the sent screenshot",
-	brief="Gives the membership role to a user")
-@commands.has_permissions(manage_messages=True)
-@commands.guild_only()
-async def set_membership(ctx, member_id: int, date):
-    await membership.set_membership(ctx.message, member_id, date)
-
-@set_membership.error
-async def set_membership_error(ctx, error):
-    global error_text
-    if isinstance(error, commands.MissingRequiredArgument):
-        error_text = "Please include at least two arguments!"
-    elif isinstance(error, commands.BadArgument):
-        error_text = "One of the arguments has the wrong data type!"
-
-
-@bot.command(name="delMember",
-    help="Removes the membership role from the user whose ID was given.\n" +
-    "A text which is sent to the user as DM can be given but is optional.",
-	brief="Removes the membership role from the user")
-@commands.has_permissions(manage_messages=True)
-@commands.guild_only()
-async def del_membership(ctx, member_id: int, *text):
-    await membership.del_membership(ctx.message, member_id, text)
-
-
-@set_idol.error
-@set_log_channel.error
-@set_member_role.error
-@del_membership.error
-@set_prefix.error
-@remove_prefix.error
-@set_automatic_role.error
-@view_members.error
-@set_tolerance_duration.error
-@set_inform_duration.error
-async def id_error(ctx, error):
-    global error_text
-    if isinstance(error, commands.BadArgument):
-        error_text = "Please provide a valid id!"
-    elif isinstance(error, commands.MissingRequiredArgument):
-        error_text = "Please include the argument!"
+        await ctx.send("This command only works in DMs!")
 
 
 @bot.command(hidden = True, name = "checkIdols")
 @commands.is_owner()
 async def check(ctx):
-    create_supported_vtuber_embed()
+    Utility.create_supported_vtuber_embed()
     await ctx.send(db_cluster['settings']['general'].find_one()['supported_idols'])
 
 
 @bot.command(hidden = True, name = "forceCheck")
 @commands.is_owner()
 async def force_member_check(ctx):
-    await membership.delete_expired_memberships(True)
+    await member_handler.delete_expired_memberships(True)
 
 @bot.command(hidden = True, name = "broadcast")
 @commands.is_owner()
@@ -419,48 +240,6 @@ async def broadcast(ctx, title, text):
 
         await lg_ch.send(content = None, embed = embed)
 
-
-@bot.command(hidden = True, name = "createNewSetting")
-@commands.is_owner()
-async def create_new_setting(ctx, kind: str, value):
-    if is_integer(value):
-        value = int(value)
-    else:
-        tmp = text_to_boolean(value)
-        if type(tmp) == bool:
-            value = tmp
-
-    dbnames = db_cluster.list_database_names()
-
-    for server in dbnames:
-        if is_integer(server):
-            server_db = db_cluster[str(server)]
-            settings = server_db["settings"]
-
-            # Create base configuration
-            json = { "kind": kind, "value" : value}
-            settings.insert_one(json)
-    await ctx.send("Added " + kind + " with default value " + str(value))
-
-@bot.command(hidden = True, name = "newMemberSetting")
-@commands.is_owner()
-async def create_new_member_setting(ctx, kind: str, value):
-    if is_integer(value):
-        value = int(value)
-    else:
-        tmp = text_to_boolean(value)
-        if type(tmp) == bool:
-            value = tmp
-
-    dbnames = db_cluster.list_database_names()
-
-    for server in dbnames:
-        if is_integer(server):
-            server_db = db_cluster[str(server)]
-            for member in server_db['members'].find():
-                # Create base configuration
-                server_db['members'].update_one({"id": member['id']}, {"$set": {kind: value}})
-    await ctx.send("Member: Added " + kind + " with default value " + str(value))
     
 @bot.command(name = "dmMe",
     help="Sends a DM containg \"hi\" to the user using the command.",
@@ -470,9 +249,9 @@ async def send_dm(ctx):
 
 @send_dm.error
 async def dm_error(ctx, error):
-    global error_text
     if isinstance(error, discord.errors.Forbidden):
-        error_text = "You need to allow DMs!"
+        await ctx.send("You need to allow DMs!")
+        error = None
 
 @bot.command(name="proof",
     help = "Allows to send additional proof. Requires the name of the vtuber. Only available in DMs",
@@ -480,7 +259,7 @@ async def dm_error(ctx, error):
 @commands.dm_only()
 async def send_proof(ctx, vtuber: str):
     if not ctx.message.attachments:
-        ctx.send("Please include a screenshot of the proof!")
+        await ctx.send("Please include a screenshot of the proof!")
         return
     server_id = map_vtuber_to_server(vtuber)
     member_veri_ch =bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
@@ -497,25 +276,12 @@ async def send_proof(ctx, vtuber: str):
 
 @send_proof.error
 async def proof_error(ctx, error):
-    global error_text
     if isinstance(error, commands.BadArgument):
-        error_text = "Please do only send a valid name"
+        await ctx.send("Please do only send a valid name")
     elif isinstance(error, commands.MissingRequiredArgument):
-        error_text = "Please include the server name!"
-    embed = create_supported_vtuber_embed()
-    ctx.send(content=None, embed=embed)
-    
-
-
-def check_role_integrity(ctx, id: int):
-    if ctx.guild.get_role(id):
-        return True
-    return False
-
-def set_value_in_server_settings(ctx, setting: str, value):
-    settings_db = db_cluster[str(ctx.guild.id)]["settings"]
-
-    settings_db.update_one({'kind': setting}, {'$set': {'value': value}})
+        await ctx.send("Please include the server name!")
+    embed = Utility.create_supported_vtuber_embed()
+    await ctx.send(content=None, embed=embed)
 
 
 def map_vtuber_to_server(name):
@@ -536,7 +302,7 @@ async def jst_clock():
 # List Coroutines to be executed
 coroutines = (
     jst_clock(),
-    membership.check_membership_routine(),
+    member_handler.check_membership_routine(),
 )
 
 # Main Coroutine
