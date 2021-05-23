@@ -15,6 +15,7 @@ from utility import Utility
 from ocr import OCR
 from sending import Sending
 from pymongo import MongoClient
+import os
 
 ### Setup data
 # Set variable to true for local testing
@@ -23,28 +24,14 @@ local = False
 
 # Customizable Settings
 # For local testing
-if(local):
-    from decouple import config
-    import pytesseract as Tess
-    token = config("TOKEN")
-    owner_id = int(config("OWNER_ID"))
-    embed_color = int(config("EMBED_COLOR"), 16)
-    # Setting up the ocr
-    Tess.pytesseract.tesseract_cmd = config('TESS_PATH')
-    db_user = config("DB_USER")
-    db_pass = config("DB_PASS")
-    db_url = config("DB_LINK")
-    dm_log = int(config("DM_LOG"))
-# For server
-else:
-    import os
-    token = os.getenv("TOKEN")
-    owner_id = int(os.getenv("OWNER_ID"))
-    embed_color = int(os.getenv("EMBED_COLOR"), 16)
-    db_user = os.getenv("DB_USER")
-    db_pass = os.getenv("DB_PASS")
-    db_url = os.getenv("DB_LINK")
-    dm_log = int(os.getenv("DM_LOG"))
+
+token = os.getenv("TOKEN")
+owner_id = int(os.getenv("OWNER_ID"))
+embed_color = int(os.getenv("EMBED_COLOR"), 16)
+db_user = os.getenv("DB_USER")
+db_pass = os.getenv("DB_PASS")
+db_url = os.getenv("DB_LINK")
+dm_log = int(os.getenv("DM_LOG"))
 
 # Intents
 intents = discord.Intents.default()
@@ -152,7 +139,12 @@ async def on_guild_remove(guild):
     settings.update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild.id}}})
 
 @bot.event
-async def on_reaction_add(reaction, user):
+async def on_raw_reaction_add(payload):
+    # get reaction from payload
+    channel = bot.get_channel(payload.channel_id)
+    msg = await channel.fetch_message(payload.message_id)
+    reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
+
     # only the first react by somebody else than the bot should be processed
     if reaction.count != 2:
         return
@@ -164,7 +156,6 @@ async def on_reaction_add(reaction, user):
     # Only process reactions that also were also made by the bot
     if not reaction.me:
         return
-    #TODO: externalize emoji as variable
     if reaction.emoji == '✅':
         embed = msg.embeds[0]
         # always only the id
