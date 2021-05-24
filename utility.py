@@ -52,7 +52,6 @@ class Utility:
         def check(reaction, user):
                 reacted_emote = str(reaction.emoji)
                 return reaction.message.id == res.id and user == actor and (reacted_emote == tick_emote or reacted_emote == cross_emote)
-        m = "The pending action has been cancelled."
         try:
             reaction, user = await cls.bot.wait_for('reaction_add', timeout = 60.0, check=check)
         except asyncio.TimeoutError:

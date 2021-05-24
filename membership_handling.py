@@ -280,6 +280,8 @@ class MembershipHandler:
         embed.add_field(name="Recognized Date", value = membership_date_text)
         embed.set_image(url = res.attachments[0].url)
         message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
+        await message.add_reaction(emoji='✅')
+        await message.add_reaction(emoji=u"\U0001F6AB")
 
 
         # should not get the role yet
@@ -290,8 +292,6 @@ class MembershipHandler:
         if not automatic_role:
             m = "The staff is checking your proof now. You will gain access if they deem the proof as appropriate"
             await res.channel.send(m)
-            await message.add_reaction(emoji='✅')
-            await message.add_reaction(emoji=u"\U0001F6AB")
             return
 
         if member:
@@ -361,7 +361,7 @@ class MembershipHandler:
         await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(self.DATE_FORMAT)), reference=res, mention_author=False)
         
 
-    async def del_membership(self, res, member_id: int, text):
+    async def del_membership(self, res, member_id: int, text, dm_flag=True):
         
         member_id = int(member_id)
 
@@ -388,11 +388,12 @@ class MembershipHandler:
         
         await res.channel.send("Membership successfully deleted.")
 
-        # If msg has extra lines, send dm to target user to notify the zoopass deletion
-        if text:
-            await target_member.send(" ".join(text))
-        else:
-            await target_member.send("Your membership for " + Utility.get_vtuber(res.guild.id) + " was deleted!")
+        if dm_flag:
+            # If msg has extra lines, send dm to target user to notify the zoopass deletion
+            if text:
+                await target_member.send(" ".join(text))
+            else:
+                await target_member.send("Your membership for " + Utility.get_vtuber(res.guild.id) + " was deleted!")
 
     async def delete_expired_memberships(self, forced=False):
         
