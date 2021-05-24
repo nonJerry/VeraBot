@@ -128,6 +128,15 @@ async def on_guild_join(guild):
         json = {"kind": "automatic_role", "value" : True}
         settings.insert_one(json)
 
+        json = {"kind": "require_additional_proof", "value" : False}
+        settings.insert_one(json)
+
+        json = {"kind": "tolerance_duration", "value" : 1}
+        settings.insert_one(json)
+
+        json = {"kind": "inform_duration", "value" : 1}
+        settings.insert_one(json)
+
 
 @bot.event
 async def on_guild_remove(guild):
