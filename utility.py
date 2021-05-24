@@ -53,17 +53,14 @@ class Utility:
                 reacted_emote = str(reaction.emoji)
                 return reaction.message.id == res.id and user == actor and (reacted_emote == tick_emote or reacted_emote == cross_emote)
         m = "The pending action has been cancelled."
-        cancel_embed = discord.Embed(title = "Action cancelled", description = m, colour = 0xFF0000)
         try:
             reaction, user = await cls.bot.wait_for('reaction_add', timeout = 60.0, check=check)
         except asyncio.TimeoutError:
             # if overtime, send timeout message and return
-            await res.channel.send(content = None, embed = cancel_embed)
             return False
 
         # if cancelled, send cancellation message and return
         if str(reaction.emoji) == cross_emote:
-            await res.channel.send(content = None, embed = cancel_embed)
             return False
 
         return True
