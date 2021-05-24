@@ -358,7 +358,7 @@ class MembershipHandler:
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)
 
-        await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(self.DATE_FORMAT)))
+        await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(self.DATE_FORMAT)), reference=res, mention_author=False)
         
 
     async def del_membership(self, res, member_id: int, text):

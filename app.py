@@ -167,20 +167,43 @@ async def on_raw_reaction_add(payload):
             # Only process reactions that also were also made by the bot
             if not reaction.me:
                 return
-            if reaction.emoji == '✅':
+            if msg.embeds:
                 embed = msg.embeds[0]
                 # always only the id
                 target_member_id = int(embed.title)
-                membership_date = embed.fields[0].value
+                if reaction.emoji == '✅':
+                    membership_date = embed.fields[0].value
 
-                # set membership
-                await member_handler.set_membership(msg, target_member_id, membership_date)
+                    # set membership
+                    await member_handler.set_membership(msg, target_member_id, membership_date)
 
-                await msg.clear_reactions()
-                await msg.add_reaction(emoji='👌')
-            elif reaction.emoji == u"\U0001F6AB":
-                await msg.clear_reactions()
-                await msg.add_reaction(emoji='👎')
+                    await msg.clear_reactions()
+                    await msg.add_reaction(emoji='👌')
+                elif reaction.emoji == u"\U0001F6AB":
+                    user = bot.get_user(payload.user_id)
+                    confirm_msg = await channel.send("Was the proof faked or is no date visible?", reference=msg, mention_author=False)
+                    if await Utility.confirm_action(confirm_msg, user):
+                        confirm_msg = await channel.send("Please write a message that will be sent to the User.", reference=msg, mention_author=False)
+                        def check(m):
+                            return m.author == user and m.channel == channel
+
+                        text_msg = await bot.wait_for('message', check=check)
+                        
+                        target_member = bot.get_user(target_member_id)
+                        await target_member.send(text_msg.content)
+                        await channel.send("Message was sent to user.", reference=text_msg, mention_author=False)
+                    else:
+                        m = "Please write the correct date from the screenshot in the format dd/mm/yyyy."
+                        await channel.send(m, reference=msg, mention_author=False)
+                        def check(m):
+                            return m.author == user and m.channel == channel
+
+                        date_msg = await bot.wait_for('message', check=check)
+
+                        await member_handler.set_membership(msg, target_member_id, date_msg.content)
+
+                    await msg.clear_reactions()
+                    await msg.add_reaction(emoji='👎')
     except discord.errors.Forbidden:
         print(payload.channel_id)
         print(payload.guild_id)
@@ -291,6 +314,7 @@ async def proof_error(ctx, error):
 
 
 def map_vtuber_to_server(name):
+    print(name)
     settings_db = db_cluster["settings"]["general"]
     result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name}}})
     if 'supported_idols' in result:
