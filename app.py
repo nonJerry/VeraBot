@@ -186,7 +186,7 @@ async def on_raw_reaction_add(payload):
                 elif reaction.emoji == u"\U0001F6AB":
                     user = bot.get_user(payload.user_id)
                     text = "Is there an issue with the proof (Faked or no date on screenshot) -> :white_check_mark:\n"
-                    text += "Or is the date incorrect/was not recognized -> :no_entry_sign:)"
+                    text += "Or is the date incorrect/was not recognized -> :no_entry_sign:"
                     confirm_msg = await channel.send(text, reference=msg, mention_author=False)
                     if await Utility.confirm_action(confirm_msg, user):
                         confirm_msg = await channel.send("Please write a message that will be sent to the User.", reference=msg, mention_author=False)
