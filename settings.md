@@ -48,7 +48,7 @@ Those are settings that are optional but useful to customize the experience for 
   This decides whether the bot is allowed to give the member role to the user once it recognizes a date. This is set to false by default.<br>
   You can be set it by using `$auto [True|False]`. It only accepts the values True and False. <br>
   <br> 
-  ![Set Auto Role](https://user-images.githubusercontent.com/79670160/119546747-8d65ca80-bd94-11eb-9b87-d955f024455a.png) <br>
+  ![Set Auto Role](https://user-images.githubusercontent.com/79670160/119550341-96f13180-bd98-11eb-8110-c6d1654a0cff.png) <br>
     
 ### Require Additional Proof ($setRequireProof [True|False]) <br>
   This decides whether the bot will ask the user to send an additional screenshot as further proof. The bot will not check this proof, it will need to be done by the staff. <br>
