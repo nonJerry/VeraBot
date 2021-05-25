@@ -90,7 +90,7 @@ class Settings(commands.Cog):
         brief="Shows all prefixes")
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def remove_prefix(self, ctx):
+    async def show_prefix(self, ctx):
         settings = self.db_cluster[str(ctx.guild.id)]["settings"]
 
         await ctx.send("Those prefixes are set: " + str(settings.find_one({"kind": "prefixes"})['values']))
