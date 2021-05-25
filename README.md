@@ -16,9 +16,11 @@ If you run into problems or have any suggestions, contact me on Discord at nonJe
 
 ## Setup at the beginning
 
-It is important that the highest role of the bot is above the membership role because it won't be able to give or remove the role otherwise!
+It is important that the highest role of the bot is above the membership role because it won't be able to give or remove the role otherwise! <br>
 
-The following commands can only be used by someone with Administrator permissions.
+For a more detailed version including screenshots and also explaining all other settings please refer to [this document](settings.md). <br>
+
+The initial setup commands can only be used by someone with Administrator permissions. <br>
 
 It is required the following attributes using the given commands before the bot will work for your server:
 - VTuber Name using `$setVTuber <name>`
@@ -51,14 +53,12 @@ If no text is written the user will just be notified that their membership was d
 Additionally there is the command `$viewMember` which will show all users who have a membership and their expiration date.
 It is also possible to just view one membership by using `$viewMenber <user id>`.
 
-If you want your user to submit further proof through the bot please ask them to use the `$proof <server>` command with a screenshot of your wanted proof. This will sent this screenshot to the same channel as the usual verify messages.
-![Proof Command in DMs](https://user-images.githubusercontent.com/79670160/119181613-208bc100-ba72-11eb-9756-45f14a417232.png)
-![Proof in log channel](https://user-images.githubusercontent.com/79670160/119181659-339e9100-ba72-11eb-8f94-f8703d76d2fb.png)
-
 
 ## How to verify
 A user can verify himself by sending the bot a DM containing the command `$verify` with a screenshot attached to it. <br>
-The bot will try to map the sent screenshot by itself and sent a corresponding messaging into the set log channel of the server.
+The bot will try to map the sent screenshot by itself and sent a corresponding messaging into the set log channel of the server. <br>
+However it is recommended to use `$verify <vtuber>` for fast processing. <br>
+
 ![Interaction in DMs](https://user-images.githubusercontent.com/79670160/119176809-d0a9fb80-ba6b-11eb-9aec-cadfa0135937.png)
 
 ![Logging](https://user-images.githubusercontent.com/79670160/119177186-40b88180-ba6c-11eb-835b-c3d41297f42b.png)
