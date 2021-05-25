@@ -125,7 +125,7 @@ async def on_guild_join(guild):
         json = {"kind": "picture_link", "value" : "https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg"} #hololive logo
         settings.insert_one(json)
 
-        json = {"kind": "automatic_role", "value" : True}
+        json = {"kind": "automatic_role", "value" : False}
         settings.insert_one(json)
 
         json = {"kind": "require_additional_proof", "value" : False}
