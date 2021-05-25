@@ -339,10 +339,13 @@ def map_vtuber_to_server(name):
 #Time in status
 async def jst_clock():
     while not bot.is_closed():
-        now = dtime.now(tz = timezone.utc) + timedelta(hours = 9)
-        timestr = now.strftime("%H:%M JST, %d/%m/%Y")
-        await bot.change_presence(activity=discord.Game(name=timestr))
-        await asyncio.sleep(60)
+        try:
+            now = dtime.now(tz = timezone.utc) + timedelta(hours = 9)
+            timestr = now.strftime("%H:%M JST, %d/%m/%Y")
+            await bot.change_presence(activity=discord.Game(name=timestr))
+            await asyncio.sleep(60)
+        except ConnectionResetError:
+            print("Could not update JST Clock!")
 
 
 # List Coroutines to be executed
