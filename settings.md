@@ -38,7 +38,7 @@ Those are settings that are optional but useful to customize the experience for 
   <br>
   ![View Settings](https://user-images.githubusercontent.com/79670160/119546693-7d4deb00-bd94-11eb-876e-59419069b0cc.png) <br>
 
-### Expiry picture ($picture <link>) <br>
+### Expiry picture ($picture \<link>) <br>
   You may want to set the picture which will be sent to the user each time they are reminded that their membership is about to end/has ended. <br>
   For this you use `$picture <link>`. The link should not expire after a certain time but be permanent as the bot does not save the picture but the link itself. Additionally it the bot will only accept links that end with .jpg, .jpeg and .png. <br>
   <br>
@@ -57,27 +57,28 @@ Those are settings that are optional but useful to customize the experience for 
   <br> 
   ![Set Require Proof](https://user-images.githubusercontent.com/79670160/119546814-a1113100-bd94-11eb-8bf7-fe69edff5c87.png) <br>
 
-### Tolerance Duration ($setTolerance <days>) <br>
+### Tolerance Duration ($setTolerance \<days>) <br>
   This duration expresses how many days the user will have access to the membership channel after their membership expired. It is set to 1 day by default. <br>
   It can be set using `$setTolerance <days>`. Only positive values are accepted. <br>
   <br> 
   ![Set Tolerance Duration](https://user-images.githubusercontent.com/79670160/119546929-c0a85980-bd94-11eb-997a-996d4b0b3640.png) <br>
 
-### Prior Notice Duration ($setPriorNotice <days>) <br>
+### Prior Notice Duration ($setPriorNotice \<days>) <br>
   This duration expresses how many days before the user's membership will end the bot will contact them warning that their membership (not access to channel) is about to end. It is set to 1 by default. <br>
-  If set to 0 there will be not notice at all. <br>
-  It can be set using `$setPriorNotice <days>`. Only positive values are accepted. <br>
+  If set to 0 there will be not notice at all. It can be set using `$setPriorNotice <days>`. Only positive values are accepted. <br>
   <br> 
   ![image](https://user-images.githubusercontent.com/79670160/119547008-db7ace00-bd94-11eb-8fe9-77dee45cd5c2.png) <br>
 
 ### Prefixes
   1. Set <br>
-      You can add as many prefixes as you like. The bot will listen to them additionally to the already set `$`. To set a prefix use `$prefix <new prefix>`. Only prefixes without space should be used. <br>
+      You can add as many prefixes as you like. The bot will listen to them additionally to the already set `$`. <br>
+      To set a prefix use `$prefix <new prefix>`. Only prefixes without space should be used. <br>
       <br> 
       ![Set Prefix](https://user-images.githubusercontent.com/79670160/119547115-fc432380-bd94-11eb-8847-894ac0dc0c1c.png) <br>
   
   2. Remove <br>
-      If you don't want a certain prefix anymore you can remove it using `$removePrefix <prefix>`. If all prefixes are removed the bot will listen start listening to `$` even if you removed it before. <br>
+      If you don't want a certain prefix anymore you can remove it using `$removePrefix <prefix>`. <br>
+      If all prefixes are removed the bot will listen start listening to `$` even if you removed it before. <br>
       <br> 
       ![Remove Prefix](https://user-images.githubusercontent.com/79670160/119548403-7a53fa00-bd96-11eb-8bb5-737d9ca3dedf.png) <br>
 
