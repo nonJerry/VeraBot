@@ -356,6 +356,8 @@ class MembershipHandler:
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)
 
+        await target_member.send("Your have been granted access to the membership channel of {}.".format(Utility.get_vtuber(res.guild.id)))
+
         await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(self.DATE_FORMAT)), reference=res, mention_author=False)
         
 
