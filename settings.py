@@ -306,3 +306,14 @@ class Settings(commands.Cog):
                     # Create base configuration
                     server_db['members'].update_one({"id": member['id']}, {"$set": {kind: value}})
         await ctx.send("Member: Added " + kind + " with default value " + str(value))
+
+    @commands.command(hidden = True, name = "servers")
+    @commands.is_owner()
+    async def servers(self, ctx):
+        activeservers = self.bot.guilds
+        m = ""
+        for guild in activeservers:
+            if not guild.id in [843294906440220693 ,623148148344225792]:
+                m += "{} ({} user)\n".format(guild.name, guild.member_count)
+        embed = discord.Embed(title="Current Servers", description=m)
+        await ctx.send(content=None, embed=embed)
