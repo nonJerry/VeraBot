@@ -199,7 +199,7 @@ async def on_raw_reaction_add(payload):
                         text_msg = await bot.wait_for('message', check=check)
                     
                         target_member = bot.get_user(target_member_id)
-                        await target_member.send(text_msg.content)
+                        await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
                         await channel.send("Message was sent to user.", reference=text_msg, mention_author=False)
 
                         if automatic_role:
@@ -225,6 +225,10 @@ async def on_raw_reaction_add(payload):
 
                     
     except discord.errors.Forbidden:
+        print(payload.channel_id)
+        print(payload.guild_id)
+    except discord.errors.NotFound:
+        print("Not found")
         print(payload.channel_id)
         print(payload.guild_id)
 
