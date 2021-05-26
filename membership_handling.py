@@ -184,9 +184,7 @@ class MembershipHandler:
         # get list from db
         idols = self.db_cluster["settings"]['general'].find_one({'name': "supported_idols"})['supported_idols']
         
-        print("start detect server")
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(url), timeout = 60)
-        print("after server")
         
         for idol in idols:
             if idol['name'] in text or idol['name'] in inverted_text:
