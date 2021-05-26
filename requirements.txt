@@ -8,3 +8,4 @@ dateparser==1.0.0
 discord==1.0.1
 Pillow==8.2.0
 python-decouple==3.4
+newrelic
