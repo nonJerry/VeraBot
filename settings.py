@@ -178,7 +178,7 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_automatic_role(self, ctx, flag: str):
         flag = Utility.text_to_boolean(flag)
-        if type(flag) != bool:
+        if not isinstance(bool, flag):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "automatic_role", flag)
@@ -192,7 +192,7 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_require_additional_proof(self, ctx, flag: str):
         flag = Utility.text_to_boolean(flag)
-        if type(flag) != bool:
+        if not isinstance(bool, flag):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "require_additional_proof", flag)
@@ -231,7 +231,7 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_logging(self, ctx, flag):
         flag = Utility.text_to_boolean(flag)
-        if type(flag) != bool:
+        if not isinstance(bool, flag):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "logging", flag)
