@@ -52,8 +52,8 @@ Those are settings that are optional but useful to customize the experience for 
     
 ### Require Additional Proof ($setRequireProof [True|False]) <br>
   This decides whether the bot will ask the user to send an additional screenshot as further proof. The bot will not check this proof, it will need to be done by the staff. <br>
-  It is recommended but not required to use this with auto role off. <br>
-  To set this you need to use `$setRequireProof [True|False]` It only accepts the values True and False. <br>
+  This is set to false by default. It is recommended but not required to use this with auto role off. <br>
+  To set this you need to use `$setRequireProof [True|False]`. It only accepts the values True and False. <br>
   <br> 
   ![Set Require Proof](https://user-images.githubusercontent.com/79670160/119546814-a1113100-bd94-11eb-8bf7-fe69edff5c87.png) <br>
 
@@ -67,7 +67,13 @@ Those are settings that are optional but useful to customize the experience for 
   This duration expresses how many days before the user's membership will end the bot will contact them warning that their membership (not access to channel) is about to end. It is set to 1 by default. <br>
   If set to 0 there will be not notice at all. It can be set using `$setPriorNotice <days>`. Only positive values are accepted. <br>
   <br> 
-  ![image](https://user-images.githubusercontent.com/79670160/119547008-db7ace00-bd94-11eb-8fe9-77dee45cd5c2.png) <br>
+  ![Set Prior Notice](https://user-images.githubusercontent.com/79670160/119547008-db7ace00-bd94-11eb-8fe9-77dee45cd5c2.png) <br>
+
+### Logging ($enableLogging [True|False]) <br>
+  This decides whether the bot will send a message into the log channel when it checks for expired memberships. This is set to true by default. <br>
+  It can be set using `$enableLogging [True|False]`. It only accepts True and False. <br>
+  <br>
+  ![Set Logging](https://user-images.githubusercontent.com/79670160/119653450-a10e4100-be27-11eb-9835-3ccd186ad01e.png) <br>
 
 ### Prefixes
   1. Set <br>

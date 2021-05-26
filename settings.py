@@ -9,6 +9,7 @@ class Settings(commands.Cog):
     def __init__(self, bot, db_cluster):
         self.bot = bot
         self.db_cluster = db_cluster
+        BOOLEAN_ONLY_TEXT = "Please do only use True or False."
 
     @commands.command(name="viewSettings", aliases=["settings", "allSettings", "showSettings"],
         help="Shows all settings of this server.",
@@ -85,7 +86,7 @@ class Settings(commands.Cog):
             await ctx.send(prefix +" removed")
 
 
-    @commands.command(name="showPrefix",
+    @commands.command(name="showPrefix", aliases=["viewPrefix", "showPrefixes", "viewPrefixes"],
         help="Shows all prefixes that are available to use commands of this bot on this server.",
         brief="Shows all prefixes")
     @commands.has_permissions(administrator=True)
@@ -177,8 +178,8 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_automatic_role(self, ctx, flag: str):
         flag = Utility.text_to_boolean(flag)
-        if type(flag) != bool:
-            await ctx.send("Please do only use True or False.")
+        if not isinstance(bool, flag):
+            await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "automatic_role", flag)
         await ctx.send("Flag for automatic role handling set to " + str(flag))
@@ -191,8 +192,8 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_require_additional_proof(self, ctx, flag: str):
         flag = Utility.text_to_boolean(flag)
-        if type(flag) != bool:
-            await ctx.send("Please do only use True or False.")
+        if not isinstance(bool, flag):
+            await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "require_additional_proof", flag)
         await ctx.send("Flag for additional Proof set to " + str(flag))
@@ -223,6 +224,19 @@ class Settings(commands.Cog):
         self.set_value_in_server_settings(ctx, "inform_duration", time)
         await ctx.send("Users will be notified " + str(time) + " days before their membership ends.")
 
+    @commands.command(name="enableLogging",
+        help="Flag which decides whether you will see the logs when the bot checks for expired memberships.",
+        brief="Toggles logging regarding expired memberships")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def set_logging(self, ctx, flag):
+        flag = Utility.text_to_boolean(flag)
+        if not isinstance(bool, flag):
+            await ctx.send(self.BOOLEAN_ONLY_TEXT)
+            return
+        self.set_value_in_server_settings(ctx, "logging", flag)
+        await ctx.send("Flag for logging set to " + str(flag))
+
 
     @set_idol.error
     @set_log_channel.error
@@ -234,6 +248,7 @@ class Settings(commands.Cog):
     @set_tolerance_duration.error
     @set_inform_duration.error
     @set_picture.error
+    @set_logging.error
     async def general_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             await ctx.send("Please provide a valid id!")
