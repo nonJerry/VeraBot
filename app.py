@@ -221,7 +221,7 @@ async def on_raw_reaction_add(payload):
 
                             await member_handler.set_membership(msg, target_member_id, date_msg.content)
                             await msg.clear_reactions()
-                            await msg.add_reaction(emoji='👎')
+                            await msg.add_reaction(emoji='👍')
 
                     
     except discord.errors.Forbidden:
