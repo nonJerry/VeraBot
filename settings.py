@@ -86,7 +86,7 @@ class Settings(commands.Cog):
             await ctx.send(prefix +" removed")
 
 
-    @commands.command(name="showPrefix",
+    @commands.command(name="showPrefix", aliases=["viewPrefix", "showPrefixes", "viewPrefixes"],
         help="Shows all prefixes that are available to use commands of this bot on this server.",
         brief="Shows all prefixes")
     @commands.has_permissions(administrator=True)
