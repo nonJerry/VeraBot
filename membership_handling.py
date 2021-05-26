@@ -410,11 +410,13 @@ class MembershipHandler:
         for server in serverlist:
             server_db = self.db_cluster[str(server['guild_id'])]
             lg_ch = self.bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
+            logging = server_db['settings'].find_one({'kind': "logging"})['value']
 
-            if not forced:
-                await lg_ch.send("Performing membership check, last check was {}".format(last_checked))
-            else:
-                await lg_ch.send("Forced Membership check")
+            if logging:
+                if not forced:
+                    await lg_ch.send("Performing membership check, last check was {}".format(last_checked))
+                else:
+                    await lg_ch.send("Forced Membership check")
 
             # perform check
             expired_memberships = await self._check_membership_dates(server)

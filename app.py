@@ -137,6 +137,9 @@ async def on_guild_join(guild):
         json = {"kind": "inform_duration", "value" : 1}
         settings.insert_one(json)
 
+        json = {"kind": "logging", "value" : True}
+        settings.insert_one(json)
+
 
 @bot.event
 async def on_guild_remove(guild):
