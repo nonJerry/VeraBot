@@ -40,6 +40,7 @@ class Utility:
             return True
         elif flag in [ 'False', 'false']:
             return False
+        return " "
             
     @classmethod
     async def confirm_action(cls, res, actor):
