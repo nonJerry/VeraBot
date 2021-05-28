@@ -39,6 +39,7 @@ class MembershipHandler:
         end_text += "Thank you so much for your continued support!"
         message_image = server_db['settings'].find_one({'kind': "picture_link"})['value']
 
+        #TODO: Restructure DB after dates?
         for member in server_db['members'].find():
             # For each member
             if member["last_membership"]:
@@ -187,7 +188,7 @@ class MembershipHandler:
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(url), timeout = 60)
         
         for idol in idols:
-            if idol['name'] in text or idol['name'] in inverted_text:
+            if idol['name'] in text.lower() or idol['name'] in inverted_text.lower():
                 return (idol['name'], idol['guild_id'])
 
 

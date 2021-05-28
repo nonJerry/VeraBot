@@ -66,11 +66,11 @@ class Utility:
         return True
 
     @classmethod
-    def get_vtuber(cls, guild_id):
+    def get_vtuber(cls, guild_id) -> str:
         settings_db = cls.db_cluster["settings"]["general"]
         result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'guild_id' : guild_id}}})
         if 'supported_idols' in result:
-            return result['supported_idols'][0]['name']
+            return result['supported_idols'][0]['name'].title()
         else:
             return "not supported server"
 
@@ -80,7 +80,7 @@ class Utility:
         array = settings.find_one({}, {'supported_idols'})['supported_idols']
 
         # list every vtuber like "- <vtuber>"
-        vtuber_list = "- " + '\n- '.join(element['name'] for element in array)
+        vtuber_list = "- " + '\n- '.join(element['name'].title() for element in array)
         title = "Supported VTuber"
 
         return discord.Embed(title = title, description = vtuber_list, colour = cls.embed_color)

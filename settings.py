@@ -109,13 +109,13 @@ class Settings(commands.Cog):
         settings = self.db_cluster["settings"]["general"]
         # always only one entry
         for element in settings.find_one({}, {'supported_idols'})['supported_idols']:
-            if vtuber_name in element['name']:
+            if vtuber_name.lower() in element['name']:
                 await ctx.send("This Vtuber is already mapped to a server!")
                 return
         if settings.find_one( { 'supported_idols.guild_id': ctx.guild.id}):
-            settings.update_one({'supported_idols.guild_id': ctx.guild.id}, {'$set': {'supported_idols.$': {"name": vtuber_name, "guild_id": ctx.guild.id}}})
+            settings.update_one({'supported_idols.guild_id': ctx.guild.id}, {'$set': {'supported_idols.$': {"name": vtuber_name.lower(), "guild_id": ctx.guild.id}}})
         else:
-            settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": vtuber_name, "guild_id": ctx.guild.id}}})
+            settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": vtuber_name.lower(), "guild_id": ctx.guild.id}}})
         await ctx.send("Set VTuber name to " + vtuber_name)
         print("New Vtuber added: " + vtuber_name)
 

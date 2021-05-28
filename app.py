@@ -339,7 +339,7 @@ async def proof_error(ctx, error):
 
 def map_vtuber_to_server(name):
     settings_db = db_cluster["settings"]["general"]
-    result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name}}})
+    result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
     if 'supported_idols' in result:
         return result['supported_idols'][0]['guild_id']
 
