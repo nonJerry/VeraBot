@@ -23,9 +23,9 @@ class OCR:
         cls.local = local
 
     @staticmethod
-    async def detect_image_date(img_url, size=2) -> datetime:
+    async def detect_image_date(img_url):
         # set ram limit
-        resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 550 * 1024 * 1024)) # 500 to 550 MB
+        resource.setrlimit(resource.RLIMIT_AS, (550 * 1024 * 1024, 550 * 1024 * 1024)) # 500 to 550 MB
         try:
             text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 90)
             try:
@@ -38,7 +38,7 @@ class OCR:
             return img_date
         except MemoryError:
             print("Memory")
-            return await OCR.detect_image_date(img_url, size/2)
+            return None
 
 
         
@@ -47,7 +47,7 @@ class OCR:
 
     ### Tesseract text detection
     @classmethod
-    async def detect_image_text(cls, img_url, size_factor = 2):
+    async def detect_image_text(cls, img_url, size_factor = 1):
         # Uses Tesseract to detect text from url img 
         # return tuple of two possible text: normal and inverted
 
