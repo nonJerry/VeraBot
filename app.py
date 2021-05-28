@@ -23,7 +23,7 @@ import resource
 local = False
 
 # set ram limit
-resource.setrlimit(resource.RLIMIT_AS, 500 * 1024 * 1024)
+resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 550 * 1024 * 1024))
 
 
 # Customizable Settings
