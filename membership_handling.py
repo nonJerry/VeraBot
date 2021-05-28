@@ -446,14 +446,17 @@ class MembershipHandler:
         await self.bot.wait_until_ready()
         # check if new tweet found
         while not self.bot.is_closed():
-            while self.verify_deque:
-                verify = self.verify_deque.popleft()
-                if verify[1]:
-                    await self.verify_membership(verify[0], verify[1])
-                else:
-                    await self.verify_membership_with_server_detection(verify[0])
+            try:
+                while self.verify_deque:
+                    verify = self.verify_deque.popleft()
+                    if verify[1]:
+                        await self.verify_membership(verify[0], verify[1])
+                    else:
+                        await self.verify_membership_with_server_detection(verify[0])
 
-            await asyncio.sleep(10) # check all 10 seconds
+                await asyncio.sleep(10) # check all 10 seconds
+            except Exception:
+                print("catched error in deque")
 
     async def process_reaction(self, channel, msg, user, reaction):
         emoji = reaction.emoji
