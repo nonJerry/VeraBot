@@ -1,4 +1,5 @@
 #External
+from datetime import datetime
 from os import stat
 from PIL import Image, ImageEnhance, ImageOps
 import requests
@@ -22,7 +23,7 @@ class OCR:
         cls.local = local
 
     @staticmethod
-    async def detect_image_date(img_url, size=2):
+    async def detect_image_date(img_url, size=2) -> datetime:
         # set ram limit
         resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 550 * 1024 * 1024)) # 500 to 550 MB
         try:
@@ -37,7 +38,7 @@ class OCR:
             return img_date
         except MemoryError:
             print("Memory")
-            return OCR.detect_image_date(img_url, size/2)
+            return await OCR.detect_image_date(img_url, size/2)
 
 
         

@@ -29,7 +29,7 @@ class Utility:
             return False
 
     @staticmethod
-    def date_from_txt(s):
+    def date_from_txt(s) -> dtime:
         # needed because replace cannot be called on None
         if search_dates(s):
             return search_dates(s)[0][1].replace(tzinfo = timezone.utc)
