@@ -4,6 +4,9 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FnonJerry%2FVeraBot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FnonJerry%2FVeraBot?ref=badge_shield)
 [![CodeFactor](https://www.codefactor.io/repository/github/nonjerry/verabot/badge)](https://www.codefactor.io/repository/github/nonjerry/verabot)
 <br>
+
+*The invite is not active anymore. If you want to invite this bot please contact me on Discord nonJerry#0001.*
+
 **VeraBot** manages the awarding of a role for membership-only content. <br>
 For this it uses OCR to verify the valid access with a sent screenshot.
 This bot is only available for the VTuber fanserver network.
