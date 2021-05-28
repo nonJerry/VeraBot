@@ -190,7 +190,7 @@ async def on_raw_reaction_add(payload):
 	brief=" Tries to verify a screenshot for membership in the DMs"
 )
 @commands.dm_only()
-@commands.cooldown(2, 30, commands.BucketType.user)
+@commands.cooldown(2, 50, commands.BucketType.user)
 async def verify(ctx, *vtuber):
     """
     Command in the DMs that tries to verify a screenshot for membership.
