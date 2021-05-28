@@ -171,58 +171,8 @@ async def on_raw_reaction_add(payload):
             if not reaction.me:
                 return
             if msg.embeds:
-                embed = msg.embeds[0]
-                automatic_role = db_cluster[str(msg.guild.id)]["settings"].find_one({"kind": "automatic_role"})["value"]
-
-                # always only the id
-                target_member_id = int(embed.title)
-                if reaction.emoji == '✅':
-                    if not automatic_role:
-                        membership_date = embed.fields[0].value
-
-                        # set membership
-                        await member_handler.set_membership(msg, target_member_id, membership_date)
-                    #always clear
-                    await msg.clear_reactions()
-                    await msg.add_reaction(emoji='👌')
-                # deny option
-                elif reaction.emoji == u"\U0001F6AB":
-                    user = bot.get_user(payload.user_id)
-                    text = "Is there an issue with the proof (Faked or no date on screenshot) -> :white_check_mark:\n"
-                    text += "Or is the date recognized incorrectly/was not recognized -> :no_entry_sign:"
-                    confirm_msg = await channel.send(text, reference=msg, mention_author=False)
-                    if await Utility.confirm_action(confirm_msg, user):
-                        confirm_msg = await channel.send("Please write a message that will be sent to the User.", reference=msg, mention_author=False)
-                        def check(m):
-                            return m.author == user and m.channel == channel
-
-                        text_msg = await bot.wait_for('message', check=check)
-                    
-                        target_member = bot.get_user(target_member_id)
-                        await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
-                        await channel.send("Message was sent to user.", reference=text_msg, mention_author=False)
-
-                        if automatic_role:
-                            await member_handler.del_membership(msg, target_member_id, None, False)
-                        await msg.clear_reactions()
-                        await msg.add_reaction(emoji='👎')
-                    else:
-                        await asyncio.sleep(1)
-                        confirm_msg = discord.utils.get(bot.cached_messages, id=confirm_msg.id)
-                        if confirm_msg.reactions[0].count == 1 and confirm_msg.reactions[1].count == 1:
-                            await channel.send("The reaction took too long! Please remove you reaction from this message and add it again.", reference=msg, mention_author=False)
-                        else:
-                            m = "Please write the correct date from the screenshot in the format dd/mm/yyyy."
-                            await channel.send(m, reference=msg, mention_author=False)
-                            def check(m):
-                                return m.author == user and m.channel == channel
-
-                            date_msg = await bot.wait_for('message', check=check)
-
-                            await member_handler.set_membership(msg, target_member_id, date_msg.content)
-                            await msg.clear_reactions()
-                            await msg.add_reaction(emoji='👍')
-
+                user = bot.get_user(payload.user_id)
+                await member_handler.process_reaction(channel, msg, user, reaction)
                     
     except discord.errors.Forbidden:
         print("Channel: {}".format(payload.channel_id))
@@ -240,7 +190,7 @@ async def on_raw_reaction_add(payload):
 	brief=" Tries to verify a screenshot for membership in the DMs"
 )
 @commands.dm_only()
-@commands.cooldown(1, 30, commands.BucketType.user)
+@commands.cooldown(2, 50, commands.BucketType.user)
 async def verify(ctx, *vtuber):
     """
     Command in the DMs that tries to verify a screenshot for membership.

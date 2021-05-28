@@ -1,6 +1,7 @@
     
 from discord.ext import commands
 from membership_handling import MembershipHandler
+from utility import Utility
 
 class Membership(commands.Cog):
 
@@ -13,10 +14,10 @@ class Membership(commands.Cog):
         brief = "Show membership(s)")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def view_members(self, ctx, *id: int):
+    async def view_members(self, ctx, *member_id: int):
         # always only one id at max
-        if id:
-            await self.member_handler.view_membership(ctx.message, id[0])
+        if member_id:
+            await self.member_handler.view_membership(ctx.message, member_id[0])
         else:
             await self.member_handler.view_membership(ctx.message, None)
 
@@ -61,3 +62,4 @@ class Membership(commands.Cog):
     async def queue(self, ctx):
         count = len(self.member_handler.verify_deque)
         await ctx.send("Queue count: {}".format(count))
+                     
