@@ -480,35 +480,42 @@ class MembershipHandler:
                 await msg.add_reaction(emoji='👌')
         # wrong date
         elif emoji == u"\U0001F4C5":
-            m = "Please write the correct date from the screenshot in the format dd/mm/yyyy."
+            m = "Please write the correct date from the screenshot in the format dd/mm/yyyy.\n"
+            m += "Type CANCEL to stop the process."
             await channel.send(m, reference=msg, mention_author=False)
             def check(m):
                 return m.author == user and m.channel == channel
 
             date_msg = await bot.wait_for('message', check=check)
 
-            if await self.set_membership(msg, target_member_id, date_msg.content, False, user):
+            if date_msg.content != "CANCEL" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
                 await msg.clear_reactions()
                 await msg.add_reaction(emoji='👍')
             else:
                 await reaction.remove(user)
+                await channel.send("Stopped the process and removed reaction.")
 
         # deny option - fake / missing date
         elif emoji == u"\U0001F6AB":
-                await channel.send("Please write a message that will be sent to the User.", reference=msg, mention_author=False)
+                m = "Please write a message that will be sent to the User."
+                m += "Type CANCEL to stop the process."
+                await channel.send(m, reference=msg, mention_author=False)
                 def check(m):
                     return m.author == user and m.channel == channel
 
                 text_msg = await bot.wait_for('message', check=check)
-            
-                target_member = bot.get_user(target_member_id)
-                await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
-                await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
+                if text_msg.content != "CANCEL":
+                    target_member = bot.get_user(target_member_id)
+                    await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
+                    await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
 
-                if automatic_role:
-                    await self.del_membership(msg, target_member_id, None, False, False)
-                # set embed
-                embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
-                await msg.edit(content = msg.content, embed = embed)
-                await msg.clear_reactions()
-                await msg.add_reaction(emoji='👎')  
+                    if automatic_role:
+                        await self.del_membership(msg, target_member_id, None, False, False)
+                    # set embed
+                    embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
+                    await msg.edit(content = msg.content, embed = embed)
+                    await msg.clear_reactions()
+                    await msg.add_reaction(emoji='👎')
+                else:
+                    await reaction.remove(user)
+                    await channel.send("Stopped the process and removed reaction.")
