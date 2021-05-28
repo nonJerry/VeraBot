@@ -22,21 +22,34 @@ class OCR:
 
     @staticmethod
     async def detect_image_date(img_url):
-        text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 90)
         try:
-            text = text[80:]
-            inverted_text = inverted_text[80:]
-        except IndexError:
-                text = text[30:]
-                inverted_text = inverted_text[30:]
-        img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
-        return img_date
+            text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 90)
+            try:
+                text = text[80:]
+                inverted_text = inverted_text[80:]
+            except IndexError:
+                    text = text[30:]
+                    inverted_text = inverted_text[30:]
+            img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
+            return img_date
+        except MemoryError:
+            text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url, 1), timeout = 90)
+            try:
+                text = text[80:]
+                inverted_text = inverted_text[80:]
+            except IndexError:
+                    text = text[30:]
+                    inverted_text = inverted_text[30:]
+            img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
+            return img_date
+
+        
 
 
 
     ### Tesseract text detection
     @classmethod
-    async def detect_image_text(cls, img_url):
+    async def detect_image_text(cls, img_url, size_factor = 2):
         # Uses Tesseract to detect text from url img 
         # return tuple of two possible text: normal and inverted
 
@@ -56,7 +69,7 @@ class OCR:
 
         img = img.crop((3, 0, img.size[0], img.size[1]))
         resized = img.resize(
-            (img.size[0] * 2, img.size[1] * 2), Image.ANTIALIAS
+            (img.size[0] * size_factor, img.size[1] * size_factor), Image.ANTIALIAS
         )
         enhancer = ImageEnhance.Sharpness(resized)
         factor = 3
