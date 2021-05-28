@@ -16,14 +16,10 @@ from ocr import OCR
 from sending import Sending
 from pymongo import MongoClient
 import os
-import resource
 
 ### Setup data
 # Set variable to true for local testing
 local = False
-
-# set ram limit
-resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 550 * 1024 * 1024))
 
 
 # Customizable Settings

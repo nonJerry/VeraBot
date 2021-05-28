@@ -10,6 +10,7 @@ from functools import partial
 import asyncio
 #Internal
 from utility import Utility
+import resource
 
 class OCR:
     bot = None
@@ -22,6 +23,8 @@ class OCR:
 
     @staticmethod
     async def detect_image_date(img_url):
+        # set ram limit
+        resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 550 * 1024 * 1024)) # 500 to 550 MB
         try:
             text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 90)
             try:
@@ -33,6 +36,7 @@ class OCR:
             img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
             return img_date
         except MemoryError:
+            print("memory")
             text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url, 1), timeout = 90)
             try:
                 text = text[80:]
