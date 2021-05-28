@@ -225,12 +225,12 @@ async def on_raw_reaction_add(payload):
 
                     
     except discord.errors.Forbidden:
-        print(payload.channel_id)
-        print(payload.guild_id)
+        print("Channel: {}".format(payload.channel_id))
+        print("Server: {}".format(payload.guild_id))
     except discord.errors.NotFound:
         print("Not found")
-        print(payload.channel_id)
-        print(payload.guild_id)
+        print("Channel: {}".format(payload.channel_id))
+        print("Server: {}".format(payload.guild_id))
 
 
 
@@ -240,6 +240,7 @@ async def on_raw_reaction_add(payload):
 	brief=" Tries to verify a screenshot for membership in the DMs"
 )
 @commands.dm_only()
+@commands.cooldown(1, 30, commands.BucketType.user)
 async def verify(ctx, *vtuber):
     """
     Command in the DMs that tries to verify a screenshot for membership.
@@ -264,6 +265,8 @@ async def verify(ctx, *vtuber):
 async def verify_error(ctx, error):
     if isinstance(error, commands.PrivateMessageOnly):
         await ctx.send("This command only works in DMs!")
+    elif isinstance(error, commands.CommandOnCooldown):
+        await ctx.send(f"Try again in {error.retry_after:.0f}s.")
 
 
 @bot.command(hidden = True, name = "checkIdols")
