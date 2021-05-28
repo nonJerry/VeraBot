@@ -329,4 +329,4 @@ class Settings(commands.Cog):
             await ctx.send("Guild does not exist.")
             return
         self.bot.leave_guild(guild)
-        ctx.send("Left guild {}.".format(str(guild_id))
+        ctx.send("Left guild {}.".format(str(guild_id)))
