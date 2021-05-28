@@ -117,7 +117,7 @@ class Settings(commands.Cog):
         else:
             settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": vtuber_name.lower(), "guild_id": ctx.guild.id}}})
         await ctx.send("Set VTuber name to " + vtuber_name)
-        print("New Vtuber added: " + vtuber_name)
+        print(str(ctx.guild.id) + "-> New Vtuber added: " + vtuber_name)
 
 
     @commands.command(name="memberRole", aliases=["setMemberRole"],

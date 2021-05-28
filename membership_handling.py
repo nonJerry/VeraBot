@@ -30,7 +30,6 @@ class MembershipHandler:
             await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
             return
         self.verify_deque.append([res, server_id])
-        print("added")
         m = "You're proof is added to the queue now and will be processed later.\n"
         m += "You will get a message when your role is applied."
         await res.channel.send(m)
@@ -170,7 +169,8 @@ class MembershipHandler:
             if not server:
                 m = "I am sorry I could not detect a VTuber name on the image you sent earlier.\n"
                 m += "Please send a screenshot with the name of the VTuber on it.\n"
-                m+= "If this was the case, please use `$verify <VTuber name>` instead of the normal $verify"
+                m+= "If this was the case, please use `$verify <VTuber name>` instead of the normal $verify.\n"
+                m += "You might need to wait as there is a cooldown on this command to avoid spam."
                 embed = Utility.create_supported_vtuber_embed()
                 await res.channel.send(content = m, embed = embed)
                 return
@@ -218,9 +218,6 @@ class MembershipHandler:
 
         if not new_membership_date:
             print(str(server_id) + ": date detection failed")
-            m = "I am sorry, I could not detect a date on the image you sent. Please wait for manual confirmation from the staff.\n"
-            m+= "If you do not get your role within the next day, please contact the staff."
-            await res.channel.send(m)
             desc = "{}\n{}".format(str(res.author), "Date not detected")
             membership_date_text = "None"
         else:
