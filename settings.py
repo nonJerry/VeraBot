@@ -54,7 +54,10 @@ class Settings(commands.Cog):
         inform_duration = settings.find_one({'kind' : 'inform_duration'})['value']
         embed.add_field(name='Prior Notice Duration', value=str(inform_duration), inline=True)
 
-        await ctx.send(content="These are your current settings.\nYour set expiration image is the picture.", embed = embed)
+        m = "These are your current settings.\nYour set expiration image is the picture.\n"
+        m += "For a full explanation of the settings please refer to:\n:"
+        m += "<https://github.com/nonJerry/VeraBot/blob/master/settings.md>"
+        await ctx.send(content=m, embed = embed)
 
     @commands.command(name="prefix",
         help="Adds the <prefix> that can be used for the bot on this server.",
@@ -313,7 +316,17 @@ class Settings(commands.Cog):
         activeservers = self.bot.guilds
         m = ""
         for guild in activeservers:
-            if not guild.id in [843294906440220693 ,623148148344225792]:
-                m += "{} ({} user)\n".format(guild.name, guild.member_count)
+            if not guild.id in [843294906440220693 ,623148148344225792, 815517423179530252]:
+                m += "{}: {} ({} user)\n".format(str(guild.id), guild.name, guild.member_count)
         embed = discord.Embed(title="Current Servers", description=m)
         await ctx.send(content=None, embed=embed)
+
+    @commands.command(hidden=True, name="leaveGuild")
+    @commands.is_owner()
+    async def leave_guild(self, ctx, guild_id: int):
+        guild = self.bot.get_guild(guild_id)
+        if not guild:
+            await ctx.send("Guild does not exist.")
+            return
+        self.bot.leave_guild(guild)
+        ctx.send("Left guild {}.".format(str(guild_id))
