@@ -1,6 +1,7 @@
     
 from discord.ext import commands
 from membership_handling import MembershipHandler
+from utility import Utility
 
 class Membership(commands.Cog):
 
@@ -61,3 +62,4 @@ class Membership(commands.Cog):
     async def queue(self, ctx):
         count = len(self.member_handler.verify_deque)
         await ctx.send("Queue count: {}".format(count))
+                     
