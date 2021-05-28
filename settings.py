@@ -9,7 +9,6 @@ class Settings(commands.Cog):
     def __init__(self, bot, db_cluster):
         self.bot = bot
         self.db_cluster = db_cluster
-        BOOLEAN_ONLY_TEXT = "Please do only use True or False."
 
     @commands.command(name="viewSettings", aliases=["settings", "allSettings", "showSettings"],
         help="Shows all settings of this server.",
