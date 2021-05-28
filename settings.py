@@ -164,7 +164,7 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def set_picture(self, ctx, link: str):
-        print(link)
+        print("{}: {}".format(str(ctx.guild.id), link))
         from re import search
         match = search(r"http[s]?://[a-zA-Z0-9_\.]+/[a-zA-Z0-9_/]+\.(png|jpeg|jpg)", link)
         if match:

@@ -30,7 +30,7 @@ class MembershipHandler:
             await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
             return
         self.verify_deque.append([res, server_id])
-        m = "You're proof is added to the queue now and will be processed later.\n"
+        m = "Your proof is added to the queue now and will be processed later.\n"
         m += "You will get a message when your role is applied."
         await res.channel.send(m)
 
