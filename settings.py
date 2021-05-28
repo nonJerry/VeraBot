@@ -175,7 +175,8 @@ class Settings(commands.Cog):
 
 
     @commands.command(name="setAuto", aliases=["auto", "setAutoRole", "setAutomaticRole"],
-        help = "Sets whether the bot is allowed to automatically add the membership role.",
+        help = "Sets whether the bot is allowed to automatically add the membership role.\n"
+        + "Only allows True or False as input.",
         brief = "Set flag for automatic role handling")
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
@@ -189,7 +190,8 @@ class Settings(commands.Cog):
 
 
     @commands.command(name="setAdditionalProof", aliases=["setProof", "setRequireProof", "additionalProof", "requireAdditionalProof"],
-        help = "Sets whether the bot will require additional proof from the user.",
+        help = "Sets whether the bot will require additional proof from the user.\n"
+        + "Only allows True or False as input.",
         brief = "Set flag for the inquiry of additional Proof")
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
@@ -329,4 +331,4 @@ class Settings(commands.Cog):
             await ctx.send("Guild does not exist.")
             return
         await guild.leave()
-        ctx.send("Left guild {}.".format(str(guild_id)))
+        await ctx.send("Left guild {}.".format(str(guild_id)))
