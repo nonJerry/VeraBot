@@ -9,7 +9,6 @@ class Settings(commands.Cog):
     def __init__(self, bot, db_cluster):
         self.bot = bot
         self.db_cluster = db_cluster
-        BOOLEAN_ONLY_TEXT = "Please do only use True or False."
 
     @commands.command(name="viewSettings", aliases=["settings", "allSettings", "showSettings"],
         help="Shows all settings of this server.",
@@ -125,11 +124,11 @@ class Settings(commands.Cog):
         brief="Sets the role for membership content")
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def set_member_role(self, ctx, id: int):
-        if self.check_role_integrity(ctx, id):
-            self.set_value_in_server_settings(ctx, "member_role", id)
+    async def set_member_role(self, ctx, role_id: int):
+        if self.check_role_integrity(ctx, role_id):
+            self.set_value_in_server_settings(ctx, "member_role", role_id)
 
-            await ctx.send("Member role id set to " + str(id))
+            await ctx.send("Member role id set to " + str(role_id))
         else:
             await ctx.send("ID does not refer to a legit role")
 
@@ -139,20 +138,20 @@ class Settings(commands.Cog):
         brief="Sets the channel for logging")
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def set_log_channel(self, ctx, id: int):
-        self.set_value_in_server_settings(ctx, "log_channel", id)
+    async def set_log_channel(self, ctx, channel_id: int):
+        self.set_value_in_server_settings(ctx, "log_channel", channel_id)
 
-        await ctx.send("Log Channel id set to " + str(id))
+        await ctx.send("Log Channel id set to " + str(channel_id))
 
 
     @commands.command(hidden = True, name="modRole")
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    async def set_mod_role(self, ctx, id: int):
-        if self.check_role_integrity(ctx, id):
-            self.set_value_in_server_settings(ctx, "mod_role", id)
+    async def set_mod_role(self, ctx, role_id: int):
+        if self.check_role_integrity(ctx, role_id):
+            self.set_value_in_server_settings(ctx, "mod_role", role_id)
 
-            await ctx.send("Mod role id set to " + str(id))
+            await ctx.send("Mod role id set to " + str(role_id))
         else:
             await ctx.send("ID does not refer to a legit role")
 
@@ -260,8 +259,8 @@ class Settings(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include the argument!")
 
-    def check_role_integrity(self, ctx, id: int):
-        if ctx.guild.get_role(id):
+    def check_role_integrity(self, ctx, role_id: int):
+        if ctx.guild.get_role(role_id):
             return True
         return False
 
@@ -277,7 +276,7 @@ class Settings(commands.Cog):
             value = int(value)
         else:
             tmp = Utility.text_to_boolean(value)
-            if type(tmp) == bool:
+            if isinstance(tmp, bool):
                 value = tmp
 
         dbnames = self.db_cluster.list_database_names()
@@ -299,7 +298,7 @@ class Settings(commands.Cog):
             value = int(value)
         else:
             tmp = Utility.text_to_boolean(value)
-            if type(tmp) == bool:
+            if isinstance(tmp, bool):
                 value = tmp
 
         dbnames = self.db_cluster.list_database_names()

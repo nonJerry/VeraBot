@@ -115,7 +115,7 @@ class MembershipHandler:
                 count += 1
                 member_id = member["id"]
                 membership_date = member["last_membership"].replace(tzinfo = timezone.utc) + relativedelta(months=1)
-                membership_date = membership_date.strftime("%d/%m/%Y")
+                membership_date = membership_date.strftime(self.DATE_FORMAT)
                 new_line = "{}: {}\n".format(member_id, membership_date)
                 if len(m) + len(new_line) > 2000:
                     await res.channel.send(m)
@@ -266,12 +266,13 @@ class MembershipHandler:
 
         # Send attachment and message to membership verification channel
         
-        embed.description = "Main Proof"
+        embed.description = "Main Proof\nUser: {}".format(res.author.mention)
         embed.add_field(name="Recognized Date", value = membership_date_text)
         embed.set_image(url = res.attachments[0].url)
         message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
         await message.add_reaction(emoji='✅')
-        await message.add_reaction(emoji=u"\U0001F6AB")
+        await message.add_reaction(emoji=u"\U0001F4C5") # calendar
+        await message.add_reaction(emoji=u"\U0001F6AB") # no entry
 
 
         # should not get the role yet
@@ -313,22 +314,20 @@ class MembershipHandler:
         await res.channel.send(m)
 
 
-    async def set_membership(self, res, member_id, date):
+    async def set_membership(self, res, member_id, date, manual=True, actor=None) -> bool:
         
         member_collection = self.db_cluster[str(res.guild.id)]['members']
         # Check if id exists
-        target_membership = member_collection.find_one({"id": member_id})
         dates = date.split("/")
 
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
                 await res.channel.send("Please provide a valid date (dd/mm/yyyy) or integer days (+/- integer).")
-                return
+                return False
         new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
-
         db_date = new_date - relativedelta(months=1)
+
+        target_membership = member_collection.find_one({"id": member_id})
         if not target_membership:
-                #needs to be date for new entry
-                await res.channel.send("Creating new entry!")
                 member_collection.insert_one({
                     "id": member_id,
                     "last_membership": db_date,
@@ -348,10 +347,16 @@ class MembershipHandler:
 
         await target_member.send("Your have been granted access to the membership channel of {}.".format(Utility.get_vtuber(res.guild.id)))
 
-        await res.channel.send("New membership date for {} set at {}!".format(member_id, new_date.strftime(self.DATE_FORMAT)), reference=res, mention_author=False)
+        if manual:
+            await res.channel.send("New membership date for {} set at {}!".format(target_member.mention, new_date.strftime(self.DATE_FORMAT)), reference=res, mention_author=False)
+        else:
+            embed = res.embeds[0]
+            embed.description = "**VERIFIED:** {}\nUser: {}\nBy: {}".format(new_date.strftime(self.DATE_FORMAT), target_member.mention, actor.mention)
+            await res.edit(content = res.content, embed = embed)
+        return True
         
 
-    async def del_membership(self, res, member_id: int, text, dm_flag=True):
+    async def del_membership(self, res, member_id: int, text, dm_flag=True, manual=True):
         
         member_id = int(member_id)
 
@@ -375,8 +380,8 @@ class MembershipHandler:
         await target_member.remove_roles(role)
 
 
-        
-        await res.channel.send("Membership successfully deleted.")
+        if manual:
+            await res.channel.send("Membership successfully deleted.")
 
         if dm_flag:
             # If msg has extra lines, send dm to target user to notify the zoopass deletion
@@ -441,11 +446,69 @@ class MembershipHandler:
         await self.bot.wait_until_ready()
         # check if new tweet found
         while not self.bot.is_closed():
-            while self.verify_deque:
-                verify = self.verify_deque.popleft()
-                if verify[1]:
-                    await self.verify_membership(verify[0], verify[1])
-                else:
-                    await self.verify_membership_with_server_detection(verify[0])
+            try:
+                while self.verify_deque:
+                    verify = self.verify_deque.popleft()
+                    if verify[1]:
+                        await self.verify_membership(verify[0], verify[1])
+                    else:
+                        await self.verify_membership_with_server_detection(verify[0])
 
-            await asyncio.sleep(10) # check all 10 seconds
+                await asyncio.sleep(10) # check all 10 seconds
+            except Exception:
+                print("catched error in deque")
+
+    async def process_reaction(self, channel, msg, user, reaction):
+        emoji = reaction.emoji
+        embed = msg.embeds[0]
+        automatic_role = self.db_cluster[str(msg.guild.id)]["settings"].find_one({"kind": "automatic_role"})["value"]
+        bot = self.bot
+        
+
+        # always only the id
+        target_member_id = int(embed.title)
+
+        # correct date
+        if emoji == '✅':
+            if not automatic_role:
+                membership_date = embed.fields[0].value
+
+                # set membership
+            if await self.set_membership(msg, target_member_id, membership_date, False, user):
+            #always clear
+                await msg.clear_reactions()
+                await msg.add_reaction(emoji='👌')
+        # wrong date
+        elif emoji == u"\U0001F4C5":
+            m = "Please write the correct date from the screenshot in the format dd/mm/yyyy."
+            await channel.send(m, reference=msg, mention_author=False)
+            def check(m):
+                return m.author == user and m.channel == channel
+
+            date_msg = await bot.wait_for('message', check=check)
+
+            if await self.set_membership(msg, target_member_id, date_msg.content, False, user):
+                await msg.clear_reactions()
+                await msg.add_reaction(emoji='👍')
+            else:
+                await reaction.remove(user)
+
+        # deny option - fake / missing date
+        elif emoji == u"\U0001F6AB":
+                await channel.send("Please write a message that will be sent to the User.", reference=msg, mention_author=False)
+                def check(m):
+                    return m.author == user and m.channel == channel
+
+                text_msg = await bot.wait_for('message', check=check)
+            
+                target_member = bot.get_user(target_member_id)
+                await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
+                await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
+
+                if automatic_role:
+                    await self.del_membership(msg, target_member_id, None, False, False)
+                # set embed
+                embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
+                await msg.edit(content = msg.content, embed = embed)
+                await msg.clear_reactions()
+                await msg.add_reaction(emoji='👎')  

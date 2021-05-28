@@ -1,4 +1,5 @@
 #External
+from datetime import datetime
 from os import stat
 from PIL import Image, ImageEnhance, ImageOps
 import requests
@@ -22,7 +23,7 @@ class OCR:
 
     @staticmethod
     async def detect_image_date(img_url):
-        text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 60)
+        text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 90)
         try:
             text = text[80:]
             inverted_text = inverted_text[80:]
@@ -32,17 +33,15 @@ class OCR:
         img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
         return img_date
 
-
-
     ### Tesseract text detection
     @classmethod
-    async def detect_image_text(cls, img_url):
+    async def detect_image_text(cls, img_url, size_factor = 1.75):
         # Uses Tesseract to detect text from url img 
         # return tuple of two possible text: normal and inverted
 
         # Set partial function for image_to_text
         if(cls.local):
-            img_to_txt = partial(Tess.image_to_string, timeout=30)
+            img_to_txt = partial(Tess.image_to_string, timeout=44)
         else:
             tess_path = r"/app/.apt/usr/share/tesseract-ocr/4.00/tessdata"
             img_to_txt = partial(tesserocr.image_to_text, path = tess_path)
@@ -56,7 +55,7 @@ class OCR:
 
         img = img.crop((3, 0, img.size[0], img.size[1]))
         resized = img.resize(
-            (img.size[0] * 2, img.size[1] * 2), Image.ANTIALIAS
+            (int(img.size[0] * size_factor), int(img.size[1] * size_factor)), Image.ANTIALIAS
         )
         enhancer = ImageEnhance.Sharpness(resized)
         factor = 3
