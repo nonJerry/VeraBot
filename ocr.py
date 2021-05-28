@@ -24,11 +24,11 @@ class OCR:
     async def detect_image_date(img_url):
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 60)
         try:
-            text = text[100:]
-            inverted_text = inverted_text[100:]
+            text = text[80:]
+            inverted_text = inverted_text[80:]
         except IndexError:
-                text = text[50:]
-                inverted_text = inverted_text[50:]
+                text = text[30:]
+                inverted_text = inverted_text[30:]
         img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
         return img_date
 
@@ -53,12 +53,17 @@ class OCR:
         img = Image.open(img_response.raw)
         img.load()
 
-        # sharpen image
-        enhancer = ImageEnhance.Sharpness(img)
+
+        img = img.crop((3, 0, img.size[0], img.size[1]))
+        resized = img.resize(
+            (img.size[0] * 2, img.size[1] * 2), Image.ANTIALIAS
+        )
+        enhancer = ImageEnhance.Sharpness(resized)
         factor = 3
         img = enhancer.enhance(factor)
 
-        # remove alpha channel and invert image
+
+        #remove alpha channel and invert image
         if img.mode == "RGBA":
             background = Image.new("RGB", img.size, (255, 255, 255))
             background.paste(img, mask=img.split()[3] if len(img.split()) >= 4 else None) # 3 is the alpha channel
