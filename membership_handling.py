@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime as dtime, tzinfo
 from datetime import timezone, timedelta
 from dateutil.relativedelta import relativedelta
+from collections import deque
 #Internal
 from utility import Utility
 from ocr import OCR
@@ -12,12 +13,27 @@ from sending import Sending
 
 class MembershipHandler:
     def __init__(self, bot, db_cluster, embed_color):
+        self.NO_PICTURE_TEXT = "I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)"
         self.ID_NOT_FOUND_TEXT = "Can't find membership id in the database!"
         self.DATE_FORMAT = r"%d/%m/%Y"
 
         self.bot = bot
         self.db_cluster = db_cluster
         self.embed_color = embed_color
+        # deque for data
+        self.verify_deque = deque()
+
+    async def add_to_queue(self, res, server_id=None):
+        
+        # Check if there is a valid attachment
+        if not res.attachments:
+            await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
+            return
+        self.verify_deque.append([res, server_id])
+        print("added")
+        m = "You're proof is added to the queue now and will be processed later.\n"
+        m += "You will get a message when your role is applied."
+        await res.channel.send(m)
 
     async def _check_membership_dates(self, server, res = None, msg = None):
         # Performs a mass check on membership dates and delete expired membership with a default message
@@ -141,20 +157,9 @@ class MembershipHandler:
         "id": int
         "last_membership": datetime
     }
-    """
-
-    NO_PICTURE_TEXT = "I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)"
+    """    
 
     async def verify_membership_with_server_detection(self, res):
-        
-        # Check if there is a valid attachment
-        if not res.attachments:
-            await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
-            return
-
-        if res.content:
-
-            await res.channel.send("Start verifying the image...")
 
             server = None
             try:
@@ -163,21 +168,13 @@ class MembershipHandler:
                 pass
 
             if not server:
-                m = "I am sorry I could not detect a VTuber name on the image.\n"
+                m = "I am sorry I could not detect a VTuber name on the image you sent earlier.\n"
                 m += "Please send a screenshot with the name of the VTuber on it.\n"
                 m+= "If this was the case, please use `$verify <VTuber name>` instead of the normal $verify"
                 embed = Utility.create_supported_vtuber_embed()
                 await res.channel.send(content = m, embed = embed)
                 return
-
-            confirm_msg = await res.channel.send("Do you want to verify Membership for " + idol + "?")
-            if await Utility.confirm_action(confirm_msg, res.author):
-                await self.verify_membership(res, server)
-            else:
-                m = "Please make sure that only one VTuber name is shown.\n"
-                m +="If this was the case, please use `$verify <VTuber name>` instead of the normal $verify"
-                embed = Utility.create_supported_vtuber_embed()
-                await res.channel.send(content = m, embed = embed)
+            await self.verify_membership(res, server)
 
 
 
@@ -209,10 +206,6 @@ class MembershipHandler:
 
     async def verify_membership(self, res, server_id):
 
-        if not res.attachments:
-            await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
-            return
-
         guild = self.bot.get_guild(server_id)
         server_db = self.db_cluster[str(server_id)]
         member_collection = server_db["members"]
@@ -224,6 +217,7 @@ class MembershipHandler:
 
 
         if not new_membership_date:
+            print(str(server_id) + ": date detection failed")
             m = "I am sorry, I could not detect a date on the image you sent. Please wait for manual confirmation from the staff.\n"
             m+= "If you do not get your role within the next day, please contact the staff."
             await res.channel.send(m)
@@ -289,8 +283,6 @@ class MembershipHandler:
 
         # automatic role not allowed
         if not automatic_role:
-            m = "The staff is checking your proof now. You will gain access if they deem the proof as appropriate"
-            await res.channel.send(m)
             return
 
         if member:
@@ -447,3 +439,16 @@ class MembershipHandler:
                 # else wait for the remaining time left
                 wait_time = 12 * 3600 - (now - last_checked).total_seconds()
             await asyncio.sleep(wait_time)
+
+    async def handle_verifies(self):
+        await self.bot.wait_until_ready()
+        # check if new tweet found
+        while not self.bot.is_closed():
+            while self.verify_deque:
+                verify = self.verify_deque.popleft()
+                if verify[1]:
+                    await self.verify_membership(verify[0], verify[1])
+                else:
+                    await self.verify_membership_with_server_detection(verify[0])
+
+            await asyncio.sleep(10) # check all 10 seconds

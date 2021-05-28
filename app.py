@@ -253,12 +253,12 @@ async def verify(ctx, *vtuber):
     if vtuber:
         server = map_vtuber_to_server(vtuber[0])
         if server:
-            await member_handler.verify_membership(ctx.message, server)
+            await member_handler.add_to_queue(ctx.message, server)
         else:
             embed = Utility.create_supported_vtuber_embed()
             await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
     else:
-        await member_handler.verify_membership_with_server_detection(ctx.message)
+        await member_handler.add_to_queue(ctx.message)
 
 @verify.error
 async def verify_error(ctx, error):
@@ -359,6 +359,7 @@ async def jst_clock():
 coroutines = (
     jst_clock(),
     member_handler.check_membership_routine(),
+    member_handler.handle_verifies()
 )
 
 # Main Coroutine
