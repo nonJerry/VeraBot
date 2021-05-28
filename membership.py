@@ -55,3 +55,9 @@ class Membership(commands.Cog):
             await ctx.send("Please provide a valid id!")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include the argument!")
+
+    @commands.command(hidden = True, name = "queue")
+    @commands.is_owner()
+    async def queue(self, ctx):
+        count = len(self.member_handler.verify_deque)
+        await ctx.send("Queue count: {}".format(count))
