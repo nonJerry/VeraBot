@@ -22,7 +22,7 @@ class OCR:
 
     @staticmethod
     async def detect_image_date(img_url):
-        text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 60)
+        text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 90)
         try:
             text = text[80:]
             inverted_text = inverted_text[80:]
@@ -42,7 +42,7 @@ class OCR:
 
         # Set partial function for image_to_text
         if(cls.local):
-            img_to_txt = partial(Tess.image_to_string, timeout=30)
+            img_to_txt = partial(Tess.image_to_string, timeout=44)
         else:
             tess_path = r"/app/.apt/usr/share/tesseract-ocr/4.00/tessdata"
             img_to_txt = partial(tesserocr.image_to_text, path = tess_path)
