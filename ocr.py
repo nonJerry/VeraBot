@@ -22,7 +22,7 @@ class OCR:
         cls.local = local
 
     @staticmethod
-    async def detect_image_date(img_url):
+    async def detect_image_date(img_url, size=2):
         # set ram limit
         resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 550 * 1024 * 1024)) # 500 to 550 MB
         try:
@@ -36,16 +36,9 @@ class OCR:
             img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
             return img_date
         except MemoryError:
-            print("memory")
-            text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url, 1), timeout = 90)
-            try:
-                text = text[80:]
-                inverted_text = inverted_text[80:]
-            except IndexError:
-                    text = text[30:]
-                    inverted_text = inverted_text[30:]
-            img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
-            return img_date
+            print("Memory")
+            return OCR.detect_image_date(img_url, size/2)
+
 
         
 
