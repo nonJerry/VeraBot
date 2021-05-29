@@ -53,6 +53,7 @@ jobs:
       - name: Run Main Bot
         run: python app.py
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DB_LINK: ${{ secrets.DB_LINK }}
           DB_PASS: ${{ secrets.DB_PASS }}
           DB_USER: ${{ secrets.DB_USER }}
@@ -67,6 +68,7 @@ jobs:
 
       - name: Run Tests
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TEST_TARGET_ID: ${{ secrets.TEST_TARGET_ID }}
           TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
           CHANNEL_ID: ${{ secrets.TEST_SERVER1_COMMANDS_CHANNEL_ID}}
