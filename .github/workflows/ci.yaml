@@ -6,7 +6,7 @@ on:
       - master
       - dev
       - '*.x'
-  commit:
+  deployment:
     branches:
       - master
       - '*.x'
