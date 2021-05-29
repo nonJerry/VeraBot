@@ -55,6 +55,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Run Main Bot
+        run: python app.py
         env:
           DB_LINK: ${{ secrets.DB_LINK }}
           DB_PASS: ${{ secrets.DB_PASS }}
@@ -66,7 +67,6 @@ jobs:
           PREFIX: ${{ secrets.PREFIX }}
           TESSDATA_PREFIX: ${{ secrets.TESSDATA_PREFIX }}
           TOKEN: ${{ secrets.TOKEN }}
-        run: python app.py
 
 
       - name: Run Tests
