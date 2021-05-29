@@ -1,7 +1,6 @@
 discord.py==1.7.2
 dnspython==2.1.0
 requests==2.25.1
-pytesseract==0.3.7
 tesserocr==2.5.1
 pymongo==3.11.4
 dateparser==1.0.0
