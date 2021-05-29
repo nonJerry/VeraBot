@@ -30,7 +30,9 @@ jobs:
 
       - name: Run Main Bot  
         run: |
-          echo "$HEROKU_LOGIN $HEROKU_PW" | heroku login -i
+          heroku login -i
+          echo "$HEROKU_LOGIN"
+          echo "$HEROKU_PW"
           heroku git:remote -a "$HEROKU_APP_NAME"
           git push heroku ${GITHUB_REF##*/}:master
           heroku ps:scale worker=1
