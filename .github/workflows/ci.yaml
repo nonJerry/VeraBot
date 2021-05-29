@@ -56,17 +56,6 @@ jobs:
 
       - name: Run Main Bot
         run: python app.py
-        env:
-          DB_LINK: ${{ secrets.DB_LINK }}
-          DB_PASS: ${{ secrets.DB_PASS }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DEV: ${{ secrets.DEV }}
-          DM_LOG: ${{ secrets.DM_LOG }}
-          EMBED_COLOR: ${{ secrets.EMBED_COLOR}}
-          OWNER_ID: ${{ secrets.OWNER_ID }}
-          PREFIX: ${{ secrets.PREFIX }}
-          TESSDATA_PREFIX: ${{ secrets.TESSDATA_PREFIX }}
-          TOKEN: ${{ secrets.TOKEN }}
 
 
       - name: Run Tests
