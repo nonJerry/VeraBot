@@ -174,14 +174,8 @@ async def on_raw_reaction_add(payload):
                 user = bot.get_user(payload.user_id)
                 await member_handler.process_reaction(channel, msg, user, reaction)
                     
-    except discord.errors.Forbidden:
-        print("Channel: {}".format(payload.channel_id))
-        print("Server: {}".format(payload.guild_id))
-    except discord.errors.NotFound:
-        print("Not found")
-        print("Channel: {}".format(payload.channel_id))
-        print("Server: {}".format(payload.guild_id))
-
+    except (discord.errors.Forbidden, discord.errors.NotFound):
+        return
 
 
 @bot.command(

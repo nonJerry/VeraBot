@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    name: Functionality-Tests
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: true
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Update pip
+        run: python -m pip install --upgrade pip wheel setuptools
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: echo "::set-output name=dir::$(pip cache dir)"
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: pip-${{ runner.os }}-3.9-${{ hashFiles('setup.py') }}
+          restore-keys: pip-${{ runner.os }}-3.9-
+
+      - name: Install tesseract
+        run: sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
+
+      - name: Install libtesseract and libleptonica
+        run: sudo apt-get install -y libtesseract-dev libleptonica-dev
+
+      - name: Install requirements
+        run: python -m pip install -r requirements.txt
+
+      - name: Run Main Bot
+        run: python app.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DB_LINK: ${{ secrets.DB_LINK }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DEV: ${{ secrets.DEV }}
+          DM_LOG: ${{ secrets.DM_LOG }}
+          EMBED_COLOR: ${{ secrets.EMBED_COLOR}}
+          OWNER_ID: ${{ secrets.OWNER_ID }}
+          PREFIX: ${{ secrets.PREFIX }}
+          TESSDATA_PREFIX: ${{ secrets.TESSDATA_PREFIX }}
+          TOKEN: ${{ secrets.TOKEN }}
+
+      - name: Run Tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_TARGET_ID: ${{ secrets.TEST_TARGET_ID }}
+          TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
+          CHANNEL_ID: ${{ secrets.TEST_SERVER1_COMMANDS_CHANNEL_ID}}
+        run: python tests/tests.py #"$TEST_TARGET_ID" "$TEST_TOKEN" -c "$CHANNEL_ID"
