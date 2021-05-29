@@ -165,7 +165,7 @@ class Settings(commands.Cog):
     async def set_picture(self, ctx, link: str):
         print("{}: {}".format(str(ctx.guild.id), link))
         from re import search
-        match = search(r"http[s]?://[a-zA-Z0-9_\.]+/[a-zA-Z0-9_/]+\.(png|jpeg|jpg)", link)
+        match = search(r"http[s]?://[a-zA-Z0-9\_\-\.]+/[a-zA-Z0-9\_\-/]+\.(png|jpeg|jpg)", link)
         if match:
             self.set_value_in_server_settings(ctx, "picture_link", link)
             await ctx.send("Image for expiration message set.")
