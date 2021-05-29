@@ -26,7 +26,9 @@ local = False
 # For local testing
 
 token = os.getenv("TOKEN")
-owner_id = int(os.getenv("OWNER_ID"))
+owner_id = os.getenv("OWNER_ID")
+print(owner_id)
+owner_id = int(owner_id)
 embed_color = int(os.getenv("EMBED_COLOR"), 16)
 db_user = os.getenv("DB_USER")
 db_pass = os.getenv("DB_PASS")
