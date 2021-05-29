@@ -34,10 +34,9 @@ jobs:
           HEROKU_LOGIN: ${{ secrets.HEROKU_LOGIN }}
           HEROKU_PW: ${{ secrets.HEROKU_PW }}
         run: |
-          heroku login -i
-          sleep 5
-          echo "$HEROKU_LOGIN"
-          echo "$HEROKU_PW"
+          { echo "$HEROKU_LOGIN";
+            echo "$HEROKU_PW";
+          } | heroku login -i
           heroku git:remote -a "$HEROKU_APP_NAME"
           git push heroku ${GITHUB_REF##*/}:master
           heroku ps:scale worker=1
