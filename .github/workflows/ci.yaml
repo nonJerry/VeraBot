@@ -56,7 +56,7 @@ jobs:
 
       - name: Run Main Bot
         env:
-          DB_LINK:
+          DB_LINK: ${{ secrets.DB_LINK }}
           DB_PASS: ${{ secrets.DB_PASS }}
           DB_USER: ${{ secrets.DB_USER }}
           DEV: ${{ secrets.DEV }}
