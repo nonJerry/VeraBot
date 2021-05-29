@@ -50,4 +50,4 @@ jobs:
         run: python tests/tests.py #"$TEST_TARGET_ID" "$TEST_TOKEN" -c "$CHANNEL_ID"
 
       - name: End Bot
-          run: heroku ps:scale worker=0
+        run: heroku ps:scale worker=0
