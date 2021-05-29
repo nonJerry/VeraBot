@@ -26,7 +26,7 @@ jobs:
           python-version: '3.9'
 
       - name: install heroku
-        run: sudo snap install --classic heroku
+        run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
 
       - name: Run Main Bot  
         run: heroku login
