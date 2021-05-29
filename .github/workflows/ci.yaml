@@ -35,8 +35,7 @@ jobs:
           HEROKU_PW: ${{ secrets.HEROKU_PW }}
         run: |
           heroku login -i
-          echo ""
-          echo ""
+          sleep 5
           echo "$HEROKU_LOGIN"
           echo "$HEROKU_PW"
           heroku git:remote -a "$HEROKU_APP_NAME"
