@@ -44,9 +44,8 @@ jobs:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
           heroku git:remote -a "$HEROKU_APP_NAME"
-          git fetch --all --unshallow
 
-      - name: Push and Run Main Bot  
+      - name: Push and Run Main Bot
         run: |
           git push heroku ${GITHUB_REF##*/}:master --force
           heroku ps:scale worker=1
