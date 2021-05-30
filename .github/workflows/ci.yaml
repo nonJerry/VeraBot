@@ -30,7 +30,7 @@ jobs:
 
       - name: Login Heroku
         run: |
-          `cat <<EOT >> ~/.netrc
+          `cat <<EOT >> .netrc
           machine api.heroku.com
               login $HEROKU_LOGIN
               password $HEROKU_API_TOKEN
