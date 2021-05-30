@@ -60,6 +60,5 @@ jobs:
 
 
       - name: End Bot
-        needs: Login Heroku
         if: always()
         run: heroku ps:scale worker=0
