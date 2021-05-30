@@ -57,8 +57,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TEST_TARGET_ID: ${{ secrets.TEST_TARGET_ID }}
           TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
-          CHANNEL_ID: ${{ secrets.TEST_SERVER1_COMMANDS_CHANNEL_ID}}
-        run: python tests/tests.py #"$TEST_TARGET_ID" "$TEST_TOKEN" -c "$CHANNEL_ID"
+          CHANNEL_ID: ${{ secrets.TEST_SERVER1_COMMANDS_CHANNEL_ID }}
+        run: python tests/server1_test.py "$TEST_TARGET_ID" "$TEST_TOKEN" -c "$CHANNEL_ID" --run all
 
       - name: End Bot
         if: always()
