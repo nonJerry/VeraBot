@@ -1,20 +1,20 @@
-import asyncio
-import os
-import sys
 from discord.ext import commands
 from distest import TestCollector
 from distest import run_dtest_bot
 from discord import Embed, Member, Status
 from distest import TestInterface
 import discord
+import os
+import sys
 
 # The tests themselves
 
-test_collector = TestCollector()
 log_channel_id = int(os.getenv("TEST_SERVER1_VERI_CHANNEL_ID"))
+test_collector = TestCollector()
 
 @test_collector()
 async def setup(interface):
+    print(interface.target.send)
     c = interface.channel
 
     await c.send("$setVTuber Lamy")
@@ -54,15 +54,27 @@ async def test_verify(interface):
     # client = interface.client
     # await client.get_user(517732773943836682).send("aaa")
     # target -> user !!!
-    await interface.target.send(content="$verify lamy", file=discord.File('tests/pictures/test1.png'))
-
-    msg = await interface.wait_for_message_in_channel("a", log_channel_id)
+    # interface.client._channel -> channel for commands
+    
+    msg = await send_and_get_verify(interface, "lamy", 'tests/pictures/test1.png')
+    
 
     patterns = {
         "title": str(interface.client.user.id),
         "description": "Main Proof",
     }
     await interface.assert_embed_regex(msg, patterns)
+
+async def send_and_get_verify(interface, vtuber, filepath):
+    client = interface.client
+
+    # _channel is the command channel
+    await client._channel.send(content="$verify {}".format(vtuber), file=discord.File(filepath))
+
+    def check(m):
+        return m.author == interface.target and m.channel == client.get_channel(log_channel_id)
+
+    return await client.wait_for('message', check=check)
 
 
 # run test bot
