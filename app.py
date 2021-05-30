@@ -185,13 +185,17 @@ async def on_raw_reaction_add(payload):
     except (discord.errors.Forbidden, discord.errors.NotFound):
         return
 
+def dm_or_test_only():
+    def predicate(ctx):
+        return isinstance(ctx.channel, discord.DMChannel) or stage == "TEST"
+    return commands.check(predicate)
 
 @bot.command(
     help="Can be called with just $verify but also with $verify <VTuber name>\n" +
     "Both versions require a screenshot sent with it.",
 	brief=" Tries to verify a screenshot for membership in the DMs"
 )
-@commands.dm_only()
+@dm_or_test_only()
 @commands.cooldown(2, 50, commands.BucketType.user)
 async def verify(ctx, *vtuber):
     """
@@ -215,9 +219,7 @@ async def verify(ctx, *vtuber):
 
 @verify.error
 async def verify_error(ctx, error):
-    if isinstance(error, commands.PrivateMessageOnly):
-        await ctx.send("This command only works in DMs!")
-    elif isinstance(error, commands.CommandOnCooldown):
+    if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"Try again in {error.retry_after:.0f}s.")
 
 
