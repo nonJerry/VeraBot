@@ -31,18 +31,19 @@ jobs:
           `cat >~/.netrc <<EOF
           machine api.heroku.com
               login $HEROKU_LOGIN
-              password $HEROKU_API_TOKEN
+              password $HEROKU_API_KEY
           machine git.heroku.com
               login $HEROKU_LOGIN
-              password $HEROKU_API_TOKEN
+              password $HEROKU_API_KEY
           EOF`
         env:
-          HEROKU_API_TOKEN: ${{ secrets.HEROKU_API_TOKEN }}
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_TOKEN }}
           HEROKU_LOGIN: ${{ secrets.HEROKU_LOGIN }}
 
       - name: Set Remote Repository 
         env:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_TOKEN }}
         run: |
           heroku git:remote -a "$HEROKU_APP_NAME"
 
@@ -50,6 +51,8 @@ jobs:
         run: |
           git push heroku ${GITHUB_REF##*/}:master
           heroku ps:scale worker=1
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_TOKEN }}
 
       - name: Run Tests
         env:
