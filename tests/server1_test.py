@@ -18,7 +18,7 @@ async def setup(interface):
 
     await c.send("$setVTuber Lamy")
     await c.send("$memberRole 815151130991656970")
-    log_channel = os.environ("TEST_SERVER1_VERI_CHANNEL_ID")
+    log_channel = os.getenv("TEST_SERVER1_VERI_CHANNEL_ID")
     await c.send("$logChannel {}".format(log_channel))
 
     await c.send("$auto False")
