@@ -26,6 +26,9 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Install distest
+        run: python -m pip install distest
+
       - name: Login Heroku
         shell: bash
         run: |
