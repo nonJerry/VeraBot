@@ -15,31 +15,30 @@ test_collector = TestCollector()
 @test_collector()
 async def setup(interface):
 
-    await interface.assert_reply_embed_equals("$setVTuber Lamy", "Set VTuber name to Lamy")
+    await interface.assert_reply_contains("$setVTuber Lamy", "Set VTuber name to Lamy")
 
-    await interface.assert_reply_embed_equals("$setVTuber Lamy", "This Vtuber is already mapped to a server!")
+    await interface.assert_reply_contains("$setVTuber Lamy", "This Vtuber is already mapped to a server!")
 
-    await interface.assert_reply_embed_equals("$memberRole 815151130991656970", "Member role id set to 815151130991656970")
+    await interface.assert_reply_contains("$memberRole 815151130991656970", "Member role id set to 815151130991656970")
 
-    await interface.assert_reply_embed_equals("$logChannel {}".format(log_channel_id), "Log Channel id set to {}".format(log_channel_id))
+    await interface.assert_reply_contains("$logChannel {}".format(log_channel_id), "Log Channel id set to {}".format(log_channel_id))
 
-    await interface.assert_reply_embed_equals("$auto False", "Flag for automatic role handling set to False")
+    await interface.assert_reply_contains("$auto False", "Flag for automatic role handling set to False")
 
-    await interface.assert_reply_embed_equals("$picture https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg", "Image for expiration message set.")
+    await interface.assert_reply_contains("$picture https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg", "Image for expiration message set.")
 
-    await interface.assert_reply_embed_equals("$setRequireProof False", "Flag for additional Proof set to False")
+    await interface.assert_reply_contains("$setRequireProof False", "Flag for additional Proof set to False")
 
-    await interface.assert_reply_embed_equals("$setTolerance 1", "Time that users will still have access to the channel after their membership expired set to 1 days.")
+    await interface.assert_reply_contains("$setTolerance 1", "Time that users will still have access to the channel after their membership expired set to 1 days.")
 
-    await interface.assert_reply_embed_equals("$setPriorNotice 1", "Users will be notified 1 days before their membership ends.")
+    await interface.assert_reply_contains("$setPriorNotice 1", "Users will be notified 1 days before their membership ends.")
 
-    await interface.assert_reply_embed_equals("$enableLogging True", "Flag for logging set to True")
+    await interface.assert_reply_contains("$enableLogging True", "Flag for logging set to True")
 
     embed = (
         Embed(
             title="Current Settings",
-            description="None",
-            color=0x1440de,
+            description="None"
         )
         .set_image(
             url="https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg"
@@ -53,7 +52,8 @@ async def setup(interface):
         .add_field(name='Prior Notice Duration', value="1", inline=True)
     )
 
-    await interface.assert_reply_embed_equals("$settings", embed)
+    await interface.send_message("$settings")
+    await interface.get_delayed_reply(5, interface.assert_embed_equals, embed, None)
 
 async def send_and_get_verify(interface, vtuber, filepath):
     client = interface.client
@@ -62,7 +62,7 @@ async def send_and_get_verify(interface, vtuber, filepath):
     await interface.channel.send(content="$verify {}".format(vtuber), file=discord.File(filepath))
 
     def check(m):
-        return m.author == interface.target and m.channel == interface.channel
+        return m.author == interface.target and m.channel == client.get_channel(log_channel_id) # verify channel
 
     return await client.wait_for('message', check=check)
 
@@ -85,7 +85,7 @@ async def test_verify(interface):
 
 @test_collector()
 async def revert_vtuber(interface):
-    await interface.assert_reply_embed_equals("$setVTuber aaaaaaaaaaaaaaaaa", "Set VTuber name to aaaaaaaaaaaaaaaaa")
+    await interface.assert_reply_contains("$setVTuber aaaaaaaaaaaaaaaaa", "Set VTuber name to aaaaaaaaaaaaaaaaa")
 
 
 # run test bot
