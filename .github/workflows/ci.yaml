@@ -58,7 +58,6 @@ jobs:
           CHANNEL_ID: ${{ secrets.TEST_SERVER1_COMMANDS_CHANNEL_ID}}
         run: python tests/tests.py #"$TEST_TARGET_ID" "$TEST_TOKEN" -c "$CHANNEL_ID"
 
-
       - name: End Bot
         if: always()
         run: heroku ps:scale worker=0
