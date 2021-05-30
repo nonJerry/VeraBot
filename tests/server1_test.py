@@ -11,6 +11,7 @@ import discord
 # The tests themselves
 
 test_collector = TestCollector()
+log_channel_id = int(os.getenv("TEST_SERVER1_VERI_CHANNEL_ID"))
 
 @test_collector()
 async def setup(interface):
@@ -18,8 +19,7 @@ async def setup(interface):
 
     await c.send("$setVTuber Lamy")
     await c.send("$memberRole 815151130991656970")
-    log_channel = os.getenv("TEST_SERVER1_VERI_CHANNEL_ID")
-    await c.send("$logChannel {}".format(log_channel))
+    await c.send("$logChannel {}".format(log_channel_id))
 
     await c.send("$auto False")
     await c.send("$picture https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg")
@@ -39,7 +39,7 @@ async def setup(interface):
         )
         .add_field(name='Prefixes', value="$", inline=True)
         .add_field(name='Member Role ID', value="815151130991656970", inline=True)
-        .add_field(name='Log Channel ID', value=str(log_channel), inline=True)
+        .add_field(name='Log Channel ID', value=str(log_channel_id), inline=True)
         .add_field(name='Auto Role Flag', value="False", inline=True)
         .add_field(name='Require Additional Proof', value="False", inline=True)
         .add_field(name='Tolerance Duration', value="1", inline=True)
@@ -55,6 +55,15 @@ async def test_verify(interface):
     # await client.get_user(517732773943836682).send("aaa")
     # target -> user !!!
     await interface.target.send(content="$verify lamy", file=discord.File('tests/pictures/test1.png'))
+
+    msg = await interface.wait_for_message_in_channel("a", log_channel_id)
+
+    patterns = {
+        "title": str(interface.client.user.id),
+        "description": "Main Proof",
+    }
+    await interface.assert_embed_regex(msg, patterns)
+
 
 # run test bot
 if __name__ == "__main__":
