@@ -54,6 +54,7 @@ jobs:
         run: |
           git push heroku ${GITHUB_REF##*/}:master --force
           heroku ps:scale worker=1
+          sleep 20
 
       - name: Run Tests
         env:
