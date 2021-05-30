@@ -31,8 +31,9 @@ class Utility:
     @staticmethod
     def date_from_txt(s) -> dtime:
         # needed because replace cannot be called on None
-        if search_dates(s):
-            return search_dates(s)[0][1].replace(tzinfo = timezone.utc)
+        dates = search_dates(s)
+        if dates:
+            return dates[0][1].replace(tzinfo = timezone.utc)
 
     @staticmethod
     def text_to_boolean(flag):
