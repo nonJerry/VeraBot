@@ -25,9 +25,6 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install heroku
-        run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-
       - name: Login Heroku
         shell: bash
         run: |
