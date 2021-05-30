@@ -43,16 +43,13 @@ jobs:
       - name: Set Remote Repository 
         env:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_TOKEN }}
         run: |
           heroku git:remote -a "$HEROKU_APP_NAME"
 
       - name: Push And Run Main Bot  
         run: |
-          git push heroku ${GITHUB_REF##*/}:master
+          git push heroku ${GITHUB_REF##*/}:master --force
           heroku ps:scale worker=1
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_TOKEN }}
 
       - name: Run Tests
         env:
