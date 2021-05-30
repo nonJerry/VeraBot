@@ -14,19 +14,26 @@ test_collector = TestCollector()
 
 @test_collector()
 async def setup(interface):
-    print(interface.target.send)
-    c = interface.channel
 
-    await c.send("$setVTuber Lamy")
-    await c.send("$memberRole 815151130991656970")
-    await c.send("$logChannel {}".format(log_channel_id))
+    await interface.assert_reply_embed_equals("$setVTuber Lamy", "Set VTuber name to Lamy")
 
-    await c.send("$auto False")
-    await c.send("$picture https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg")
-    await c.send("setRequireProof False")
-    await c.send("$setTolerance 1")
-    await c.send("$setPriorNotice 1")
-    await c.send("$enableLogging True")
+    await interface.assert_reply_embed_equals("$setVTuber Lamy", "This Vtuber is already mapped to a server!")
+
+    await interface.assert_reply_embed_equals("$memberRole 815151130991656970", "Member role id set to 815151130991656970")
+
+    await interface.assert_reply_embed_equals("$logChannel {}".format(log_channel_id), "Log Channel id set to {}".format(log_channel_id))
+
+    await interface.assert_reply_embed_equals("$auto False", "Flag for automatic role handling set to False")
+
+    await interface.assert_reply_embed_equals("$picture https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg", "Image for expiration message set.")
+
+    await interface.assert_reply_embed_equals("$setRequireProof False", "Flag for additional Proof set to False")
+
+    await interface.assert_reply_embed_equals("$setTolerance 1", "Time that users will still have access to the channel after their membership expired set to 1 days.")
+
+    await interface.assert_reply_embed_equals("$setPriorNotice 1", "Users will be notified 1 days before their membership ends.")
+
+    await interface.assert_reply_embed_equals("$enableLogging True", "Flag for logging set to True")
 
     embed = (
         Embed(
@@ -46,8 +53,19 @@ async def setup(interface):
         .add_field(name='Prior Notice Duration', value="1", inline=True)
     )
 
-    # This image is in WikiMedia Public Domain
     await interface.assert_reply_embed_equals("$settings", embed)
+
+async def send_and_get_verify(interface, vtuber, filepath):
+    client = interface.client
+
+    # _channel is the command channel
+    await interface.channel.send(content="$verify {}".format(vtuber), file=discord.File(filepath))
+
+    def check(m):
+        return m.author == interface.target and m.channel == interface.channel
+
+    return await client.wait_for('message', check=check)
+
 @test_collector()
 async def test_verify(interface):
     # NOTE: IMPORTANT WAY TO SEND DMS
@@ -65,16 +83,9 @@ async def test_verify(interface):
     }
     await interface.assert_embed_regex(msg, patterns)
 
-async def send_and_get_verify(interface, vtuber, filepath):
-    client = interface.client
-
-    # _channel is the command channel
-    await client._channel.send(content="$verify {}".format(vtuber), file=discord.File(filepath))
-
-    def check(m):
-        return m.author == interface.target and m.channel == client.get_channel(log_channel_id)
-
-    return await client.wait_for('message', check=check)
+@test_collector()
+async def revert_vtuber(interface):
+    await interface.assert_reply_embed_equals("$setVTuber aaaaaaaaaaaaaaaaa", "Set VTuber name to aaaaaaaaaaaaaaaaa")
 
 
 # run test bot
