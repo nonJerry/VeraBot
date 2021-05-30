@@ -25,20 +25,30 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: install heroku
+      - name: Install heroku
         run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+
+      - name: Login Heroku
+        run: |
+          `cat ≶~/.netrc <<EOF
+          machine api.heroku.com
+              login $HEROKU_LOGIN
+              password $HEROKU_API_TOKEN
+          machine git.heroku.com
+              login $HEROKU_LOGIN
+              password $HEROKU_API_TOKEN
+          EOF`
+        env:
+          HEROKU_API_TOKEN: ${{ secrets.HEROKU_API_TOKEN }}
+          HEROKU_LOGIN: ${{ secrets.HEROKU_LOGIN }}
 
       - name: Run Main Bot  
         env:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
-          HEROKU_LOGIN: ${{ secrets.HEROKU_LOGIN }}
-          HEROKU_PW: ${{ secrets.HEROKU_PW }}
         run: |
-          printf '$HEROKU_LOGIN\n$HEROKU_PW\n' | heroku login -i
           heroku git:remote -a "$HEROKU_APP_NAME"
           git push heroku ${GITHUB_REF##*/}:master
           heroku ps:scale worker=1
-
 
       - name: Run Tests
         env:
@@ -48,5 +58,7 @@ jobs:
           CHANNEL_ID: ${{ secrets.TEST_SERVER1_COMMANDS_CHANNEL_ID}}
         run: python tests/tests.py #"$TEST_TARGET_ID" "$TEST_TOKEN" -c "$CHANNEL_ID"
 
+
       - name: End Bot
+        if: always()
         run: heroku ps:scale worker=0
