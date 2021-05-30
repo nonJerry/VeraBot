@@ -317,7 +317,6 @@ class MembershipHandler:
     async def set_membership(self, res, member_id, date, manual=True, actor=None) -> bool:
         
         member_collection = self.db_cluster[str(res.guild.id)]['members']
-        # Check if id exists
         dates = date.split("/")
 
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
@@ -326,6 +325,7 @@ class MembershipHandler:
         new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
         db_date = new_date - relativedelta(months=1)
 
+        # Check if id exists
         target_membership = member_collection.find_one({"id": member_id})
         if not target_membership:
                 member_collection.insert_one({

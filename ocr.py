@@ -1,6 +1,4 @@
 #External
-from datetime import datetime
-from os import stat
 from PIL import Image, ImageEnhance, ImageOps
 import requests
 import pytesseract as Tess
