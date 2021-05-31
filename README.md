@@ -3,6 +3,7 @@
 [![Invite](https://img.shields.io/badge/Invite%20Link-%40VeraBot-brightgreen)](https://discord.com/api/oauth2/authorize?client_id=844020223913099285&permissions=268823616&scope=bot)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FnonJerry%2FVeraBot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FnonJerry%2FVeraBot?ref=badge_shield)
 [![CodeFactor](https://www.codefactor.io/repository/github/nonjerry/verabot/badge)](https://www.codefactor.io/repository/github/nonjerry/verabot)
+![Test Status Master](https://github.com/nonJerry/VeraBot/actions/workflows/testing.yaml/badge.svg?branch=master)
 <br>
 
 *The invite is not active anymore. If you want to invite this bot please contact me on Discord nonJerry#0001.*
