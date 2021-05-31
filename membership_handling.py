@@ -2,7 +2,7 @@
 import discord
 #Python
 import asyncio
-from datetime import datetime as dtime, tzinfo
+from datetime import datetime as dtime, date, time, tzinfo
 from datetime import timezone, timedelta
 from dateutil.relativedelta import relativedelta
 from collections import deque
@@ -345,7 +345,7 @@ class MembershipHandler:
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)
 
-        await target_member.send("Your have been granted access to the membership channel of {}.".format(Utility.get_vtuber(res.guild.id)))
+        await target_member.send("You have been granted access to the membership channel of {}.".format(Utility.get_vtuber(res.guild.id)))
 
         if manual:
             await res.channel.send("New membership date for {} set at {}!".format(target_member.mention, new_date.strftime(self.DATE_FORMAT)), reference=res, mention_author=False)
@@ -422,7 +422,9 @@ class MembershipHandler:
                 await lg_ch.send(m)
 
             # add wait time
-            overall_settings.update_one({"name": "member_check"}, {"$set": {"last_checked": now}})
+            dt = date.today()
+            today = dtime.combine(dt, time(12, 0, 0, tzinfo = timezone.utc))
+            overall_settings.update_one({"name": "member_check"}, {"$set": {"last_checked": today}})
         
     async def check_membership_routine(self):
         while not self.bot.is_closed():
@@ -434,12 +436,12 @@ class MembershipHandler:
                 # add utc to last checked (mongodb always naive)
                 last_checked = last_checked.replace(tzinfo = timezone.utc)
 
-            if not last_checked or (now - last_checked >= timedelta(hours = 12)):
+            if not last_checked or (now - last_checked >= timedelta(hours = 24)):
                 await self.delete_expired_memberships()
-                wait_time = 12 * 3600
+                wait_time = 24 * 3600
             else:
                 # else wait for the remaining time left
-                wait_time = 12 * 3600 - (now - last_checked).total_seconds()
+                wait_time = 24 * 3600 - (now - last_checked).total_seconds()
             await asyncio.sleep(wait_time)
 
     async def handle_verifies(self):
