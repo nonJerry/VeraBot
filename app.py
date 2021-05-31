@@ -20,7 +20,7 @@ import sys
 
 ### Setup data
 # Set variable to true for local testing
-local = True
+local = False
 
 
 # Customizable Settings
