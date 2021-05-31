@@ -33,7 +33,7 @@ class OCR:
 
     ### Tesseract text detection
     @classmethod
-    async def detect_image_text(cls, img_url, size_factor = 1.75):
+    async def detect_image_text(cls, img_url, size_factor = 1.6):
         # Uses Tesseract to detect text from url img 
         # return tuple of two possible text: normal and inverted
 
