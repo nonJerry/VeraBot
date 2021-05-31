@@ -16,6 +16,7 @@ from ocr import OCR
 from sending import Sending
 from pymongo import MongoClient
 import os
+import sys
 
 ### Setup data
 # Set variable to true for local testing
@@ -32,6 +33,7 @@ db_user = os.getenv("DB_USER")
 db_pass = os.getenv("DB_PASS")
 db_url = os.getenv("DB_LINK")
 dm_log = int(os.getenv("DM_LOG"))
+stage = os.getenv("STAGE")
 
 # Intents
 intents = discord.Intents.default()
@@ -56,6 +58,12 @@ async def determine_prefix(bot, message):
 
 # Set up bot
 bot = commands.Bot(command_prefix=determine_prefix, description='Bot to verify and manage Memberships.\nlogChannel, Vtuber name and memberRole need to be set!', intents=intents, case_insensitive=True, owner_id=owner_id)
+
+# listen to other bots while testing
+
+if stage == "TEST":
+    from distest.patches import patch_target
+    bot = patch_target(bot)
 
 
 # database settings
@@ -177,13 +185,17 @@ async def on_raw_reaction_add(payload):
     except (discord.errors.Forbidden, discord.errors.NotFound):
         return
 
+def dm_or_test_only():
+    def predicate(ctx):
+        return isinstance(ctx.channel, discord.DMChannel) or stage == "TEST"
+    return commands.check(predicate)
 
 @bot.command(
     help="Can be called with just $verify but also with $verify <VTuber name>\n" +
     "Both versions require a screenshot sent with it.",
 	brief=" Tries to verify a screenshot for membership in the DMs"
 )
-@commands.dm_only()
+@dm_or_test_only()
 @commands.cooldown(2, 50, commands.BucketType.user)
 async def verify(ctx, *vtuber):
     """
@@ -207,9 +219,7 @@ async def verify(ctx, *vtuber):
 
 @verify.error
 async def verify_error(ctx, error):
-    if isinstance(error, commands.PrivateMessageOnly):
-        await ctx.send("This command only works in DMs!")
-    elif isinstance(error, commands.CommandOnCooldown):
+    if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"Try again in {error.retry_after:.0f}s.")
 
 
@@ -219,11 +229,14 @@ async def check(ctx):
     Utility.create_supported_vtuber_embed()
     await ctx.send(db_cluster['settings']['general'].find_one()['supported_idols'])
 
+def owner_or_test(ctx):
+    return ctx.author.id == 846648298093936641 or ctx.author.id == owner_id
 
 @bot.command(hidden = True, name = "forceCheck")
-@commands.is_owner()
+@commands.check(owner_or_test)
 async def force_member_check(ctx):
     await member_handler.delete_expired_memberships(True)
+
 
 @bot.command(hidden = True, name = "broadcast")
 @commands.is_owner()
