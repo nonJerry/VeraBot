@@ -2,9 +2,9 @@
 import discord
 from dateparser.search import search_dates
 #Python
-import asyncio
 from datetime import datetime as dtime
 from datetime import timezone
+import logging
 
 
 class Utility:
@@ -31,6 +31,11 @@ class Utility:
     @staticmethod
     def date_from_txt(s) -> dtime:
         # needed because replace cannot be called on None
+        dates = search_dates(s)
+        # NOTE: Temporary as info to search for reason why variable didn't want to work
+        logging.info("Input string for date search: %s", s)
+        logging.info("Search dates from variable: %s", dates[0][1])
+        logging.info("Search dates from call: %s", search_dates(s)[0][1])
         if search_dates(s):
             return search_dates(s)[0][1].replace(tzinfo = timezone.utc)
 
@@ -41,29 +46,6 @@ class Utility:
         elif flag in [ 'False', 'false']:
             return False
         return " "
-            
-    @classmethod
-    async def confirm_action(cls, res, actor):
-
-        tick_emote = u"\u2705"
-        cross_emote = u"\U0001F6AB"
-        await res.add_reaction(tick_emote)
-        await res.add_reaction(cross_emote)
-
-        def check(reaction, user):
-                reacted_emote = str(reaction.emoji)
-                return reaction.message.id == res.id and user == actor and (reacted_emote == tick_emote or reacted_emote == cross_emote)
-        try:
-            reaction, user = await cls.bot.wait_for('reaction_add', timeout = 60.0, check=check)
-        except asyncio.TimeoutError:
-            # if overtime, send timeout message and return
-            return False
-
-        # if cancelled, send cancellation message and return
-        if str(reaction.emoji) == cross_emote:
-            return False
-
-        return True
 
     @classmethod
     def get_vtuber(cls, guild_id) -> str:
@@ -72,6 +54,7 @@ class Utility:
         if 'supported_idols' in result:
             return result['supported_idols'][0]['name'].title()
         else:
+            logging.warn("Not supported server on getVtuber!")
             return "not supported server"
 
     @classmethod

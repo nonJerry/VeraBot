@@ -1,6 +1,8 @@
 
 import discord
 from discord.ext import commands
+# Python
+import logging
 #Internal
 from utility import Utility
 
@@ -16,6 +18,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def show_settings(self, ctx):
+        logging.debug("%s called viewSettings.", ctx.author.id)
+
         title = "Current Settings"
         embed = discord.Embed(title = title, description = None)
         settings = self.db_cluster[str(ctx.guild.id)]["settings"]
@@ -54,7 +58,7 @@ class Settings(commands.Cog):
         embed.add_field(name='Prior Notice Duration', value=str(inform_duration), inline=True)
 
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
-        m += "For a full explanation of the settings please refer to:\n:"
+        m += "For a full explanation of the settings please refer to:\n"
         m += "<https://github.com/nonJerry/VeraBot/blob/master/settings.md>"
         await ctx.send(content=m, embed = embed)
 
@@ -67,6 +71,7 @@ class Settings(commands.Cog):
         settings = self.db_cluster[str(ctx.guild.id)]["settings"]
         settings.update_one({"kind": "prefixes"}, {'$push': {'values': prefix}})
         await ctx.send("Prefix " + prefix + " added")
+        logging.debug("%s added %s as prefix.", ctx.guild.id, prefix)
 
     @set_prefix.error
     async def prefix_error(self, ctx, error):
@@ -86,6 +91,7 @@ class Settings(commands.Cog):
             await ctx.send("Prefix not found")
         else:
             await ctx.send(prefix +" removed")
+        logging.debug("%s removed %s as prefix.", ctx.guild.id, prefix)
 
 
     @commands.command(name="showPrefix", aliases=["viewPrefix", "showPrefixes", "viewPrefixes"],
@@ -97,6 +103,7 @@ class Settings(commands.Cog):
         settings = self.db_cluster[str(ctx.guild.id)]["settings"]
 
         await ctx.send("Those prefixes are set: " + str(settings.find_one({"kind": "prefixes"})['values']))
+        logging.debug("%s viewed their prefixes.", ctx.guild.id)
 
 
     @commands.command(name="setVTuber",
@@ -116,7 +123,7 @@ class Settings(commands.Cog):
         else:
             settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": vtuber_name.lower(), "guild_id": ctx.guild.id}}})
         await ctx.send("Set VTuber name to " + vtuber_name)
-        print(str(ctx.guild.id) + "-> New Vtuber added: " + vtuber_name)
+        logging.info("%s (%s) -> New Vtuber added: %s", ctx.guild.name, ctx.guild.id, vtuber_name)
 
 
     @commands.command(name="memberRole", aliases=["setMemberRole"],
@@ -131,6 +138,7 @@ class Settings(commands.Cog):
             await ctx.send("Member role id set to " + str(role_id))
         else:
             await ctx.send("ID does not refer to a legit role")
+        logging.info("%s set %s as member role.", ctx.guild.id, role_id)
 
 
     @commands.command(name="logChannel", aliases=["setLogChannel"],
@@ -140,6 +148,7 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_log_channel(self, ctx, channel_id: int):
         self.set_value_in_server_settings(ctx, "log_channel", channel_id)
+        logging.info("%s set %s as log channel.", ctx.guild.id, channel_id)
 
         await ctx.send("Log Channel id set to " + str(channel_id))
 
@@ -163,7 +172,7 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def set_picture(self, ctx, link: str):
-        print("{}: {}".format(str(ctx.guild.id), link))
+        logging.info("{} set their picture: {}".format(str(ctx.guild.id), link))
         from re import search
         match = search(r"http[s]?://[a-zA-Z0-9\_\-\.]+/[a-zA-Z0-9\_\-/]+\.(png|jpeg|jpg)", link)
         if match:
@@ -185,6 +194,8 @@ class Settings(commands.Cog):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "automatic_role", flag)
+        logging.info("%s set auto to %s", ctx.guild.id, str(flag))
+
         await ctx.send("Flag for automatic role handling set to " + str(flag))
 
 
@@ -200,6 +211,8 @@ class Settings(commands.Cog):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "require_additional_proof", flag)
+        logging.info("%s set additional Proof to %s", ctx.guild.id, str(flag))
+
         await ctx.send("Flag for additional Proof set to " + str(flag))
 
 
@@ -213,6 +226,8 @@ class Settings(commands.Cog):
             await ctx.send("This value needs to be at least 0 days.")
             return
         self.set_value_in_server_settings(ctx, "tolerance_duration", time)
+        logging.info("%s set Tolerance to %s", ctx.guild.id, time)
+
         await ctx.send("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)))
 
 
@@ -226,6 +241,8 @@ class Settings(commands.Cog):
             await ctx.send("This value needs to be at least 0 days.")
             return
         self.set_value_in_server_settings(ctx, "inform_duration", time)
+        logging.info("%s set prior Notice to %s", ctx.guild.id, time)
+
         await ctx.send("Users will be notified " + str(time) + " days before their membership ends.")
 
     @commands.command(name="enableLogging",
@@ -239,6 +256,8 @@ class Settings(commands.Cog):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
         self.set_value_in_server_settings(ctx, "logging", flag)
+        logging.info("%s set logging to %s", ctx.guild.id, str(flag))
+
         await ctx.send("Flag for logging set to " + str(flag))
 
 
@@ -255,8 +274,10 @@ class Settings(commands.Cog):
     @set_logging.error
     async def general_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
+            logging.debug("%s used invalid ID for %s", ctx.author.id, ctx.command)
             await ctx.send("Please provide a valid id!")
         elif isinstance(error, commands.MissingRequiredArgument):
+            logging.debug("%s forgot argument for %s", ctx.author.id, ctx.command)
             await ctx.send("Please include the argument!")
 
     def check_role_integrity(self, ctx, role_id: int):
@@ -289,6 +310,8 @@ class Settings(commands.Cog):
                 # Create base configuration
                 json = { "kind": kind, "value" : value}
                 settings.insert_one(json)
+
+        logging.info("Added %s with default value %s", kind, str(value))
         await ctx.send("Added " + kind + " with default value " + str(value))
 
     @commands.command(hidden = True, name = "newMemberSetting")
@@ -309,6 +332,8 @@ class Settings(commands.Cog):
                 for member in server_db['members'].find():
                     # Create base configuration
                     server_db['members'].update_one({"id": member['id']}, {"$set": {kind: value}})
+
+        logging.info("Member: Added %s with default value %s", kind, str(value))            
         await ctx.send("Member: Added " + kind + " with default value " + str(value))
 
     @commands.command(hidden = True, name = "servers")
@@ -320,6 +345,7 @@ class Settings(commands.Cog):
             if not guild.id in [843294906440220693 ,623148148344225792, 815517423179530252]:
                 m += "{}: {} ({} user)\n".format(str(guild.id), guild.name, guild.member_count)
         embed = discord.Embed(title="Current Servers", description=m)
+
         await ctx.send(content=None, embed=embed)
 
     @commands.command(hidden=True, name="leaveGuild")
@@ -330,4 +356,5 @@ class Settings(commands.Cog):
             await ctx.send("Guild does not exist.")
             return
         await guild.leave()
+
         await ctx.send("Left guild {}.".format(str(guild_id)))
