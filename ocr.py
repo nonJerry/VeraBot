@@ -3,12 +3,13 @@ from PIL import Image, ImageEnhance, ImageOps
 import requests
 import pytesseract as Tess
 # Comment out this tesserocr import if changing stuff here when testing locally
-import tesserocr
+#import tesserocr
 #Python
 from functools import partial
 import asyncio
 #Internal
 from utility import Utility
+import gc
 
 class OCR:
     bot = None
@@ -73,4 +74,9 @@ class OCR:
 
         # get inverted text (run as coroutine to not block the event loop)
         inverted_text = await cls.bot.loop.run_in_executor(None, img_to_txt, inverted_img)
+
+        # free space
+        del img
+        del inverted_img
+        gc.collect()
         return (text, inverted_text)
