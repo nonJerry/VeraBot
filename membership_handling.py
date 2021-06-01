@@ -490,7 +490,7 @@ class MembershipHandler:
 
             date_msg = await bot.wait_for('message', check=check)
 
-            if date_msg.content != "CANCEL" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
+            if date_msg.content.lowercase() != "cancel" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
                 await msg.clear_reactions()
                 await msg.add_reaction(emoji='👍')
             else:
@@ -506,7 +506,7 @@ class MembershipHandler:
                     return m.author == user and m.channel == channel
 
                 text_msg = await bot.wait_for('message', check=check)
-                if text_msg.content != "CANCEL":
+                if text_msg.content.lowercase() != "cancel":
                     target_member = bot.get_user(target_member_id)
                     await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
                     await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
