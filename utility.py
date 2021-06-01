@@ -34,10 +34,8 @@ class Utility:
         dates = search_dates(s)
         # NOTE: Temporary as info to search for reason why variable didn't want to work
         logging.info("Input string for date search: %s", s)
-        logging.info("Search dates from variable: %s", dates[0][1])
-        logging.info("Search dates from call: %s", search_dates(s)[0][1])
-        if search_dates(s):
-            return search_dates(s)[0][1].replace(tzinfo = timezone.utc)
+        if dates:
+            return dates[0][1].replace(tzinfo = timezone.utc)
 
     @staticmethod
     def text_to_boolean(flag):
