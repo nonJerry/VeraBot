@@ -49,42 +49,39 @@ class OCR:
             img_to_txt = partial(tesserocr.image_to_text, path = tess_path)
 
         # Get image from url
-        img_response = requests.get(img_url, stream=True)
-        img_response.raw.decode_content = True
-        img = Image.open(img_response.raw)
-        img.load()
+        with requests.get(img_url, stream=True) as img_response:
+            img_response.raw.decode_content = True
 
 
-        img = img.crop((3, 0, img.size[0], img.size[1]))
-        resized = img.resize(
-            (int(img.size[0] * size_factor), int(img.size[1] * size_factor)), Image.ANTIALIAS
-        )
-        enhancer = ImageEnhance.Sharpness(resized)
-        factor = 3
-        img = enhancer.enhance(factor)
+            with Image.open(img_response.raw) as img:
+                img.load()
 
 
-        #remove alpha channel and invert image
-        if img.mode == "RGBA":
-            background = Image.new("RGB", img.size, (255, 255, 255))
-            background.paste(img, mask=img.split()[3] if len(img.split()) >= 4 else None) # 3 is the alpha channel
-            img = background
+                img = img.crop((3, 0, img.size[0], img.size[1]))
+                resized = img.resize(
+                    (int(img.size[0] * size_factor), int(img.size[1] * size_factor)), Image.ANTIALIAS
+                )
+                enhancer = ImageEnhance.Sharpness(resized)
+                factor = 3
+                img = enhancer.enhance(factor)
 
-        inverted_img = ImageOps.invert(img)
 
-        # get text (run as coroutine to not block the event loop)
-        text = await cls.bot.loop.run_in_executor(None, img_to_txt, img)
+                #remove alpha channel and invert image
+                if img.mode == "RGBA":
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[3] if len(img.split()) >= 4 else None) # 3 is the alpha channel
+                    img = background
 
-        # get inverted text (run as coroutine to not block the event loop)
-        inverted_text = await cls.bot.loop.run_in_executor(None, img_to_txt, inverted_img)
+                # get text (run as coroutine to not block the event loop)
+                text = await cls.bot.loop.run_in_executor(None, img_to_txt, img)
+                logging.debug("Recognized text on %s:\n%s", img_url, text)
 
-        logging.debug("Recognized text on %s:\n%s", img_url, text)
-        logging.debug("Recognized inverted text on %s:\n%s", img_url, inverted_text)
+                # use inverted image
+                with ImageOps.invert(img) as inverted_img:
 
-        # free space
-        img = None
-        inverted_img = None
-        del img
-        del inverted_img
+                    # get inverted text (run as coroutine to not block the event loop)
+                    inverted_text = await cls.bot.loop.run_in_executor(None, img_to_txt, inverted_img)
+                    logging.debug("Recognized inverted text on %s:\n%s", img_url, inverted_text)
+                    
         gc.collect()
         return (text, inverted_text)
