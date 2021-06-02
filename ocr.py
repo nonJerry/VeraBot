@@ -1,4 +1,5 @@
 #External
+import logging
 from PIL import Image, ImageEnhance, ImageOps
 import requests
 import pytesseract as Tess
@@ -7,6 +8,7 @@ import tesserocr
 #Python
 from functools import partial
 import asyncio
+import gc
 #Internal
 from utility import Utility
 
@@ -26,6 +28,7 @@ class OCR:
             text = text[80:]
             inverted_text = inverted_text[80:]
         except IndexError:
+                logging.info("Smaller text cut on %s.", img_url)
                 text = text[30:]
                 inverted_text = inverted_text[30:]
         img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
@@ -39,6 +42,7 @@ class OCR:
 
         # Set partial function for image_to_text
         if(cls.local):
+            logging.warn("Using local OCR!!!")
             img_to_txt = partial(Tess.image_to_string, timeout=44)
         else:
             tess_path = r"/app/.apt/usr/share/tesseract-ocr/4.00/tessdata"
@@ -73,4 +77,12 @@ class OCR:
 
         # get inverted text (run as coroutine to not block the event loop)
         inverted_text = await cls.bot.loop.run_in_executor(None, img_to_txt, inverted_img)
+
+        logging.debug("Recognized text on %s:\n%s", img_url, text)
+        logging.debug("Recognized inverted text on %s:\n%s", img_url, inverted_text)
+
+        # free space
+        del img
+        del inverted_img
+        gc.collect()
         return (text, inverted_text)

@@ -6,6 +6,7 @@ from datetime import datetime as dtime, date, time, tzinfo
 from datetime import timezone, timedelta
 from dateutil.relativedelta import relativedelta
 from collections import deque
+import logging
 #Internal
 from utility import Utility
 from ocr import OCR
@@ -28,8 +29,11 @@ class MembershipHandler:
         # Check if there is a valid attachment
         if not res.attachments:
             await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
+            logging.info("Verify without screenshot from %s.", res.author.id)
             return
         self.verify_deque.append([res, server_id])
+        logging.info("Proof from %s added to queue for server: %s", res.author.id, server_id)
+
         m = "Your proof is added to the queue now and will be processed later.\n"
         m += "You will get a message when your role is applied."
         await res.channel.send(m)
@@ -160,21 +164,23 @@ class MembershipHandler:
 
     async def verify_membership_with_server_detection(self, res):
 
-            server = None
-            try:
-                idol, server = await self.detect_idol_server(res.attachments[0].url)
-            except Exception:
-                pass
+        server = None
+        try:
+            idol, server = await self.detect_idol_server(res.attachments[0].url)
+        except Exception:
+            logging.info("Could not detect server for %s.", res.author.id)
 
-            if not server:
-                m = "I am sorry I could not detect a VTuber name on the image you sent earlier.\n"
-                m += "Please send a screenshot with the name of the VTuber on it.\n"
-                m+= "If this was the case, please use `$verify <VTuber name>` instead of the normal $verify.\n"
-                m += "You might need to wait as there is a cooldown on this command to avoid spam."
-                embed = Utility.create_supported_vtuber_embed()
-                await res.channel.send(content = m, embed = embed)
-                return
-            await self.verify_membership(res, server)
+        if not server:
+            m = "I am sorry I could not detect a VTuber name on the image you sent earlier.\n"
+            m += "Please send a screenshot with the name of the VTuber on it.\n"
+            m+= "If this was the case, please use `$verify <VTuber name>` instead of the normal $verify.\n"
+            m += "You might need to wait as there is a cooldown on this command to avoid spam."
+            embed = Utility.create_supported_vtuber_embed()
+            await res.channel.send(content = m, embed = embed)
+            return
+
+        logging.info("Detected server for %s: %s (%s)", res.author.id, idol, server)
+        await self.verify_membership(res, server)
 
 
 
@@ -196,9 +202,9 @@ class MembershipHandler:
             img_date = await OCR.detect_image_date(res.attachments[0].url)
 
         except asyncio.TimeoutError:
-            print("timeout error detecting image")
+            logging.info("Timout while detecting image for %s.", res.author.id)
         except Exception:
-            print("date detection fail!!")
+            logging.exception("Date detection failed for %s.", res.author.id)
 
         if img_date:
             return (img_date)
@@ -217,24 +223,20 @@ class MembershipHandler:
 
 
         if not new_membership_date:
-            print(str(server_id) + ": date detection failed")
             desc = "{}\n{}".format(str(res.author), "Date not detected")
             membership_date_text = "None"
         else:
-
             membership_date_text = new_membership_date.strftime(self.DATE_FORMAT)
             desc = "{}\n{}".format(str(res.author), membership_date_text)
 
             #substract month for db
             new_membership_date = new_membership_date  - relativedelta(months=1)
-
         
 
         #verification channel of the server
         member_veri_ch = self.bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
         
         FORGOTTEN_SETTINGS_TEXT = "Please contact the staff of your server, they forgot to set some settings"
-        
         if not member_veri_ch:
             res.channel.send(FORGOTTEN_SETTINGS_TEXT)
             return
@@ -250,12 +252,14 @@ class MembershipHandler:
             m = "This server requires you to send additional proof.\n"
             m += "Please send a screenshot as specified by them."
             await res.channel.send(m)
+            logging.info("Requiring additional proof from %s for server %s.", res.author.id, server_id)
 
             def check(m):
                 return len(m.attachments) > 0
             try:
                 proof_msg = await self.bot.wait_for('message', timeout=60, check=check)
             except asyncio.TimeoutError:
+                logging.info("%s took to long with the proof.", res.author.id)
                 await res.channel.send("I am sorry, you timed out. Please start the verify process again.")
                 return
 
@@ -273,10 +277,12 @@ class MembershipHandler:
         await message.add_reaction(emoji='✅')
         await message.add_reaction(emoji=u"\U0001F4C5") # calendar
         await message.add_reaction(emoji=u"\U0001F6AB") # no entry
+        logging.info("Sent embed with reactions to %s", server_id)
 
 
         # should not get the role yet
         if not new_membership_date:
+            logging.info("Date for %s on server %s was missing.", res.author.id, server_id)
             return
 
         # automatic role not allowed
@@ -296,22 +302,28 @@ class MembershipHandler:
                 "expiry_sent": False
             })
         # add role
+
         author = guild.get_member(res.author.id)
+        if author:
+            logging.info("Adding role automatically for %s on server %s", res.author.id, server_id)
 
-        role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
-        role = guild.get_role(role_id)
+            role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
+            role = guild.get_role(role_id)
 
-        if not role:
-            res.channel.send(FORGOTTEN_SETTINGS_TEXT)
-            return
-            
-        await author.add_roles(role)
+            if not role:
+                res.channel.send(FORGOTTEN_SETTINGS_TEXT)
+                return
+                
+            await author.add_roles(role)
 
-        # DM user that the verification process is complete
-        m = "Membership applied! You now have access to members-excusive content in the server."
-        m += "\nPlease note that our staff will double-confirm the verification photo and may revoke it on a case-by-case basis."
-        m += "\nIf you have encountered any issue with accessing the channels or have a separate enquiry, please contact a mod."
-        await res.channel.send(m)
+            # DM user that the verification process is complete
+            m = "Membership applied! You now have access to members-excusive content in the server."
+            m += "\nPlease note that our staff will double-confirm the verification photo and may revoke it on a case-by-case basis."
+            m += "\nIf you have encountered any issue with accessing the channels or have a separate enquiry, please contact a mod."
+            await res.channel.send(m)
+        else:
+            logging.info("%s is not part of server %s", res.author.id, server_id)
+            await res.channel.send("You are not part of this server!")
 
 
     async def set_membership(self, res, member_id, date, manual=True, actor=None) -> bool:
@@ -320,21 +332,25 @@ class MembershipHandler:
         dates = date.split("/")
 
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
-                await res.channel.send("Please provide a valid date (dd/mm/yyyy) or integer days (+/- integer).")
-                return False
+            logging.info("%s used a wrong date format to set the membership.", res.author.id)
+
+            await res.channel.send("Please provide a valid date (dd/mm/yyyy) or integer days (+/- integer).")
+            return False
         new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
         db_date = new_date - relativedelta(months=1)
 
         # Check if id exists
         target_membership = member_collection.find_one({"id": member_id})
         if not target_membership:
-                member_collection.insert_one({
-                    "id": member_id,
-                    "last_membership": db_date,
-                    "informed": False,
-                    "expiry_sent": False
-                })
+            logging.info("Creating new membership for %s on server %s with last membership: %s.", member_id, res.guild.id, db_date)
+            member_collection.insert_one({
+                "id": member_id,
+                "last_membership": db_date,
+                "informed": False,
+                "expiry_sent": False
+            })
         else:
+            logging.info("Updating membership for %s on server %s with last membership: %s.", member_id, res.guild.id, db_date)
             self.db_cluster[str(res.guild.id)]['members'].update_one({"id": member_id}, {"$set": {"last_membership": db_date, "informed": False, "expiry_sent": False}})
 
         server_db = self.db_cluster[str(res.guild.id)]
@@ -344,6 +360,7 @@ class MembershipHandler:
         role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)
+        logging.info("Added member role to user %s on server %s.", member_id, res.guild.id)
 
         await target_member.send("You have been granted access to the membership channel of {}.".format(Utility.get_vtuber(res.guild.id)))
 
@@ -365,10 +382,13 @@ class MembershipHandler:
         # Check if zoopass in database and delete
         target_membership = server_db['members'].find_one({"id": member_id})
         if not target_membership:
+            logging.info("Requested user does not have membership; by %s.", res.author.id)
             await res.channel.send(self.ID_NOT_FOUND_TEXT)
             return
         await res.channel.send("Found membership in database, deleting now!")
         server_db['members'].delete_one(target_membership)
+
+        logging.info("Deleted membership on %s: %s", res.guild.id, target_membership)
 
         # Remove zoopass role from user
         guild = res.guild
@@ -377,25 +397,28 @@ class MembershipHandler:
         role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
         role = guild.get_role(role_id)
 
-        await target_member.remove_roles(role)
+        if target_member:
+            await target_member.remove_roles(role)
+            logging.info("Removing role from %s on server %s.", target_membership, res.guild.id)
 
+            if manual:
+                await res.channel.send("Membership successfully deleted.")
 
-        if manual:
-            await res.channel.send("Membership successfully deleted.")
-
-        if dm_flag:
-            # If msg has extra lines, send dm to target user to notify the zoopass deletion
-            if text:
-                await target_member.send(" ".join(text))
-            else:
-                await target_member.send("Your membership for " + Utility.get_vtuber(res.guild.id) + " was deleted!")
+            if dm_flag:
+                # If msg has extra lines, send dm to target user to notify the zoopass deletion
+                if text:
+                    await target_member.send(" ".join(text))
+                else:
+                    await target_member.send("Your membership for " + Utility.get_vtuber(res.guild.id) + " was deleted!")
+        else:
+            res.channel.send("User is not on this server!")
+            logging.info("%s not on server %s.", target_membership, res.guild.id)
 
     async def delete_expired_memberships(self, forced=False):
         
         overall_settings = self.db_cluster["settings"]['general']
 
         # get data of last checked timestamp
-        now = dtime.now(tz = timezone.utc)
         last_checked = overall_settings.find_one({"name": "member_check"}).get("last_checked", None)
 
         #get all active servers
@@ -403,11 +426,13 @@ class MembershipHandler:
 
         #execute for every server
         for server in serverlist:
+            logging.info("Checking Memberships for %s.", server['guild_id'])
+
             server_db = self.db_cluster[str(server['guild_id'])]
             lg_ch = self.bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
-            logging = server_db['settings'].find_one({'kind': "logging"})['value']
+            logging_enabled = server_db['settings'].find_one({'kind': "logging"})['value']
 
-            if logging:
+            if logging_enabled:
                 if not forced:
                     await lg_ch.send("Performing membership check, last check was {}".format(last_checked))
                 else:
@@ -421,10 +446,11 @@ class MembershipHandler:
             if m:
                 await lg_ch.send(m)
 
-            # add wait time
-            dt = date.today()
-            today = dtime.combine(dt, time(12, 0, 0, tzinfo = timezone.utc))
-            overall_settings.update_one({"name": "member_check"}, {"$set": {"last_checked": today}})
+        # add wait time
+        dt = date.today()
+        today = dtime.combine(dt, time(12, 0, 0, tzinfo = timezone.utc))
+        overall_settings.update_one({"name": "member_check"}, {"$set": {"last_checked": today}})
+        logging.info("Set last membership check to %s.", today)
         
     async def check_membership_routine(self):
         while not self.bot.is_closed():
@@ -437,11 +463,11 @@ class MembershipHandler:
                 last_checked = last_checked.replace(tzinfo = timezone.utc)
 
             if not last_checked or (now - last_checked >= timedelta(hours = 24)):
+                logging.info("Checking memberships!")
                 await self.delete_expired_memberships()
-                wait_time = 24 * 3600
-            else:
-                # else wait for the remaining time left
-                wait_time = 24 * 3600 - (now - last_checked).total_seconds()
+
+            wait_time = 24 * 3600 - (now - last_checked).total_seconds()
+            logging.info("Waiting for %s seconds to next membership check.", wait_time)
             await asyncio.sleep(wait_time)
 
     async def handle_verifies(self):
@@ -458,20 +484,22 @@ class MembershipHandler:
 
                 await asyncio.sleep(10) # check all 10 seconds
             except Exception:
-                print("catched error in deque")
+                logging.exception("Catched error in deque")
 
     async def process_reaction(self, channel, msg, user, reaction):
         emoji = reaction.emoji
         embed = msg.embeds[0]
         automatic_role = self.db_cluster[str(msg.guild.id)]["settings"].find_one({"kind": "automatic_role"})["value"]
         bot = self.bot
-        
 
+        
         # always only the id
         target_member_id = int(embed.title)
 
         # correct date
         if emoji == '✅':
+            logging.info("Recognized date correct in %s for user %s.", channel.guild.id, target_member_id)
+            
             if not automatic_role:
                 membership_date = embed.fields[0].value
 
@@ -482,6 +510,8 @@ class MembershipHandler:
                 await msg.add_reaction(emoji='👌')
         # wrong date
         elif emoji == u"\U0001F4C5":
+            logging.info("Wrong date recognized in %s for user %s.", channel.guild.id, target_member_id)
+
             m = "Please write the correct date from the screenshot in the format dd/mm/yyyy.\n"
             m += "Type CANCEL to stop the process."
             await channel.send(m, reference=msg, mention_author=False)
@@ -490,34 +520,38 @@ class MembershipHandler:
 
             date_msg = await bot.wait_for('message', check=check)
 
-            if date_msg.content != "CANCEL" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
+            if date_msg.content.lower() != "cancel" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
                 await msg.clear_reactions()
                 await msg.add_reaction(emoji='👍')
             else:
+                logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
                 await reaction.remove(user)
                 await channel.send("Stopped the process and removed reaction.")
 
         # deny option - fake / missing date
         elif emoji == u"\U0001F6AB":
-                m = "Please write a message that will be sent to the User."
-                m += "Type CANCEL to stop the process."
-                await channel.send(m, reference=msg, mention_author=False)
-                def check(m):
-                    return m.author == user and m.channel == channel
+            logging.info("Fake or without date in %s for user %s.", channel.guild.id, target_member_id)
 
-                text_msg = await bot.wait_for('message', check=check)
-                if text_msg.content != "CANCEL":
-                    target_member = bot.get_user(target_member_id)
-                    await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
-                    await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
+            m = "Please write a message that will be sent to the User."
+            m += "Type CANCEL to stop the process."
+            await channel.send(m, reference=msg, mention_author=False)
+            def check(m):
+                return m.author == user and m.channel == channel
 
-                    if automatic_role:
-                        await self.del_membership(msg, target_member_id, None, False, False)
-                    # set embed
-                    embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
-                    await msg.edit(content = msg.content, embed = embed)
-                    await msg.clear_reactions()
-                    await msg.add_reaction(emoji='👎')
-                else:
-                    await reaction.remove(user)
-                    await channel.send("Stopped the process and removed reaction.")
+            text_msg = await bot.wait_for('message', check=check)
+            if text_msg.content.lower() != "cancel":
+                target_member = bot.get_user(target_member_id)
+                await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
+                await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
+
+                if automatic_role:
+                    await self.del_membership(msg, target_member_id, None, False, False)
+                # set embed
+                embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
+                await msg.edit(content = msg.content, embed = embed)
+                await msg.clear_reactions()
+                await msg.add_reaction(emoji='👎')
+            else:
+                logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
+                await reaction.remove(user)
+                await channel.send("Stopped the process and removed reaction.")
