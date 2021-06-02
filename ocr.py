@@ -4,7 +4,7 @@ from PIL import Image, ImageEnhance, ImageOps
 import requests
 import pytesseract as Tess
 # Comment out this tesserocr import if changing stuff here when testing locally
-#import tesserocr
+import tesserocr
 #Python
 from functools import partial
 import asyncio
