@@ -7,6 +7,7 @@ from datetime import timezone, timedelta
 from dateutil.relativedelta import relativedelta
 from collections import deque
 import logging
+import gc
 #Internal
 from utility import Utility
 from ocr import OCR
@@ -481,7 +482,8 @@ class MembershipHandler:
                         await self.verify_membership(verify[0], verify[1])
                     else:
                         await self.verify_membership_with_server_detection(verify[0])
-
+                    del verify
+                    gc.collect()
                 await asyncio.sleep(10) # check all 10 seconds
             except Exception:
                 logging.exception("Catched error in deque")

@@ -82,6 +82,8 @@ class OCR:
         logging.debug("Recognized inverted text on %s:\n%s", img_url, inverted_text)
 
         # free space
+        img = None
+        inverted_img = None
         del img
         del inverted_img
         gc.collect()
