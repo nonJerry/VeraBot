@@ -1,8 +1,6 @@
-from discord.ext import commands
 from distest import TestCollector
 from distest import run_dtest_bot
-from discord import Embed, Member, Status
-from distest import TestInterface
+from discord import Embed
 import discord
 import os
 import sys
@@ -75,13 +73,15 @@ async def test_verify(interface):
     # interface.client._channel -> channel for commands
     
     msg = await send_and_get_verify(interface, "lamy", 'tests/pictures/test1.png')
-    
 
     patterns = {
         "title": str(interface.client.user.id),
-        "description": "Main Proof",
+        "description": "Main Proof"
     }
     await interface.assert_embed_regex(msg, patterns)
+
+    #  make sure the date is correct
+    await interface.assert_message_contains(msg, "06/06/2021")
 
 @test_collector()
 async def revert_vtuber(interface):

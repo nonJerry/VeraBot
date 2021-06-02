@@ -1,5 +1,7 @@
 #External
 import discord
+# Python
+import logging
 #Internal
 from utility import Utility
 
@@ -19,7 +21,7 @@ class Sending:
 
         # if member_id is not integer or a string that represents integer, return error message
         if not Utility.is_integer(member_id):
-            return "Please provide a valid user id!"
+            return
         target_user = cls.bot.get_user(int(member_id))
 
         if embed:
@@ -31,3 +33,4 @@ class Sending:
             await target_user.send(content = None, embed = embed)
         else:
             await target_user.send(message)
+        logging.debug("Sent DM to %s", member_id)

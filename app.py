@@ -2,11 +2,13 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands.errors import CommandNotFound
+from pymongo import MongoClient
 #Python
 import asyncio
 from datetime import datetime as dtime
 from datetime import timezone, timedelta
-import re
+import os
+import logging
 #Internal
 from membership_handling import MembershipHandler
 from settings import Settings
@@ -14,9 +16,11 @@ from membership import Membership
 from utility import Utility
 from ocr import OCR
 from sending import Sending
-from pymongo import MongoClient
-import os
-import sys
+
+
+
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+logging.info("Started")
 
 ### Setup data
 # Set variable to true for local testing
@@ -64,6 +68,7 @@ bot = commands.Bot(command_prefix=determine_prefix, description='Bot to verify a
 if stage == "TEST":
     from distest.patches import patch_target
     bot = patch_target(bot)
+    logging.info("Listining to bots too. Only for testing purposes!!!")
 
 
 # database settings
@@ -79,6 +84,7 @@ Sending.setup(bot, embed_color)
 #add cogs
 bot.add_cog(Settings(bot, db_cluster))
 bot.add_cog(Membership(bot, member_handler))
+logging.info("Cogs added")
 
 
 @bot.event
@@ -87,6 +93,7 @@ async def on_command_error(ctx, error):
         # Ignore this error
         pass
     elif isinstance(error, commands.MissingPermissions):
+        logging.info("%s tried to invoke %s without the needed permissions!", ctx.author.id, ctx.command)
         await ctx.send("You are not allowed to use this command!")
     elif isinstance(error, commands.NoPrivateMessage):
         await ctx.send("This command should not be used in the DMs")
@@ -109,7 +116,7 @@ async def on_guild_join(guild):
     """
     Creates the database and settings collection when the bot joins a server.
     """
-    print("Joined new Guild: " + str(guild.id))
+    logging.info("Joined new Guild: %s (%s)", guild.name , guild.id)
 
     dbnames = db_cluster.list_database_names()
     
@@ -148,13 +155,15 @@ async def on_guild_join(guild):
         json = {"kind": "logging", "value" : True}
         settings.insert_one(json)
 
+        logging.info("Created database for %s". str(guild.id))
+
 
 @bot.event
 async def on_guild_remove(guild):
     """
     Removes the guild from the supported idols so that memberships are not checked.
     """
-    print("Left Guild: " + str(guild.id))
+    logging.info("Left Guild: %s (%s)", guild.name , guild.id)
     settings = db_cluster["settings"]["general"]
     settings.update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild.id}}})
 
@@ -183,6 +192,7 @@ async def on_raw_reaction_add(payload):
                 await member_handler.process_reaction(channel, msg, user, reaction)
                     
     except (discord.errors.Forbidden, discord.errors.NotFound):
+        logging.info("%s: problem with reaction in %s", payload.guild_id, channel.id)
         return
 
 def dm_or_test_only():
@@ -220,12 +230,14 @@ async def verify(ctx, *vtuber):
 @verify.error
 async def verify_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
+        logging.info("%s tried to use verify too often.", ctx.author.id)
         await ctx.send(f"Try again in {error.retry_after:.0f}s.")
 
 
 @bot.command(hidden = True, name = "checkIdols")
 @commands.is_owner()
 async def check(ctx):
+    logging.info("Checked supported VTuber!")
     Utility.create_supported_vtuber_embed()
     await ctx.send(db_cluster['settings']['general'].find_one()['supported_idols'])
 
@@ -235,6 +247,7 @@ def owner_or_test(ctx):
 @bot.command(hidden = True, name = "forceCheck")
 @commands.check(owner_or_test)
 async def force_member_check(ctx):
+    logging.info("Running forced check!")
     await member_handler.delete_expired_memberships(True)
 
 
@@ -252,19 +265,21 @@ async def broadcast(ctx, title, text):
         lg_ch = bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
 
         await lg_ch.send(content = None, embed = embed)
+    logging.info("Sent broadcast to all servers.")
 
     
 @bot.command(name = "dmMe",
     help="Sends a DM containg \"hi\" to the user using the command.",
 	brief="Sends a DM to the user")
 async def send_dm(ctx):
+    logging.info("%s wanted a DM!", ctx.author.id)
     await ctx.author.send("Hi")
 
 @send_dm.error
 async def dm_error(ctx, error):
     if isinstance(error, discord.errors.Forbidden):
+        logging.info("%s has DMs not allowed.", ctx.author.id)
         await ctx.send("You need to allow DMs!")
-        error = None
 
 @bot.command(name="proof",
     help = "Allows to send additional proof. Requires the name of the vtuber. Only available in DMs",
@@ -286,6 +301,8 @@ async def send_proof(ctx, vtuber: str):
 
     #send confirmation
     await ctx.send("Your additional proof was delivered safely!")
+
+    logging.info("%s used the proof method for %s", ctx.author.id, vtuber)
 
 @send_proof.error
 async def proof_error(ctx, error):
@@ -312,7 +329,7 @@ async def jst_clock():
             await bot.change_presence(activity=discord.Game(name=timestr))
             await asyncio.sleep(60)
         except ConnectionResetError:
-            print("Could not update JST Clock!")
+            logging.warn("Could not update JST Clock!")
 
 
 # List Coroutines to be executed
