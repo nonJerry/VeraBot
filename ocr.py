@@ -31,7 +31,7 @@ class OCR:
                 logging.info("Smaller text cut on %s.", img_url)
                 text = text[30:]
                 inverted_text = inverted_text[30:]
-        img_date = Utility.date_from_txt(text) or Utility.date_from_txt(inverted_text)
+        img_date = Utility.date_from_txt(inverted_text) or Utility.date_from_txt(text)
         return img_date
 
     ### Tesseract text detection
