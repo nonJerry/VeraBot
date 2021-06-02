@@ -204,7 +204,7 @@ class MembershipHandler:
         except asyncio.TimeoutError:
             logging.info("Timout while detecting image for %s.", res.author.id)
         except Exception:
-            logging.info("Date detection failed for %s.", res.author.id)
+            logging.exception("Date detection failed for %s.", res.author.id)
 
         if img_date:
             return (img_date)
