@@ -4,6 +4,7 @@ from dateparser.search import search_dates
 #Python
 from datetime import datetime as dtime
 from datetime import timezone
+from dateutil.relativedelta import relativedelta
 import logging
 
 
@@ -31,8 +32,15 @@ class Utility:
     @staticmethod
     def date_from_txt(s) -> dtime:
         # needed because replace cannot be called on None
-        dates = search_dates(s)
-        # NOTE: Temporary as info to search for reason why variable didn't want to work
+        usual_date = dtime.now() + relativedelta(months=1)
+        date_index = s.find("billing date")
+        if date_index != -1:
+            s = s[date_index:] # starting at date text
+        billed_index = s.find("Billed with")
+        if billed_index != -1:
+            s = s[:billed_index] # ending at billing with text
+
+        dates = search_dates(s, settings={'RELATIVE_BASE': usual_date})
         logging.info("Input string for date search: %s", s)
         if dates:
             return dates[0][1].replace(tzinfo = timezone.utc)
