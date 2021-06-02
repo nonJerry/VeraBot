@@ -33,17 +33,37 @@ class Utility:
     def date_from_txt(s) -> dtime:
         # needed because replace cannot be called on None
         usual_date = dtime.now() + relativedelta(months=1)
-        date_index = s.find("billing date")
-        if date_index != -1:
-            s = s[date_index:] # starting at date text
-        billed_index = s.find("Billed with")
-        if billed_index != -1:
-            s = s[:billed_index] # ending at billing with text
-
-        dates = search_dates(s, settings={'RELATIVE_BASE': usual_date})
+        s = Utility.cut_to_date(s)
         logging.info("Input string for date search: %s", s)
+
+        # use date in 1 month from now as reference
+        dates = search_dates(s, settings={'RELATIVE_BASE': usual_date})
         if dates:
             return dates[0][1].replace(tzinfo = timezone.utc)
+
+    @staticmethod
+    def cut_to_date(s) -> str:
+        # on membership page in several languages
+        BILLING_DATE = "billing date"
+        BILLED_WITH = "billed with"
+        searches = {
+            "l1": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with'},
+            "l2": {BILLING_DATE: 'data de', BILLED_WITH: 'Faturado com'},
+            "l3": {BILLING_DATE: 'Abrechnungsdatum', BILLED_WITH: 'Abgerechnet tiber'}, # german: ocr cannot parse "ueber"
+            "l4": {BILLING_DATE: 'penagihan berikutnya', BILLED_WITH: 'Ditagih dengan'},
+            "l5": {BILLING_DATE: 'fecha de', BILLED_WITH: 'Facturado con'},
+            "l6": {BILLING_DATE: 'petsa ng pagsingil', BILLED_WITH: 'Sinisingil sa'},
+            "l7": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq'},
+            }
+        # go through all listed languages
+        for language in searches.values():
+            date_index = s.find(language[BILLING_DATE])
+            if date_index != -1:
+                s = s[date_index:] # starting at date text
+                billed_index = s.find(language[BILLED_WITH])
+                if billed_index != -1:
+                    s = s[:billed_index] # ending at billing with text
+                return s
 
     @staticmethod
     def text_to_boolean(flag):
