@@ -472,7 +472,6 @@ class MembershipHandler:
             await asyncio.sleep(wait_time)
 
     async def handle_verifies(self):
-        await self.bot.wait_until_ready()
         # check if new tweet found
         while not self.bot.is_closed():
             try:
@@ -483,7 +482,7 @@ class MembershipHandler:
                     else:
                         await self.verify_membership_with_server_detection(verify[0])
                     del verify
-                    gc.collect()
+                gc.collect()
                 await asyncio.sleep(10) # check all 10 seconds
             except Exception:
                 logging.exception("Catched error in deque")

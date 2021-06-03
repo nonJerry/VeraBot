@@ -213,7 +213,7 @@ async def verify(ctx, *vtuber):
     """
     # log content to dm log channel for record
     dm_lg_ch = bot.get_channel(dm_log)
-    await dm_lg_ch.send("{}\n{}".format(str(ctx.author),ctx.message.content))
+    await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
     for attachment in ctx.message.attachments:
         await dm_lg_ch.send(attachment.url)
 
@@ -290,7 +290,7 @@ async def send_proof(ctx, vtuber: str):
         await ctx.send("Please include a screenshot of the proof!")
         return
     server_id = map_vtuber_to_server(vtuber)
-    member_veri_ch =bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+    member_veri_ch = bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
 
     # Send attachment and message to membership verification channel
     desc = "{}\n{}".format(str(ctx.author), "Additional proof")
