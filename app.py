@@ -174,22 +174,22 @@ async def on_raw_reaction_add(payload):
         return
     channel = bot.get_channel(payload.channel_id)
     try:
-        with await channel.fetch_message(payload.message_id) as msg:
-            reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
+        msg = await channel.fetch_message(payload.message_id)
+        reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
 
-            # only the first react by somebody else than the bot should be processed
-            if reaction:
-                if reaction.count != 2:
-                    return
-                msg = reaction.message
+        # only the first react by somebody else than the bot should be processed
+        if reaction:
+            if reaction.count != 2:
+                return
+            msg = reaction.message
 
-                # this handling is not for DMs
-                # Only process reactions that also were also made by the bot
-                if not reaction.me:
-                    return
-                if msg.embeds:
-                    user = bot.get_user(payload.user_id)
-                    await member_handler.process_reaction(channel, msg, user, reaction)
+            # this handling is not for DMs
+            # Only process reactions that also were also made by the bot
+            if not reaction.me:
+                return
+            if msg.embeds:
+                user = bot.get_user(payload.user_id)
+                await member_handler.process_reaction(channel, msg, user, reaction)
                     
     except (discord.errors.Forbidden, discord.errors.NotFound):
         logging.info("%s: problem with reaction in %s", payload.guild_id, channel.id)
