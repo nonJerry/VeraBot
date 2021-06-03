@@ -212,21 +212,23 @@ async def verify(ctx, *vtuber):
     Command in the DMs that tries to verify a screenshot for membership.
     """
     # log content to dm log channel for record
+    print("Before with")
     with bot.get_channel(dm_log) as dm_lg_ch:
-        await dm_lg_ch.send("{}\n{}".format(str(ctx.author),ctx.message.content))
+        await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
         for attachment in ctx.message.attachments:
             await dm_lg_ch.send(attachment.url)
+    print("After with")
 
-        if vtuber:
-            server = map_vtuber_to_server(vtuber[0])
-            if server:
-                print("{} as server".format(server))
-                await member_handler.add_to_queue(ctx.message, server)
-            else:
-                embed = Utility.create_supported_vtuber_embed()
-                await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
+    if vtuber:
+        server = map_vtuber_to_server(vtuber[0])
+        if server:
+            print("{} as server".format(server))
+            await member_handler.add_to_queue(ctx.message, server)
         else:
-            await member_handler.add_to_queue(ctx.message)
+            embed = Utility.create_supported_vtuber_embed()
+            await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
+    else:
+        await member_handler.add_to_queue(ctx.message)
 
 @verify.error
 async def verify_error(ctx, error):
