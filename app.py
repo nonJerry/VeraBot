@@ -220,6 +220,7 @@ async def verify(ctx, *vtuber):
         if vtuber:
             server = map_vtuber_to_server(vtuber[0])
             if server:
+                print("{} as server".format(server))
                 await member_handler.add_to_queue(ctx.message, server)
             else:
                 embed = Utility.create_supported_vtuber_embed()
