@@ -28,7 +28,6 @@ class MembershipHandler:
     async def add_to_queue(self, res, server_id=None):
         
         # Check if there is a valid attachment
-        print("Begin of add method")
         if not res.attachments:
             await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
             logging.info("Verify without screenshot from %s.", res.author.id)

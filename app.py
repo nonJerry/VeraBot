@@ -212,8 +212,7 @@ async def verify(ctx, *vtuber):
     Command in the DMs that tries to verify a screenshot for membership.
     """
     # log content to dm log channel for record
-    print("Before with")
-    dm_lg_ch = bot.get_channel(dm_log):
+    dm_lg_ch = bot.get_channel(dm_log)
     await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
     for attachment in ctx.message.attachments:
         await dm_lg_ch.send(attachment.url)
@@ -221,7 +220,6 @@ async def verify(ctx, *vtuber):
     if vtuber:
         server = map_vtuber_to_server(vtuber[0])
         if server:
-            print("{} as server".format(server))
             await member_handler.add_to_queue(ctx.message, server)
         else:
             embed = Utility.create_supported_vtuber_embed()
