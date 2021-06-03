@@ -172,28 +172,28 @@ async def on_raw_reaction_add(payload):
     # get reaction from payload
     if not payload.guild_id:
         return
-    with bot.get_channel(payload.channel_id) as channel:
-        try:
-            with await channel.fetch_message(payload.message_id) as msg:
-                reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
+    channel = bot.get_channel(payload.channel_id)
+    try:
+        with await channel.fetch_message(payload.message_id) as msg:
+            reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
 
-                # only the first react by somebody else than the bot should be processed
-                if reaction:
-                    if reaction.count != 2:
-                        return
-                    msg = reaction.message
+            # only the first react by somebody else than the bot should be processed
+            if reaction:
+                if reaction.count != 2:
+                    return
+                msg = reaction.message
 
-                    # this handling is not for DMs
-                    # Only process reactions that also were also made by the bot
-                    if not reaction.me:
-                        return
-                    if msg.embeds:
-                        user = bot.get_user(payload.user_id)
-                        await member_handler.process_reaction(channel, msg, user, reaction)
-                        
-        except (discord.errors.Forbidden, discord.errors.NotFound):
-            logging.info("%s: problem with reaction in %s", payload.guild_id, channel.id)
-            return
+                # this handling is not for DMs
+                # Only process reactions that also were also made by the bot
+                if not reaction.me:
+                    return
+                if msg.embeds:
+                    user = bot.get_user(payload.user_id)
+                    await member_handler.process_reaction(channel, msg, user, reaction)
+                    
+    except (discord.errors.Forbidden, discord.errors.NotFound):
+        logging.info("%s: problem with reaction in %s", payload.guild_id, channel.id)
+        return
 
 def dm_or_test_only():
     def predicate(ctx):
@@ -213,11 +213,10 @@ async def verify(ctx, *vtuber):
     """
     # log content to dm log channel for record
     print("Before with")
-    with bot.get_channel(dm_log) as dm_lg_ch:
-        await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
-        for attachment in ctx.message.attachments:
-            await dm_lg_ch.send(attachment.url)
-    print("After with")
+    dm_lg_ch = bot.get_channel(dm_log):
+    await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
+    for attachment in ctx.message.attachments:
+        await dm_lg_ch.send(attachment.url)
 
     if vtuber:
         server = map_vtuber_to_server(vtuber[0])
