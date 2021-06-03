@@ -62,7 +62,7 @@ async def send_and_get_verify(interface, vtuber, filepath):
     def check(m):
         return m.author == interface.target and m.channel == client.get_channel(log_channel_id) # verify channel
 
-    return await client.wait_for('message', check=check)
+    return await client.wait_for('message', check=check, timeout=90.0)
 
 @test_collector()
 async def test_verify(interface):
