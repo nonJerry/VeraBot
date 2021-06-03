@@ -6,6 +6,7 @@ from datetime import datetime as dtime
 from datetime import timezone
 from dateutil.relativedelta import relativedelta
 import logging
+from typing import Optional
 
 
 class Utility:
@@ -30,7 +31,7 @@ class Utility:
             return False
 
     @staticmethod
-    def date_from_txt(s) -> dtime:
+    def date_from_txt(s) -> Optional[dtime]:
         # needed because replace cannot be called on None
         usual_date = dtime.now() + relativedelta(months=1)
         s = Utility.cut_to_date(s)
@@ -64,6 +65,7 @@ class Utility:
                 if billed_index != -1:
                     s = s[:billed_index] # ending at billing with text
                 return s
+        return s
 
     @staticmethod
     def text_to_boolean(flag):
