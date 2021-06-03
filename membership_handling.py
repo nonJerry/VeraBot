@@ -483,7 +483,7 @@ class MembershipHandler:
                     else:
                         await self.verify_membership_with_server_detection(verify[0])
                     del verify
-                    gc.collect()
+                gc.collect()
                 await asyncio.sleep(10) # check all 10 seconds
             except Exception:
                 logging.exception("Catched error in deque")
