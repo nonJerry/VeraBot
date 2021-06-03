@@ -472,7 +472,6 @@ class MembershipHandler:
             await asyncio.sleep(wait_time)
 
     async def handle_verifies(self):
-        await self.bot.wait_until_ready()
         # check if new tweet found
         while not self.bot.is_closed():
             try:
