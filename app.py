@@ -172,28 +172,28 @@ async def on_raw_reaction_add(payload):
     # get reaction from payload
     if not payload.guild_id:
         return
-    channel = bot.get_channel(payload.channel_id)
-    try:
-        msg = await channel.fetch_message(payload.message_id)
-        reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
+    with bot.get_channel(payload.channel_id) as channel:
+        try:
+            with await channel.fetch_message(payload.message_id) as msg:
+                reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
 
-        # only the first react by somebody else than the bot should be processed
-        if reaction:
-            if reaction.count != 2:
-                return
-            msg = reaction.message
+                # only the first react by somebody else than the bot should be processed
+                if reaction:
+                    if reaction.count != 2:
+                        return
+                    msg = reaction.message
 
-            # this handling is not for DMs
-            # Only process reactions that also were also made by the bot
-            if not reaction.me:
-                return
-            if msg.embeds:
-                user = bot.get_user(payload.user_id)
-                await member_handler.process_reaction(channel, msg, user, reaction)
-                    
-    except (discord.errors.Forbidden, discord.errors.NotFound):
-        logging.info("%s: problem with reaction in %s", payload.guild_id, channel.id)
-        return
+                    # this handling is not for DMs
+                    # Only process reactions that also were also made by the bot
+                    if not reaction.me:
+                        return
+                    if msg.embeds:
+                        user = bot.get_user(payload.user_id)
+                        await member_handler.process_reaction(channel, msg, user, reaction)
+                        
+        except (discord.errors.Forbidden, discord.errors.NotFound):
+            logging.info("%s: problem with reaction in %s", payload.guild_id, channel.id)
+            return
 
 def dm_or_test_only():
     def predicate(ctx):
@@ -212,20 +212,20 @@ async def verify(ctx, *vtuber):
     Command in the DMs that tries to verify a screenshot for membership.
     """
     # log content to dm log channel for record
-    dm_lg_ch = bot.get_channel(dm_log)
-    await dm_lg_ch.send("{}\n{}".format(str(ctx.author),ctx.message.content))
-    for attachment in ctx.message.attachments:
-        await dm_lg_ch.send(attachment.url)
+    with bot.get_channel(dm_log) as dm_lg_ch:
+        await dm_lg_ch.send("{}\n{}".format(str(ctx.author),ctx.message.content))
+        for attachment in ctx.message.attachments:
+            await dm_lg_ch.send(attachment.url)
 
-    if vtuber:
-        server = map_vtuber_to_server(vtuber[0])
-        if server:
-            await member_handler.add_to_queue(ctx.message, server)
+        if vtuber:
+            server = map_vtuber_to_server(vtuber[0])
+            if server:
+                await member_handler.add_to_queue(ctx.message, server)
+            else:
+                embed = Utility.create_supported_vtuber_embed()
+                await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
         else:
-            embed = Utility.create_supported_vtuber_embed()
-            await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
-    else:
-        await member_handler.add_to_queue(ctx.message)
+            await member_handler.add_to_queue(ctx.message)
 
 @verify.error
 async def verify_error(ctx, error):
@@ -290,7 +290,7 @@ async def send_proof(ctx, vtuber: str):
         await ctx.send("Please include a screenshot of the proof!")
         return
     server_id = map_vtuber_to_server(vtuber)
-    member_veri_ch =bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+    member_veri_ch = bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
 
     # Send attachment and message to membership verification channel
     desc = "{}\n{}".format(str(ctx.author), "Additional proof")
