@@ -328,7 +328,7 @@ def map_language(lang) -> str:
     supported = {
         "eng": ["en", "eng", "english"],
         "jpn": ["jp", "jap", "jpn", "japanese"],
-        "chi": ["ch", "chi", "chinese"],
+        "chi_tra": ["ch", "chi", "chinese"],
         "rus": ["ru", "rus", "russian"]
     }
     for tuple in supported.items():
