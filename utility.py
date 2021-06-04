@@ -6,7 +6,7 @@ from datetime import datetime as dtime
 from datetime import timezone
 from dateutil.relativedelta import relativedelta
 import logging
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 
 class Utility:
@@ -63,7 +63,9 @@ class Utility:
             "l7": {BILLING_DATE: 'petsa ng pagsingil', BILLED_WITH: 'Sinisingil sa', ACCESS_ENDS: 'mga perk sa', GREETING: 'Kumusta'},
             "l8": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq', ACCESS_ENDS: 'koriczy sie', GREETING: 'Czesé'},
             }
-            
+        print("==============")
+        print(s)
+        print("==============")
         # check for direct pattern
         if lang in searches:
             s, success = Utility._cut_to_date(s, searches[lang])
@@ -93,7 +95,9 @@ class Utility:
             if date_index != -1:
                 start_index = date_index + len(hooks["expired"])
                 s = s[start_index:] # starting after date text
-                # there is never billing with text
+                billed_index = s.find(hooks["greeting"])
+                if billed_index != -1:
+                    s = s[:billed_index]
                 return s, True
         return s, False
 
