@@ -6,7 +6,7 @@ from datetime import datetime as dtime
 from datetime import timezone
 from dateutil.relativedelta import relativedelta
 import logging
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 
 class Utility:
@@ -48,41 +48,53 @@ class Utility:
         # on membership page in several languages
         BILLING_DATE = "billing date"
         BILLED_WITH = "billed with"
+        ACCESS_ENDS = "expired"
+        GREETING = "greeting"
         searches = {
-            "eng": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with'},
-            "jap": {BILLING_DATE: '請求日', BILLED_WITH: 'お支払'},
-            "chi_sim": {BILLING_DATE: '算日期', BILLED_WITH: '结算'},
-            "rus": {BILLING_DATE: 'платежа', BILLED_WITH: 'Оплата'},
-            "l2": {BILLING_DATE: 'data de', BILLED_WITH: 'Faturado com'},
-            "l3": {BILLING_DATE: 'Abrechnungsdatum', BILLED_WITH: 'Abgerechnet tiber'}, # german: ocr in en setting cannot parse "ueber"
-            "l4": {BILLING_DATE: 'penagihan berikutnya', BILLED_WITH: 'Ditagih dengan'},
-            "l5": {BILLING_DATE: 'fecha de', BILLED_WITH: 'Facturado con'},
-            "l6": {BILLING_DATE: 'petsa ng pagsingil', BILLED_WITH: 'Sinisingil sa'},
-            "l7": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq'},
+            "eng": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with', ACCESS_ENDS: 'Access to', GREETING: 'Hello'},
+            "jap": {BILLING_DATE: '請求日', BILLED_WITH: 'お支払', ACCESS_ENDS: '終了日', GREETING: '様'},
+            "chi_sim": {BILLING_DATE: '算日期', BILLED_WITH: '结算', ACCESS_ENDS: '止日期', GREETING: '尊敬的'},
+            "rus": {BILLING_DATE: 'платежа', BILLED_WITH: 'Оплата', ACCESS_ENDS: 'доступны до', GREETING: 'Здравству'},
+            "l2": {BILLING_DATE: 'data de', BILLED_WITH: 'Faturado com', ACCESS_ENDS: 'termina a', GREETING: 'Ola'}, #portugese
+            "l3": {BILLING_DATE: 'Abrechnungsdatum', BILLED_WITH: 'Abgerechnet tiber', ACCESS_ENDS: 'endet am', GREETING: 'Hallo'}, # german: ocr in en setting cannot parse "ueber"
+            "l4": {BILLING_DATE: 'seterusnya', BILLED_WITH: 'Dibilkan dengan', ACCESS_ENDS: 'Akses', GREETING: 'Helo'},
+            "l5": {BILLING_DATE: 'berikutnya', BILLED_WITH: 'Ditagih dengan', ACCESS_ENDS: 'Akses', GREETING: 'Halo'},
+            "l6": {BILLING_DATE: 'fecha de', BILLED_WITH: 'Facturado con', ACCESS_ENDS: 'acceso', GREETING: 'Hola'},
+            "l7": {BILLING_DATE: 'petsa ng pagsingil', BILLED_WITH: 'Sinisingil sa', ACCESS_ENDS: 'mga perk sa', GREETING: 'Kumusta'},
+            "l8": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq', ACCESS_ENDS: 'koriczy sie', GREETING: 'Czesé'},
             }
             
         # check for direct pattern
         if lang in searches:
-            hooks = searches[lang]
-            date_index = s.find(hooks[BILLING_DATE])
-            if date_index != -1:
-                s = s[date_index:] # starting at date text
-                billed_index = s.find(hooks[BILLED_WITH])
-                if billed_index != -1:
-                    s = s[:billed_index] # ending at billing with text
-                return s
+            s = Utility._cut_to_date(s, searches[lang])
 
         # if there is no hit, check every pattern
-        for language in searches.values():
-            date_index = s.find(language[BILLING_DATE])
-            if date_index != -1:
-                s = s[date_index:] # starting at date text
-                billed_index = s.find(language[BILLED_WITH])
-                if billed_index != -1:
-                    s = s[:billed_index] # ending at billing with text
+        for hooks in searches.values():
+            s, success = Utility._cut_to_date(s, hooks)
+            if success:
                 return s
         # return full string if not successful
         return s
+    
+    @staticmethod
+    def _cut_to_date(s: str, hooks) -> Tuple[str, bool]:
+        date_index = s.find(hooks["billing date"])
+        if date_index != -1:
+            s = s[date_index:] # starting at date text
+            billed_index = s.find(hooks["billed with"])
+            if billed_index != -1:
+                s = s[:billed_index] # ending at billing with text
+            return s, True
+        else:
+            date_index = s.find(hooks["expired"])
+            if date_index != -1:
+                s = s[date_index:] # starting at date text
+                billed_index = s.find(hooks["greeting"])
+                if billed_index != -1:
+                    s = s[:billed_index] # ending at billing with text
+                return s, True
+        return s, False
+
 
     @staticmethod
     def text_to_boolean(flag):
