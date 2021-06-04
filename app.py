@@ -25,7 +25,6 @@ logging.info("Started")
 ### Setup data
 # Set variable to true for local testing
 local = False
-local = True
 
 
 # Customizable Settings
