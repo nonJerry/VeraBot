@@ -27,7 +27,6 @@ class OCR:
         print("Text: " + text)
         print("===============")
         print("inv: " + inverted_text)
-        print("------------------")
         try:
             text = text[80:]
             inverted_text = inverted_text[80:]
