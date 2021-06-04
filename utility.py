@@ -83,7 +83,7 @@ class Utility:
     def _cut_to_date(s: str, hooks) -> Tuple[str, bool]:
         date_index = s.find(hooks["billing date"])
         if date_index != -1:
-            start_index = date_index + len(hooks["billing date"])
+            start_index = date_index + len(hooks["billing date"]) - 1
             s = s[start_index:] # starting after date text
             billed_index = s.find(hooks["billed with"])
             if billed_index != -1:
@@ -92,7 +92,7 @@ class Utility:
         else:
             date_index = s.find(hooks["expired"])
             if date_index != -1:
-                start_index = date_index + len(hooks["expired"])
+                start_index = date_index + len(hooks["expired"]) - 1
                 s = s[start_index:] # starting after date text
                 billed_index = s.find(hooks["greeting"])
                 if billed_index != -1:
