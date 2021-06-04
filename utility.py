@@ -51,7 +51,7 @@ class Utility:
         ACCESS_ENDS = "expired"
         GREETING = "greeting"
         searches = {
-            "eng": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with', ACCESS_ENDS: 'Access to', GREETING: 'Hello'},
+            "l1": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with', ACCESS_ENDS: 'Access to', GREETING: 'Hello'},
             "jap": {BILLING_DATE: '請求日', BILLED_WITH: 'お支払', ACCESS_ENDS: '終了日', GREETING: '様'},
             "chi_sim": {BILLING_DATE: '算日期', BILLED_WITH: '结算', ACCESS_ENDS: '止日期', GREETING: '尊敬的'},
             "rus": {BILLING_DATE: 'платежа', BILLED_WITH: 'Оплата', ACCESS_ENDS: 'доступны до', GREETING: 'Здравству'},
@@ -66,7 +66,9 @@ class Utility:
             
         # check for direct pattern
         if lang in searches:
-            s = Utility._cut_to_date(s, searches[lang])
+            s, success = Utility._cut_to_date(s, searches[lang])
+            if success:
+                return s
 
         # if there is no hit, check every pattern
         for hooks in searches.values():
