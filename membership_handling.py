@@ -363,6 +363,7 @@ class MembershipHandler:
         await target_member.add_roles(role)
         logging.info("Added member role to user %s on server %s.", member_id, res.guild.id)
 
+        asyncio.sleep(0.21)
         await target_member.send("You have been granted access to the membership channel of {}.".format(Utility.get_vtuber(res.guild.id)))
 
         if manual:
