@@ -219,7 +219,7 @@ async def verify(ctx, *vtuber):
 
     if vtuber:
         server = map_vtuber_to_server(vtuber[0])
-        
+
         if len(vtuber) > 1:
             language = map_language(vtuber[1])
 
@@ -328,7 +328,7 @@ def map_language(lang) -> str:
     supported = {
         "eng": ["en", "eng", "english"],
         "jpn": ["jp", "jap", "jpn", "japanese"],
-        "chi_sim": ["ch", "chi", "chinese"],
+        "chi": ["ch", "chi", "chinese"],
         "rus": ["ru", "rus", "russian"]
     }
     for tuple in supported.items():
