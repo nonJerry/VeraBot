@@ -52,7 +52,7 @@ class Utility:
         GREETING = "greeting"
         searches = {
             "l1": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with', ACCESS_ENDS: 'Access to', GREETING: 'Hello'},
-            "jap": {BILLING_DATE: '請求日', BILLED_WITH: 'お支払', ACCESS_ENDS: '終了日', GREETING: '様'},
+            "jpn": {BILLING_DATE: '請求日', BILLED_WITH: 'お支払', ACCESS_ENDS: '終了日', GREETING: '様'},
             "chi_sim": {BILLING_DATE: '算日期', BILLED_WITH: '结算', ACCESS_ENDS: '止日期', GREETING: '尊敬的'},
             "rus": {BILLING_DATE: 'платежа', BILLED_WITH: 'Оплата', ACCESS_ENDS: 'доступны до', GREETING: 'Здравству'},
             "l2": {BILLING_DATE: 'data de', BILLED_WITH: 'Faturado com', ACCESS_ENDS: 'termina a', GREETING: 'Ola'}, #portugese
