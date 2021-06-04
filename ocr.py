@@ -23,6 +23,7 @@ class OCR:
 
     @staticmethod
     async def detect_image_date(img_url, lang):
+        logging.info("Using %s OCR", lang)
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url, lang), timeout = 90)
 
         img_date = Utility.date_from_txt(inverted_text, lang) or Utility.date_from_txt(text, lang)
