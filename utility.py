@@ -34,6 +34,7 @@ class Utility:
     def date_from_txt(s, lang="eng") -> Optional[dtime]:
         # needed because replace cannot be called on None
         usual_date = dtime.now() + relativedelta(months=1)
+        print("string: " + s)
         s = Utility.cut_to_date(s, lang)
         logging.info("Input string for date search: %s", s)
 
@@ -43,7 +44,7 @@ class Utility:
             return dates[0][1].replace(tzinfo = timezone.utc)
 
     @staticmethod
-    def cut_to_date(s, lang) -> str:
+    def cut_to_date(s: str, lang: str) -> str:
         # on membership page in several languages
         BILLING_DATE = "billing date"
         BILLED_WITH = "billed with"

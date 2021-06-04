@@ -25,7 +25,7 @@ class MembershipHandler:
         # deque for data
         self.verify_deque = deque()
 
-    async def add_to_queue(self, res, server_id=None, lang=None):
+    async def add_to_queue(self, res, server_id=None, lang="eng"):
         
         # Check if there is a valid attachment
         if not res.attachments:
@@ -478,6 +478,7 @@ class MembershipHandler:
                 while self.verify_deque:
                     verify = self.verify_deque.popleft()
                     if verify[1]:
+                        print("ver2: " + str(verify[2]))
                         await self.verify_membership(verify[0], verify[1], verify[2])
                     else:
                         await self.verify_membership_with_server_detection(verify[0], verify[2])
