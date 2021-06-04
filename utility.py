@@ -62,7 +62,7 @@ class Utility:
             "l6": {BILLING_DATE: 'fecha de', BILLED_WITH: 'Facturado con', ACCESS_ENDS: 'acceso', GREETING: 'Hola'},
             "l7": {BILLING_DATE: 'petsa ng pagsingil', BILLED_WITH: 'Sinisingil sa', ACCESS_ENDS: 'mga perk sa', GREETING: 'Kumusta'},
             "l8": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq', ACCESS_ENDS: 'koniczy sie', GREETING: 'Czesé'},
-            "l9": {BILLING_DATE: 'REBRA', BILLED_WITH: 'BTS', ACCESS_ENDS: 'BRAOVIVAZDKRT A', GREETING: '#&'} # japanese if used with eng ocr
+            "l9": {BILLING_DATE: 'REBRA', BILLED_WITH: 'BTS', ACCESS_ENDS: 'AZDKRT A', GREETING: '#&'} # japanese if used with eng ocr
             }
 
         # check for direct pattern
