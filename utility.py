@@ -31,10 +31,10 @@ class Utility:
             return False
 
     @staticmethod
-    def date_from_txt(s) -> Optional[dtime]:
+    def date_from_txt(s, lang="eng") -> Optional[dtime]:
         # needed because replace cannot be called on None
         usual_date = dtime.now() + relativedelta(months=1)
-        s = Utility.cut_to_date(s)
+        s = Utility.cut_to_date(s, lang)
         logging.info("Input string for date search: %s", s)
 
         # use date in 1 month from now as reference
@@ -43,20 +43,34 @@ class Utility:
             return dates[0][1].replace(tzinfo = timezone.utc)
 
     @staticmethod
-    def cut_to_date(s) -> str:
+    def cut_to_date(s, lang) -> str:
         # on membership page in several languages
         BILLING_DATE = "billing date"
         BILLED_WITH = "billed with"
         searches = {
-            "l1": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with'},
+            "eng": {BILLING_DATE: 'billing date', BILLED_WITH: 'Billed with'},
+            "jap": {BILLING_DATE: '請求日', BILLED_WITH: 'お支払'},
+            "chi_sim": {BILLING_DATE: '算日期', BILLED_WITH: '结算'},
+            "rus": {BILLING_DATE: 'платежа', BILLED_WITH: 'Оплата'},
             "l2": {BILLING_DATE: 'data de', BILLED_WITH: 'Faturado com'},
-            "l3": {BILLING_DATE: 'Abrechnungsdatum', BILLED_WITH: 'Abgerechnet tiber'}, # german: ocr cannot parse "ueber"
+            "l3": {BILLING_DATE: 'Abrechnungsdatum', BILLED_WITH: 'Abgerechnet tiber'}, # german: ocr in en setting cannot parse "ueber"
             "l4": {BILLING_DATE: 'penagihan berikutnya', BILLED_WITH: 'Ditagih dengan'},
             "l5": {BILLING_DATE: 'fecha de', BILLED_WITH: 'Facturado con'},
             "l6": {BILLING_DATE: 'petsa ng pagsingil', BILLED_WITH: 'Sinisingil sa'},
             "l7": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq'},
             }
         # go through all listed languages
+        hooks = searches[lang]
+        if hooks:
+            s = date_index = s.find(hooks[BILLING_DATE])
+            if date_index != -1:
+                s = s[date_index:] # starting at date text
+                billed_index = s.find(hooks[BILLED_WITH])
+                if billed_index != -1:
+                    s = s[:billed_index] # ending at billing with text
+                return s
+
+        # if there is no hit, check every pattern
         for language in searches.values():
             date_index = s.find(language[BILLING_DATE])
             if date_index != -1:
@@ -65,6 +79,7 @@ class Utility:
                 if billed_index != -1:
                     s = s[:billed_index] # ending at billing with text
                 return s
+        # return full string if not successful
         return s
 
     @staticmethod

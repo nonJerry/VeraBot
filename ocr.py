@@ -24,17 +24,8 @@ class OCR:
     @staticmethod
     async def detect_image_date(img_url, lang):
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url, lang), timeout = 90)
-        print("Text: " + text)
-        print("===============")
-        print("inv: " + inverted_text)
-        try:
-            text = text[80:]
-            inverted_text = inverted_text[80:]
-        except IndexError:
-                logging.info("Smaller text cut on %s.", img_url)
-                text = text[30:]
-                inverted_text = inverted_text[30:]
-        img_date = Utility.date_from_txt(inverted_text) or Utility.date_from_txt(text)
+
+        img_date = Utility.date_from_txt(inverted_text, lang) or Utility.date_from_txt(text, lang)
         return img_date
 
     ### Tesseract text detection

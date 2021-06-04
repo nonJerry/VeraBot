@@ -25,6 +25,7 @@ logging.info("Started")
 ### Setup data
 # Set variable to true for local testing
 local = False
+local = True
 
 
 # Customizable Settings
@@ -229,7 +230,7 @@ async def verify(ctx, *vtuber):
             embed = Utility.create_supported_vtuber_embed()
             await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
     else:
-        await member_handler.add_to_queue(ctx.message, "eng")
+        await member_handler.add_to_queue(ctx.message, language)
 
 @verify.error
 async def verify_error(ctx, error):
