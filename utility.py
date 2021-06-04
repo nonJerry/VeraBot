@@ -61,7 +61,7 @@ class Utility:
             "l5": {BILLING_DATE: 'berikutnya', BILLED_WITH: 'Ditagih dengan', ACCESS_ENDS: 'Akses', GREETING: 'Halo'},
             "l6": {BILLING_DATE: 'fecha de', BILLED_WITH: 'Facturado con', ACCESS_ENDS: 'acceso', GREETING: 'Hola'},
             "l7": {BILLING_DATE: 'petsa ng pagsingil', BILLED_WITH: 'Sinisingil sa', ACCESS_ENDS: 'mga perk sa', GREETING: 'Kumusta'},
-            "l8": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq', ACCESS_ENDS: 'koriczy sie', GREETING: 'Czesé'},
+            "l8": {BILLING_DATE: 'nastepnego rozliczenia', BILLED_WITH: 'Ptatnosci kartq', ACCESS_ENDS: 'koniczy sie', GREETING: 'Czesé'},
             }
         print("==============")
         print(s)
