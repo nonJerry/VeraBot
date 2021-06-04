@@ -222,6 +222,8 @@ async def verify(ctx, *vtuber):
 
         if len(vtuber) > 1:
             language = map_language(vtuber[1])
+        else:
+            language = "eng"
 
         if server:
             await member_handler.add_to_queue(ctx.message, server, language)
