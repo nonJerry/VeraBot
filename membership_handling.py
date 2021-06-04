@@ -25,14 +25,14 @@ class MembershipHandler:
         # deque for data
         self.verify_deque = deque()
 
-    async def add_to_queue(self, res, server_id=None):
+    async def add_to_queue(self, res, server_id=None, lang=None):
         
         # Check if there is a valid attachment
         if not res.attachments:
             await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
             logging.info("Verify without screenshot from %s.", res.author.id)
             return
-        self.verify_deque.append([res, server_id])
+        self.verify_deque.append([res, server_id, lang])
         logging.info("Proof from %s added to queue for server: %s", res.author.id, server_id)
 
         m = "Your proof is added to the queue now and will be processed later.\n"
@@ -163,7 +163,7 @@ class MembershipHandler:
     }
     """    
 
-    async def verify_membership_with_server_detection(self, res):
+    async def verify_membership_with_server_detection(self, res, lang):
 
         server = None
         try:
@@ -181,7 +181,7 @@ class MembershipHandler:
             return
 
         logging.info("Detected server for %s: %s (%s)", res.author.id, idol, server)
-        await self.verify_membership(res, server)
+        await self.verify_membership(res, server, lang)
 
 
 
@@ -196,11 +196,11 @@ class MembershipHandler:
                 return (idol['name'], idol['guild_id'])
 
 
-    async def detect_membership_date(self, res):
+    async def detect_membership_date(self, res, lang):
         img_date = None
         # check date
         try:
-            img_date = await OCR.detect_image_date(res.attachments[0].url)
+            img_date = await OCR.detect_image_date(res.attachments[0].url, lang)
 
         except asyncio.TimeoutError:
             logging.info("Timout while detecting image for %s.", res.author.id)
@@ -211,7 +211,7 @@ class MembershipHandler:
             return (img_date)
 
 
-    async def verify_membership(self, res, server_id):
+    async def verify_membership(self, res, server_id, lang):
 
         guild = self.bot.get_guild(server_id)
         server_db = self.db_cluster[str(server_id)]
@@ -220,7 +220,7 @@ class MembershipHandler:
         # if member exists, update date
         member = member_collection.find_one({"id": res.author.id})
 
-        new_membership_date = await self.detect_membership_date(res)
+        new_membership_date = await self.detect_membership_date(res, lang)
 
 
         if not new_membership_date:
@@ -478,9 +478,9 @@ class MembershipHandler:
                 while self.verify_deque:
                     verify = self.verify_deque.popleft()
                     if verify[1]:
-                        await self.verify_membership(verify[0], verify[1])
+                        await self.verify_membership(verify[0], verify[1], verify[2])
                     else:
-                        await self.verify_membership_with_server_detection(verify[0])
+                        await self.verify_membership_with_server_detection(verify[0], verify[2])
                     del verify
                 gc.collect()
                 await asyncio.sleep(10) # check all 10 seconds
