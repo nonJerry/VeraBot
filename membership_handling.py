@@ -447,7 +447,6 @@ class MembershipHandler:
                 count = 0
                 m = "Expired Memberships:"
                 for member in content:
-                    print(member)
                     count += 1
                     new_line = '\n' + member
                     if len(m) + len(new_line) > 2000:
