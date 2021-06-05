@@ -1,9 +1,9 @@
-
+# External
 import discord
 from discord.ext import commands
 # Python
 import logging
-#Internal
+# Internal
 from utility import Utility
 
 class Settings(commands.Cog):
@@ -23,6 +23,10 @@ class Settings(commands.Cog):
         title = "Current Settings"
         embed = discord.Embed(title = title, description = None)
         settings = self.db_cluster[str(ctx.guild.id)]["settings"]
+
+        # VTuber
+        vtuber = Utility.get_vtuber(ctx.guild.id)
+        embed.add_field(name="VTuber", value=vtuber)
         
         #get prefixes
         prefixes = settings.find_one({'kind' : 'prefixes'})['values']
@@ -56,6 +60,10 @@ class Settings(commands.Cog):
         # inform duration
         inform_duration = settings.find_one({'kind' : 'inform_duration'})['value']
         embed.add_field(name='Prior Notice Duration', value=str(inform_duration), inline=True)
+
+        # logging
+        enable_logging = settings.find_one({'kind' : 'logging'})['value']
+        embed.add_field(name='Logging enabled', value=str(enable_logging), inline=True)
 
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
         m += "For a full explanation of the settings please refer to:\n"
