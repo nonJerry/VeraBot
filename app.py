@@ -219,8 +219,14 @@ async def verify(ctx, *vtuber):
 
     if vtuber:
         server = map_vtuber_to_server(vtuber[0])
+
+        if len(vtuber) > 1:
+            language = map_language(vtuber[1])
+        else:
+            language = "eng"
+
         if server:
-            await member_handler.add_to_queue(ctx.message, server)
+            await member_handler.add_to_queue(ctx.message, server, language)
         else:
             embed = Utility.create_supported_vtuber_embed()
             await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
@@ -319,6 +325,18 @@ def map_vtuber_to_server(name):
     result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
     if 'supported_idols' in result:
         return result['supported_idols'][0]['guild_id']
+
+def map_language(lang: str) -> str:
+    supported = {
+        "eng": ["en", "eng", "english"],
+        "jpn": ["jp", "jap", "jpn", "japanese"],
+        "chi_sim": ["ch", "chi", "chinese"],
+        "rus": ["ru", "rus", "russian"]
+    }
+    for tuple in supported.items():
+        if lang.lower() in tuple[1]:
+            return tuple[0]
+    return "eng"
 
 #Time in status
 async def jst_clock():
