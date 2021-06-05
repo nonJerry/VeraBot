@@ -326,7 +326,7 @@ def map_vtuber_to_server(name):
     if 'supported_idols' in result:
         return result['supported_idols'][0]['guild_id']
 
-def map_language(lang) -> str:
+def map_language(lang: str) -> str:
     supported = {
         "eng": ["en", "eng", "english"],
         "jpn": ["jp", "jap", "jpn", "japanese"],
@@ -334,7 +334,7 @@ def map_language(lang) -> str:
         "rus": ["ru", "rus", "russian"]
     }
     for tuple in supported.items():
-        if lang in tuple[1]:
+        if lang.lower() in tuple[1]:
             return tuple[0]
     return "eng"
 
