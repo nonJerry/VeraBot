@@ -22,21 +22,16 @@ class OCR:
         cls.local = local
 
     @staticmethod
-    async def detect_image_date(img_url):
-        text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url), timeout = 90)
-        try:
-            text = text[80:]
-            inverted_text = inverted_text[80:]
-        except IndexError:
-                logging.info("Smaller text cut on %s.", img_url)
-                text = text[30:]
-                inverted_text = inverted_text[30:]
-        img_date = Utility.date_from_txt(inverted_text) or Utility.date_from_txt(text)
+    async def detect_image_date(img_url, lang):
+        logging.info("Using %s OCR", lang)
+        text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url, lang), timeout = 90)
+
+        img_date = Utility.date_from_txt(inverted_text, lang) or Utility.date_from_txt(text, lang)
         return img_date
 
     ### Tesseract text detection
     @classmethod
-    async def detect_image_text(cls, img_url, size_factor = 1.6):
+    async def detect_image_text(cls, img_url, lang, size_factor = 1.6):
         # Uses Tesseract to detect text from url img 
         # return tuple of two possible text: normal and inverted
 
@@ -46,7 +41,7 @@ class OCR:
             img_to_txt = partial(Tess.image_to_string, timeout=44)
         else:
             tess_path = r"/app/.apt/usr/share/tesseract-ocr/4.00/tessdata"
-            img_to_txt = partial(tesserocr.image_to_text, path = tess_path)
+            img_to_txt = partial(tesserocr.image_to_text, lang=lang, path = tess_path)
 
         # Get image from url
         with requests.get(img_url, stream=True) as img_response:
