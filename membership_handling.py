@@ -77,12 +77,13 @@ class MembershipHandler:
                     guild = self.bot.get_guild(server['guild_id'])
                     target_member = guild.get_member(member["id"])
 
-                    role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
-                    member_role = guild.get_role(role_id)
+                    if target_member:
+                        role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
+                        member_role = guild.get_role(role_id)
 
-                    await target_member.remove_roles(member_role)
-                    #send dm
-                    await Sending.dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
+                        await target_member.remove_roles(member_role)
+                        #send dm
+                        await Sending.dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
                 # notify
                 elif inform_duration != 0 and last_membership <= notify_date and not member['informed']:
                     title = message_title.format("expires soon!")
@@ -434,19 +435,35 @@ class MembershipHandler:
             lg_ch = self.bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
             logging_enabled = server_db['settings'].find_one({'kind': "logging"})['value']
 
+            expired_memberships = await self._check_membership_dates(server)
+
             if logging_enabled:
                 if not forced:
                     await lg_ch.send("Performing membership check, last check was {}".format(last_checked))
                 else:
                     await lg_ch.send("Forced Membership check")
 
-            # perform check
-            expired_memberships = await self._check_membership_dates(server)
-            content = ["{}: {}".format(d["id"], d["last_membership"]) for d in expired_memberships]
-            m = "Expired Memberships:\n"
-            m += "\n".join(content)
-            if m:
-                await lg_ch.send(m)
+                content = ["{}".format(d["id"]) for d in expired_memberships]
+                count = 0
+                m = "Expired Memberships:"
+                for member in content:
+                    print(member)
+                    count += 1
+                    new_line = '\n' + member
+                    if len(m) + len(new_line) > 2000:
+                        await lg_ch.send(m)
+                        m = ""
+                    m += new_line
+
+                if count != 0:
+                    # send ids if there are some
+                    if m != "":
+                        await lg_ch.send(m)
+                    # send count
+                    await lg_ch.send("Expired membership count: " + str(count))
+                else:
+                    await lg_ch.send("No expired memberships!")
+
 
         # add wait time
         dt = date.today()
