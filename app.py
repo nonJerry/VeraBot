@@ -155,7 +155,7 @@ async def on_guild_join(guild):
         json = {"kind": "logging", "value" : True}
         settings.insert_one(json)
 
-        logging.info("Created database for %s". str(guild.id))
+        logging.info("Created database for %s", guild.id)
 
 
 @bot.event
