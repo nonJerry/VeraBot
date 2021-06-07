@@ -61,53 +61,54 @@ class MembershipHandler:
 
         #TODO: Restructure DB after dates?
         for member in server_db['members'].find():
-            # For each member
-            if member["last_membership"]:
-                last_membership = member["last_membership"].replace(tzinfo = timezone.utc)
-                # delete role
-                if last_membership <= tolerance_date:
-                    title = message_title.format("channel access ended")
-                    message_desc = "You lost your access to {}'s members-only channel!\n"
-                    message_desc += end_text
+            try:
+                # For each member
+                if member["last_membership"]:
+                    last_membership = member["last_membership"].replace(tzinfo = timezone.utc)
+                    # delete role
+                    if last_membership <= tolerance_date:
+                        title = message_title.format("channel access ended")
+                        message_desc = "You lost your access to {}'s members-only channel!\n"
+                        message_desc += end_text
 
-                    # Delete from database
-                    server_db['members'].delete_one(member)
+                        # Delete from database
+                        server_db['members'].delete_one(member)
 
-                    # Remove member role from user
-                    guild = self.bot.get_guild(server['guild_id'])
-                    target_member = guild.get_member(member["id"])
+                        # Remove member role from user
+                        guild = self.bot.get_guild(server['guild_id'])
+                        target_member = guild.get_member(member["id"])
 
-                    if target_member:
-                        role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
-                        member_role = guild.get_role(role_id)
+                        if target_member:
+                            role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
+                            member_role = guild.get_role(role_id)
 
-                        await target_member.remove_roles(member_role)
-                        #send dm
+                            await target_member.remove_roles(member_role)
+                            #send dm
+                            await Sending.dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
+                    # notify
+                    elif inform_duration != 0 and last_membership <= notify_date and not member['informed']:
+                        title = message_title.format("expires soon!")
+                        message_desc = "Your membership to {} will expire in {} day(s).\n"
+                        message_desc += "If you do not want to lose this membership please don't forget to anew it!"
                         await Sending.dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
-                # notify
-                elif inform_duration != 0 and last_membership <= notify_date and not member['informed']:
-                    title = message_title.format("expires soon!")
-                    message_desc = "Your membership to {} will expire in {} day(s).\n"
-                    message_desc += "If you do not want to lose this membership please don't forget to anew it!"
-                    await Sending.dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
-                    server_db['members'].update_one({"id": member['id']}, {"$set": {"informed": True}})
 
-            if not last_membership or (last_membership <= expiry_date and not member['expiry_sent'] and tolerance_date < last_membership):
-                title = message_title.format("expired")
-                message_desc = "Your membership to {} has just expired!\n"
-                message_desc += "You will lose your access to the channel after {} day(s) if you do not renew your membership.\n"
-                message_desc += end_text
-            
-                # Add to delete list
-                expired_memberships.append(member)
+                        server_db['members'].update_one({"id": member['id']}, {"$set": {"informed": True}})
 
-                # dm expired membership
-                try:
+                if not last_membership or (last_membership <= expiry_date and not member['expiry_sent'] and tolerance_date < last_membership):
+                    title = message_title.format("expired")
+                    message_desc = "Your membership to {} has just expired!\n"
+                    message_desc += "You will lose your access to the channel after {} day(s) if you do not renew your membership.\n"
+                    message_desc += end_text
+                
+                    # Add to delete list
+                    expired_memberships.append(member)
+
+                    # dm expired membership
                     await Sending.dm_member(member["id"], title, message_desc.format(idol, str(tolerance_duration)), embed = True, attachment_url = message_image)
-                except discord.errors.Forbidden:
-                    logging.warn("Could not send DM to %s", member["id"])
 
-                server_db['members'].update_one({"id": member['id']}, {"$set": {"expiry_sent": True}})
+                    server_db['members'].update_one({"id": member['id']}, {"$set": {"expiry_sent": True}})
+            except discord.errors.Forbidden:
+                logging.warn("Could not send DM to %s", member["id"])
 
         # Returns expired_memberships list
         return expired_memberships
