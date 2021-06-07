@@ -102,7 +102,10 @@ class MembershipHandler:
                 expired_memberships.append(member)
 
                 # dm expired membership
-                await Sending.dm_member(member["id"], title, message_desc.format(idol, str(tolerance_duration)), embed = True, attachment_url = message_image)
+                try:
+                    await Sending.dm_member(member["id"], title, message_desc.format(idol, str(tolerance_duration)), embed = True, attachment_url = message_image)
+                except discord.errors.Forbidden:
+                    logging.warn("Could not send DM to %s", member["id"])
 
                 server_db['members'].update_one({"id": member['id']}, {"$set": {"expiry_sent": True}})
 
