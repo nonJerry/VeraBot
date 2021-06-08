@@ -361,16 +361,17 @@ class MembershipHandler:
 
         server_db = self.db_cluster[str(res.guild.id)]
 
-
+        await asyncio.sleep(0.21)
         target_member = res.guild.get_member(member_id)
         role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)
         logging.info("Added member role to user %s on server %s.", member_id, res.guild.id)
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.21)
         await target_member.send("You have been granted access to the membership channel of {}.".format(Utility.get_vtuber(res.guild.id)))
 
+        await asyncio.sleep(0.21)
         if manual:
             await res.channel.send("New membership date for {} set at {}!".format(target_member.mention, new_date.strftime(self.DATE_FORMAT)), reference=res, mention_author=False)
         else:
