@@ -65,13 +65,23 @@ A user can verify himself by sending the bot a DM containing the command `$verif
 The bot will try to map the sent screenshot by itself and sent a corresponding messaging into the set log channel of the server. <br>
 However it is recommended to use `$verify <vtuber>` for fast processing. <br>
 
-![Interaction in DMs](https://user-images.githubusercontent.com/79670160/119176809-d0a9fb80-ba6b-11eb-9aec-cadfa0135937.png)
-
-![Logging](https://user-images.githubusercontent.com/79670160/119177186-40b88180-ba6c-11eb-835b-c3d41297f42b.png)
+![Interaction in DMs](https://user-images.githubusercontent.com/79670160/121266335-a0ab8680-c8ba-11eb-832c-6ba0e9bb9653.png)
 
 
+![Logging](https://user-images.githubusercontent.com/79670160/121266440-ccc70780-c8ba-11eb-8bfc-869b0c2c5cdd.png)
 
 
+If autorole is disabled you should get a message like this into your set log channel. The reactions are to be used as followed:
+<br>
+:white_check_mark: -> correct date, everything fine <br>
+:calendar: -> recognized date wrong / date was not recognized <br>
+:no_entry_sign: -> fake / date missing on  the screenshot <br>
+<br>
+After selecting the bot will tell you what to do and add `VERIFIED: <verification date>` or `DENIED` to the embed and also change the reactions after the process.
+<br>
+![VERIFIED example](https://user-images.githubusercontent.com/79670160/121267108-f59bcc80-c8bb-11eb-8c90-81df557cda59.png)
+
+![DENIED example](https://user-images.githubusercontent.com/79670160/121267177-149a5e80-c8bc-11eb-9ea7-f0d40b67ad49.png)
 
 
 
