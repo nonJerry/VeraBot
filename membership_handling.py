@@ -198,7 +198,7 @@ class MembershipHandler:
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(url), timeout = 60)
         
         for idol in idols:
-            if idol['name'] in text.lower() or idol['name'] in inverted_text.lower():
+            if idol['name'].title() in text or idol['name'].title() in inverted_text:
                 return (idol['name'], idol['guild_id'])
 
 
