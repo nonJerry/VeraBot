@@ -529,7 +529,9 @@ class MembershipHandler:
                 # set membership
             if await self.set_membership(msg, target_member_id, membership_date, False, user):
             #always clear
+                await asyncio.sleep(0.21)
                 await msg.clear_reactions()
+                await asyncio.sleep(0.21)
                 await msg.add_reaction(emoji='👌')
         # wrong date
         elif emoji == u"\U0001F4C5":
@@ -545,10 +547,12 @@ class MembershipHandler:
 
             if date_msg.content.lower() != "cancel" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
                 await msg.clear_reactions()
+                await asyncio.sleep(0.21)
                 await msg.add_reaction(emoji='👍')
             else:
                 logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
                 await reaction.remove(user)
+                await asyncio.sleep(0.21)
                 await channel.send("Stopped the process and removed reaction.")
 
         # deny option - fake / missing date
@@ -572,6 +576,7 @@ class MembershipHandler:
                 # set embed
                 embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
                 await msg.edit(content = msg.content, embed = embed)
+                await asyncio.sleep(0.21)
                 await msg.clear_reactions()
                 await msg.add_reaction(emoji='👎')
             else:
