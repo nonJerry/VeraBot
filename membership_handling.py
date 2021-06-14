@@ -50,7 +50,7 @@ class MembershipHandler:
         tolerance_duration = server_db['settings'].find_one({"kind": "tolerance_duration"})['value']
 
         expired_memberships = []
-        expiry_date = dtime.now(tz = timezone.utc) - relativedelta(months=1)
+        expiry_date = dtime.now(tz = timezone.utc) - relativedelta(months=1) - timedelta(days=1)
         notify_date = expiry_date + timedelta(days=inform_duration)
         tolerance_date = expiry_date - timedelta(days=tolerance_duration)
 
@@ -84,19 +84,20 @@ class MembershipHandler:
 
                             await target_member.remove_roles(member_role)
                             #send dm
-                            await Sending.dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
+                            await Sending.dm_member(member["id"], title, message_desc.format(idol.title(), str(inform_duration)), embed = True, attachment_url = message_image)
                     # notify
                     elif inform_duration != 0 and last_membership <= notify_date and not member['informed']:
                         title = message_title.format("expires soon!")
-                        message_desc = "Your membership to {} will expire in {} day(s).\n"
+                        message_desc = "Your membership to {} will expire within the next {} hours.\n"
                         message_desc += "If you do not want to lose this membership please don't forget to anew it!"
-                        await Sending.dm_member(member["id"], title, message_desc.format(idol, str(inform_duration)), embed = True, attachment_url = message_image)
+                        await Sending.dm_member(member["id"], title, message_desc.format(idol.title(), str(inform_duration * 24)), embed = True, attachment_url = message_image)
 
                         server_db['members'].update_one({"id": member['id']}, {"$set": {"informed": True}})
 
                 if not last_membership or (last_membership <= expiry_date and not member['expiry_sent'] and tolerance_date < last_membership):
                     title = message_title.format("expired")
-                    message_desc = "Your membership to {} has just expired!\n"
+                    message_desc = "Your membership to {} should have expired today!\n"
+                    message_desc += "If your billing date has not changed yet, please wait until it does to send your new proof.\n"
                     message_desc += "You will lose your access to the channel after {} day(s) if you do not renew your membership.\n"
                     message_desc += end_text
                 
@@ -104,7 +105,7 @@ class MembershipHandler:
                     expired_memberships.append(member)
 
                     # dm expired membership
-                    await Sending.dm_member(member["id"], title, message_desc.format(idol, str(tolerance_duration)), embed = True, attachment_url = message_image)
+                    await Sending.dm_member(member["id"], title, message_desc.format(idol.title(), str(tolerance_duration)), embed = True, attachment_url = message_image)
 
                     server_db['members'].update_one({"id": member['id']}, {"$set": {"expiry_sent": True}})
             except discord.errors.Forbidden:
@@ -197,7 +198,7 @@ class MembershipHandler:
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(url), timeout = 60)
         
         for idol in idols:
-            if idol['name'] in text.lower() or idol['name'] in inverted_text.lower():
+            if idol['name'].title() in text or idol['name'].title() in inverted_text:
                 return (idol['name'], idol['guild_id'])
 
 
@@ -261,7 +262,7 @@ class MembershipHandler:
             logging.info("Requiring additional proof from %s for server %s.", res.author.id, server_id)
 
             def check(m):
-                return len(m.attachments) > 0
+                return len(m.attachments) > 0 and m.author == res.author and isinstance(m.channel, discord.DMChannel)
             try:
                 proof_msg = await self.bot.wait_for('message', timeout=60, check=check)
             except asyncio.TimeoutError:
@@ -529,7 +530,9 @@ class MembershipHandler:
                 # set membership
             if await self.set_membership(msg, target_member_id, membership_date, False, user):
             #always clear
+                await asyncio.sleep(0.21)
                 await msg.clear_reactions()
+                await asyncio.sleep(0.21)
                 await msg.add_reaction(emoji='👌')
         # wrong date
         elif emoji == u"\U0001F4C5":
@@ -545,10 +548,12 @@ class MembershipHandler:
 
             if date_msg.content.lower() != "cancel" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
                 await msg.clear_reactions()
+                await asyncio.sleep(0.21)
                 await msg.add_reaction(emoji='👍')
             else:
                 logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
                 await reaction.remove(user)
+                await asyncio.sleep(0.21)
                 await channel.send("Stopped the process and removed reaction.")
 
         # deny option - fake / missing date
@@ -572,6 +577,7 @@ class MembershipHandler:
                 # set embed
                 embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
                 await msg.edit(content = msg.content, embed = embed)
+                await asyncio.sleep(0.21)
                 await msg.clear_reactions()
                 await msg.add_reaction(emoji='👎')
             else:
