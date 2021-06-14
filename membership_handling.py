@@ -50,7 +50,7 @@ class MembershipHandler:
         tolerance_duration = server_db['settings'].find_one({"kind": "tolerance_duration"})['value']
 
         expired_memberships = []
-        expiry_date = dtime.now(tz = timezone.utc) - relativedelta(months=1)
+        expiry_date = dtime.now(tz = timezone.utc) - relativedelta(months=1) - timedelta(days=1)
         notify_date = expiry_date + timedelta(days=inform_duration)
         tolerance_date = expiry_date - timedelta(days=tolerance_duration)
 
