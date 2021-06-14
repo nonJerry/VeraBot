@@ -261,7 +261,7 @@ class MembershipHandler:
             logging.info("Requiring additional proof from %s for server %s.", res.author.id, server_id)
 
             def check(m):
-                return len(m.attachments) > 0
+                return len(m.attachments) > 0 and m.author == res.author and isinstance(m.channel, discord.DMChannel)
             try:
                 proof_msg = await self.bot.wait_for('message', timeout=60, check=check)
             except asyncio.TimeoutError:
