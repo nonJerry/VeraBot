@@ -80,7 +80,7 @@ class Membership(commands.Cog):
         embed = discord.Embed(title = str(user_id))
 
         # Send attachment and message to membership verification channel
-        member_veri_ch = self.bot.get_channel(self.db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+        member_veri_ch = self.bot.get_channel(self.member_handler.db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
 
         author = self.bot.get_user(user_id)
         desc = "{}\n{}".format(str(author), "Date not detected")
