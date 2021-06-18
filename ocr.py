@@ -51,6 +51,18 @@ class OCR:
             with Image.open(img_response.raw) as img:
                 img.load()
 
+                width, height = img.size
+                
+                resize = False
+                if width > 1920:
+                    width = 1920
+                    resize = True
+                if height > 1080:
+                    height = 1080
+                    resize = True
+                if resize:
+                    img = img.resize((width, height))
+
 
                 img = img.crop((3, 0, img.size[0], img.size[1]))
                 resized = img.resize(
