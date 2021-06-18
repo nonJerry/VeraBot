@@ -1,4 +1,5 @@
 # External
+import discord
 from discord.ext import commands
 # Python
 import logging
@@ -72,4 +73,26 @@ class Membership(commands.Cog):
     async def queue(self, ctx):
         count = len(self.member_handler.verify_deque)
         await ctx.send("Queue count: {}".format(count))
+
+    @commands.command(hidden= True, name = "relayVerify")
+    @commands.is_owner()
+    async def queue(self, ctx, user_id: int, server_id: int):
+        embed = discord.Embed(title = str(user_id))
+
+        # Send attachment and message to membership verification channel
+        member_veri_ch = self.bot.get_channel(self.db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+
+        author = self.bot.get_user(user_id)
+        desc = "{}\n{}".format(str(author), "Date not detected")
+
+        embed.description = "Main Proof\nUser: {}".format(author.mention)
+        embed.add_field(name="Recognized Date", value = "None")
+        embed.set_image(url = ctx.message.attachments[0].url)
+        message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
+        await message.add_reaction(emoji='✅')
+        await message.add_reaction(emoji=u"\U0001F4C5") # calendar
+        await message.add_reaction(emoji=u"\U0001F6AB") # no entry
+        logging.info("Sent embed with reactions to %s", server_id)
+        logging.info("Relayed the verify")
+
                      
