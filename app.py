@@ -173,6 +173,11 @@ async def on_raw_reaction_add(payload):
     if not payload.guild_id:
         return
     channel = bot.get_channel(payload.channel_id)
+    permissions = channel.permissions_for(channel.guild.me)
+    print(permissions.read_message_history)
+    if not permissions.read_message_history:
+        return
+
     try:
         msg = await channel.fetch_message(payload.message_id)
         reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
@@ -183,7 +188,6 @@ async def on_raw_reaction_add(payload):
                 return
             msg = reaction.message
 
-            # this handling is not for DMs
             # Only process reactions that also were also made by the bot
             if not reaction.me:
                 return
