@@ -174,7 +174,7 @@ async def on_raw_reaction_add(payload):
         return
     channel = bot.get_channel(payload.channel_id)
     permissions = channel.permissions_for(channel.guild.me)
-    print(permissions.read_message_history)
+    
     if not permissions.read_message_history:
         return
 
