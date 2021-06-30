@@ -23,14 +23,16 @@ class Sending:
         if not Utility.is_integer(member_id):
             return
         target_user = cls.bot.get_user(int(member_id))
+        try:
+            if embed:
+                # split message into title and description
+                embed = discord.Embed(title = title, description = message, colour = cls.embed_color)
 
-        if embed:
-            # split message into title and description
-            embed = discord.Embed(title = title, description = message, colour = cls.embed_color)
-
-            if attachment_url:
-                embed.set_image(url = attachment_url)
-            await target_user.send(content = None, embed = embed)
-        else:
-            await target_user.send(message)
-        logging.debug("Sent DM to %s", member_id)
+                if attachment_url:
+                    embed.set_image(url = attachment_url)
+                await target_user.send(content = None, embed = embed)
+            else:
+                await target_user.send(message)
+            logging.debug("Sent DM to %s", member_id)
+        except AttributeError:
+            logging.info("User {} does not exist.".format(member_id))
