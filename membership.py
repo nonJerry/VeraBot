@@ -76,7 +76,7 @@ class Membership(commands.Cog):
 
     @commands.command(hidden= True, name = "relayVerify")
     @commands.is_owner()
-    async def queue(self, ctx, user_id: int, server_id: int):
+    async def relay_verify(self, ctx, user_id: int, server_id: int):
         embed = discord.Embed(title = str(user_id))
 
         # Send attachment and message to membership verification channel
