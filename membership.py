@@ -1,8 +1,10 @@
 # External
 import discord
 from discord.ext import commands
+import gspread
 # Python
 import logging
+from os import getenv
 # Internal
 from membership_handling import MembershipHandler
 
@@ -93,4 +95,51 @@ class Membership(commands.Cog):
         await message.add_reaction(emoji=u"\U0001F6AB") # no entry
         logging.info("Relayed the verify to %s", server_id)
 
-                     
+    
+    @commands.command(hidden = True, name ="dumpSheet")
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def dump_sheet(self, ctx, link: str):
+        logging.info("%s used dump sheet for link %s.", ctx.author.id, link)
+
+        credential_file = getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        try:
+            gc = gspread.service_account(filename=credential_file)
+            sh = gc.open_by_url(link)
+            worksheet = sh.worksheet("Member Dump")
+            if not worksheet:
+                worksheet = sh.add_worksheet(title="Member Dump", rows="300", cols="20")
+
+            server_db = self.member_handler.db_cluster[str(ctx.guild.id)]
+            count = 0
+            for member in server_db['members'].find():
+                count += 1
+                target_member = ctx.guild.get_member(member["id"])
+
+                worksheet.update('A' + str(count), member['id'])
+                worksheet.update('B' + str(count), str(target_member))
+                worksheet.update('C' + str(count), member["last_membership"].strftime(r"%d/%m/%Y"), raw=False)
+            logging.info("%s: Dumped data successfully.", ctx.guild.id)
+            await ctx.send("Finished dumping the data. It is in a sheet called `Member Dump`.")
+
+        except gspread.exceptions.APIError as e:
+            code = e.args[0]['code']
+            if code == 403:
+                logging.info("%s didn't give bot access to sheet.", ctx.guild.id)
+                await ctx.send("Please give the bot access to the sheet. You can either use a link that can be used by everyone or add `verabot@verabot-318714.iam.gserviceaccount.com`.")
+            elif code == 404:
+                logging.info("%s requested sheet dump with invalid link.", ctx.guild.id)
+                await ctx.send("Your link was not valid. Please use the command with a valid google sheets link.")
+
+    @dump_sheet.error
+    async def verify_error(self, ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            logging.info("%s tried to use dump sheet too often.", ctx.author.id)
+            await ctx.send(f"Try again in {error.retry_after:.0f}s.")
+        elif isinstance(error, commands.BadArgument):
+            logging.debug("%s used invalid Link (not string) for %s", ctx.author.id, ctx.command)
+            await ctx.send("Please provide a valid link!")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            logging.debug("%s forgot link for %s", ctx.author.id, ctx.command)
+            await ctx.send("Please include the link to the spreadsheet!")
