@@ -116,21 +116,26 @@ class Membership(commands.Cog):
 
             server_db = self.member_handler.db_cluster[str(ctx.guild.id)]
             count = 0
+            entries = []
             for member in server_db['members'].find():
-                try:
                     count += 1
+
                     target_member = ctx.guild.get_member(member["id"])
                     date = member["last_membership"] + relativedelta(months = 1)
 
-                    worksheet.update('A' + str(count), str(member['id']))
-                    worksheet.update('B' + str(count), str(target_member))
-                    worksheet.update('C' + str(count), date.strftime(r"%d/%m/%Y"), raw=False)
-                    await asyncio.sleep(2)
-                except gspread.exceptions.APIError as e:
-                    code = e.args[0]['code']
-                    if code == 429:
-                        logging.warning("Hit API rate limit of google sheets")
-                        await asyncio.sleep(100)
+                    member_id = str(member['id'])
+                    name = str(target_member)
+                    date = date.strftime(r"%d/%m/%Y")
+
+                    entries.append([member_id, name, date])
+            try:
+                worksheet.clear()
+                worksheet.update('A1:C' + str(count), entries, raw = False)
+            except gspread.exceptions.APIError as e:
+                code = e.args[0]['code']
+                if code == 429:
+                    logging.warning("Hit API rate limit of google sheets")
+                    await asyncio.sleep(100)
             logging.info("%s: Dumped data successfully.", ctx.guild.id)
             await ctx.send("Finished dumping the data. It is in a sheet called `Member Dump`.")
 
