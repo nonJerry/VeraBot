@@ -1,4 +1,6 @@
 # External
+import asyncio
+from dateutil.relativedelta import relativedelta
 import discord
 from discord.ext import commands
 import gspread
@@ -102,8 +104,9 @@ class Membership(commands.Cog):
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def dump_sheet(self, ctx, link: str):
         logging.info("%s used dump sheet for link %s.", ctx.author.id, link)
-
         credential_file = getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        
+        await ctx.send("Starting to dump data now!")
         try:
             gc = gspread.service_account(filename=credential_file)
             sh = gc.open_by_url(link)
@@ -114,12 +117,20 @@ class Membership(commands.Cog):
             server_db = self.member_handler.db_cluster[str(ctx.guild.id)]
             count = 0
             for member in server_db['members'].find():
-                count += 1
-                target_member = ctx.guild.get_member(member["id"])
+                try:
+                    count += 1
+                    target_member = ctx.guild.get_member(member["id"])
+                    date = member["last_membership"] + relativedelta(months = 1)
 
-                worksheet.update('A' + str(count), member['id'])
-                worksheet.update('B' + str(count), str(target_member))
-                worksheet.update('C' + str(count), member["last_membership"].strftime(r"%d/%m/%Y"), raw=False)
+                    worksheet.update('A' + str(count), str(member['id']))
+                    worksheet.update('B' + str(count), str(target_member))
+                    worksheet.update('C' + str(count), date.strftime(r"%d/%m/%Y"), raw=False)
+                    await asyncio.sleep(2)
+                except gspread.exceptions.APIError as e:
+                    code = e.args[0]['code']
+                    if code == 429:
+                        logging.warning("Hit API rate limit of google sheets")
+                        await asyncio.sleep(100)
             logging.info("%s: Dumped data successfully.", ctx.guild.id)
             await ctx.send("Finished dumping the data. It is in a sheet called `Member Dump`.")
 
