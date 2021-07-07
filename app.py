@@ -215,7 +215,7 @@ def dm_or_test_only():
 )
 @dm_or_test_only()
 @commands.cooldown(2, 50, commands.BucketType.user)
-async def verify(ctx, *vtuber):
+async def verify(ctx, *args):
     """
     Command in the DMs that tries to verify a screenshot for membership.
     """
@@ -225,16 +225,20 @@ async def verify(ctx, *vtuber):
     for attachment in ctx.message.attachments:
         await dm_lg_ch.send(attachment.url)
 
-    if vtuber:
-        server = map_vtuber_to_server(vtuber[0])
+    if args:
+        server = map_vtuber_to_server(args[0])
 
-        if len(vtuber) > 1:
-            language = map_language(vtuber[1])
+        if len(args) > 1:
+            language = map_language(args[1])
         else:
             language = "eng"
 
         if server:
-            await member_handler.add_to_queue(ctx.message, server, language)
+            if Utility.is_user_on_server(ctx.author.id, server):
+                await member_handler.add_to_queue(ctx.message, server, language)
+            else:
+                logging.info("%s tried to verify for a server they are not on.", ctx.author.id)
+                await ctx.send("You are not on {} server!".format(args[0].title()))
         else:
             embed = Utility.create_supported_vtuber_embed()
             await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)

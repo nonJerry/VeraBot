@@ -191,7 +191,11 @@ class MembershipHandler:
             return
 
         logging.info("Detected server for %s: %s (%s)", res.author.id, idol, server)
-        await self.verify_membership(res, server, lang)
+        if Utility.is_user_on_server(res.author.id, server):
+            await self.verify_membership(res, server, lang)
+        else:
+            logging.info("%s tried to verify for a server they are not on.", res.author.id)
+            await res.channel.send("You are not on {} server!".format(idol.title()))
 
 
 
@@ -374,6 +378,10 @@ class MembershipHandler:
 
         await asyncio.sleep(0.21)
         target_member = res.guild.get_member(member_id)
+        # stop if user not on server
+        if not target_member:
+            await res.channel.send("{} is not on this server!".format(target_member.mention), reference=res, mention_author=False)
+            return True
         role_id = server_db["settings"].find_one({"kind": "member_role"})["value"]
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)

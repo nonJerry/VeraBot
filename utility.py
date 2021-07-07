@@ -129,3 +129,11 @@ class Utility:
         title = "Supported VTuber"
 
         return discord.Embed(title = title, description = vtuber_list, colour = cls.embed_color)
+
+    @classmethod
+    def is_user_on_server(cls, user: int, server: int) -> bool:
+        guild = cls.bot.get_guild(server)
+        member = guild.get_member(user)
+        if member:
+            return True
+        return False
