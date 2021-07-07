@@ -54,7 +54,7 @@ class MembershipHandler:
         notify_date = expiry_date + timedelta(days=inform_duration)
         tolerance_date = expiry_date - timedelta(days=tolerance_duration)
 
-        message_title = idol + " Membership {}!"
+        message_title = idol.title() + " Membership {}!"
         end_text = "You may renew your membership by sending another updated verification photo using the ``$verify`` command."
         end_text += "Thank you so much for your continued support!"
         message_image = server_db['settings'].find_one({'kind': "picture_link"})['value']
@@ -110,6 +110,10 @@ class MembershipHandler:
                     server_db['members'].update_one({"id": member['id']}, {"$set": {"expiry_sent": True}})
             except discord.errors.Forbidden:
                 logging.warn("Could not send DM to %s", member["id"])
+                member_veri_ch = self.bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
+                user = self.bot.get_user(member["id"])
+                member_veri_ch.send("Could not send reminder to {}.".format(user.mention))
+
 
         # Returns expired_memberships list
         return expired_memberships
@@ -343,7 +347,13 @@ class MembershipHandler:
 
             await res.channel.send("Please provide a valid date (dd/mm/yyyy) or integer days (+/- integer).")
             return False
-        new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
+        try:
+            new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
+        except ValueError:
+            logging.info("%s used a invalid number for the date to set the membership.", res.author.id)
+            await res.channel.send("Your date was not valid. Please use the format dd/mm/yyyy")
+            return False
+
         db_date = new_date - relativedelta(months=1)
 
         # Check if id exists
