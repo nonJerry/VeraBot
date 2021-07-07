@@ -5,6 +5,7 @@ from discord.ext.commands.errors import CommandNotFound
 from pymongo import MongoClient
 #Python
 import asyncio
+from typing import Optional
 from datetime import datetime as dtime
 from datetime import timezone, timedelta
 import os
@@ -55,7 +56,10 @@ async def determine_prefix(bot, message):
         return "$"
     guild = message.guild
     if guild:
-        prefixes = db_cluster[str(guild.id)]["settings"].find_one({"kind": "prefixes"})["values"]
+        try:
+            prefixes = db_cluster[str(guild.id)]["settings"].find_one({"kind": "prefixes"})["values"]
+        except TypeError:
+            return "$"
         if prefixes:
             return prefixes
     return "$"
@@ -324,7 +328,7 @@ async def proof_error(ctx, error):
     await ctx.send(content=None, embed=embed)
 
 
-def map_vtuber_to_server(name):
+def map_vtuber_to_server(name) -> Optional[int]:
     settings_db = db_cluster["settings"]["general"]
     result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
     if 'supported_idols' in result:
