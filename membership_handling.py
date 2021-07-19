@@ -15,7 +15,6 @@ from sending import Sending
 
 class MembershipHandler:
     def __init__(self, bot, db_cluster, embed_color):
-        self.NO_PICTURE_TEXT = "I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)"
         self.ID_NOT_FOUND_TEXT = "Can't find membership id in the database!"
         self.DATE_FORMAT = r"%d/%m/%Y"
 
@@ -28,10 +27,6 @@ class MembershipHandler:
     async def add_to_queue(self, res, server_id=None, lang="eng"):
         
         # Check if there is a valid attachment
-        if not res.attachments:
-            await res.channel.send(self.NO_PICTURE_TEXT.format(res.author))
-            logging.info("Verify without screenshot from %s.", res.author.id)
-            return
         self.verify_deque.append([res, server_id, lang])
         logging.info("Proof from %s added to queue for server: %s", res.author.id, server_id)
 
@@ -112,7 +107,7 @@ class MembershipHandler:
                 logging.warn("Could not send DM to %s", member["id"])
                 member_veri_ch = self.bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
                 user = self.bot.get_user(member["id"])
-                member_veri_ch.send("Could not send reminder to {}.".format(user.mention))
+                await member_veri_ch.send("Could not send reminder to {}.".format(user.mention))
 
 
         # Returns expired_memberships list
@@ -546,12 +541,11 @@ class MembershipHandler:
                 membership_date = embed.fields[0].value
 
                 # set membership
-            if await self.set_membership(msg, target_member_id, membership_date, False, user):
-            #always clear
-                await asyncio.sleep(0.21)
-                await msg.clear_reactions()
-                await asyncio.sleep(0.21)
-                await msg.add_reaction(emoji='👌')
+                if await self.set_membership(msg, target_member_id, membership_date, False, user):
+                    await asyncio.sleep(0.21)
+                    await msg.clear_reactions()
+                    await asyncio.sleep(0.21)
+                    await msg.add_reaction(emoji='👌')
         # wrong date
         elif emoji == u"\U0001F4C5":
             logging.info("Wrong date recognized in %s for user %s.", channel.guild.id, target_member_id)
