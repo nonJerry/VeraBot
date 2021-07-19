@@ -199,8 +199,11 @@ async def on_raw_reaction_add(payload):
                 user = bot.get_user(payload.user_id)
                 await member_handler.process_reaction(channel, msg, user, reaction)
                     
-    except (discord.errors.Forbidden, discord.errors.NotFound):
-        logging.info("%s: problem with reaction in %s", payload.guild_id, channel.id)
+    except discord.errors.Forbidden:
+        logging.info("%s: forbidden on reaction in %s", payload.guild_id, channel.id)
+        return
+    except discord.errors.NotFound:
+        logging.info("%s: message not found on reaction in %s", payload.guild_id, channel.id)
         return
 
 def dm_or_test_only():
@@ -222,6 +225,12 @@ async def verify(ctx, *args):
     # log content to dm log channel for record
     dm_lg_ch = bot.get_channel(dm_log)
     await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
+    # check for needed picture
+    if not ctx.message.attachments:
+        NO_PICTURE_TEXT = "I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)"
+        await ctx.message.channel.send(NO_PICTURE_TEXT.format(ctx.author))
+        logging.info("Verify without screenshot from %s.", ctx.author.id)
+        return
     for attachment in ctx.message.attachments:
         await dm_lg_ch.send(attachment.url)
 
