@@ -269,6 +269,60 @@ class Settings(commands.Cog):
         await ctx.send("Flag for logging set to " + str(flag))
 
 
+    @commands.command(name="proofChannel", aliases=["setProofChannel", "threadChannel", "setThreadChannel"],
+    help="Sets the Channel to which the threads will be attached.",
+    brief="Sets the Channel to which the threads will be attached.")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def set_proof_channel(self, ctx, channel_id: int):
+        
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            await ctx.send("Please use a valid channel!")
+            return
+
+        #check whether use_public_thread is allowed
+        permissions = channel.permissions_for(channel.guild.me)
+        if not permissions.use_threads:
+            await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
+            return
+
+        self.set_value_in_server_settings(ctx, "proof_channel", channel_id)
+        logging.info("%s set %s as proof channel.", ctx.guild.id, channel_id)
+
+        await ctx.send("Proof Channel id set to " + str(channel_id))
+
+
+    @commands.command(name="enableThreads", aliases=["threads", "enabledThread", "thread"],
+    help="Will activate the use of threads. The bot will create a Thread for each submitted proof. The log channel will be used to protocol the verified/denied proofs, not as place to verify them anymore.\n" +
+    "Requires a proof channel to be set and use_public_threads to be enabled for this channel.",
+    brief="Toggles function that the bot creates a thread for each proof.")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def toggle_threads(self, ctx, flag):
+        flag = Utility.text_to_boolean(flag)
+        if not isinstance(flag, bool):
+            await ctx.send(self.BOOLEAN_ONLY_TEXT)
+            return
+
+        if flag:
+            channel = self.bot.get_channel(self.db_cluster[str(ctx.guild.id)]["settings"].find_one({"kind": "proof_channel"})["value"])
+            if not channel:
+                await ctx.send("Please set a proof channel first!")
+                return
+
+            #check whether use_public_thread is allowed
+            permissions = channel.permissions_for(channel.guild.me)
+            if not permissions.use_threads:
+                await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
+                return
+        # set value
+        self.set_value_in_server_settings(ctx, "threads", flag)
+        logging.info("%s set threads to %s", ctx.guild.id, str(flag))
+
+        await ctx.send("Flag for using threads set to " + str(flag))
+
+
     @set_idol.error
     @set_log_channel.error
     @set_member_role.error
@@ -280,6 +334,9 @@ class Settings(commands.Cog):
     @set_inform_duration.error
     @set_picture.error
     @set_logging.error
+    @toggle_threads.error
+    @set_proof_channel.error
+    #@toggle_threads.error
     async def general_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
             logging.debug("%s used invalid ID for %s", ctx.author.id, ctx.command)
