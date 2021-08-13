@@ -205,6 +205,8 @@ async def on_raw_reaction_add(payload):
     except discord.errors.NotFound:
         logging.info("%s: message not found on reaction in %s", payload.guild_id, channel.id)
         return
+    except discord.errors.DiscordServerError:
+        logging.info("%s: Discord Server has some problems", payload.guild_id)
 
 def dm_or_test_only():
     def predicate(ctx):
