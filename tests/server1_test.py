@@ -1,3 +1,4 @@
+import asyncio
 from distest import TestCollector
 from distest import run_dtest_bot
 from discord import Embed
@@ -62,7 +63,11 @@ async def send_and_get_verify(interface, vtuber, filepath):
     def check(m):
         return m.author == interface.target and m.channel == client.get_channel(log_channel_id) # verify channel
 
-    return await client.wait_for('message', check=check, timeout=90.0)
+    try:
+        msg = await client.wait_for('message', check=check, timeout=90.0)
+    except asyncio.TimeoutError:
+        msg = None
+    return msg
 
 @test_collector()
 async def test_verify(interface):
