@@ -8,6 +8,8 @@ from dateutil.relativedelta import relativedelta
 from collections import deque
 import logging
 import gc
+
+from discord.enums import ChannelType
 #Internal
 from utility import Utility
 from ocr import OCR
@@ -243,15 +245,30 @@ class MembershipHandler:
             new_membership_date = new_membership_date  - relativedelta(months=1)
         
 
-        #verification channel of the server
-        member_veri_ch = self.bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
-        
         FORGOTTEN_SETTINGS_TEXT = "Please contact the staff of your server, they forgot to set some settings"
+        threads_enabled = server_db["settings"].find_one({"kind": "threads"})["value"]
+
+        # check if permissions are okay
+        if threads_enabled:
+            member_veri_ch = self.bot.get_channel(server_db["settings"].find_one({"kind": "proof_channel"})["value"])
+            permissions = member_veri_ch.permissions_for(member_veri_ch.guild.me)
+            if not permissions.use_threads:
+                res.channel.send(FORGOTTEN_SETTINGS_TEXT)
+                member_veri_ch.send("You need to activate use_public_threads for VeraBot on this channel. Or deactivate the threads feature.")
+                logging.info("%s: Did not have Threads permission enabled.", server_id)
+                return
+        else:
+            #verification channel of the server
+            member_veri_ch = self.bot.get_channel(server_db["settings"].find_one({"kind": "log_channel"})["value"])
+            
+        
         if not member_veri_ch:
             res.channel.send(FORGOTTEN_SETTINGS_TEXT)
             return
 
         automatic_role = server_db["settings"].find_one({"kind": "automatic_role"})["value"]
+
+
 
         require_additional_proof = server_db["settings"].find_one({"kind": "require_additional_proof"})["value"]
 
@@ -268,15 +285,21 @@ class MembershipHandler:
                 return len(m.attachments) > 0 and m.author == res.author and isinstance(m.channel, discord.DMChannel)
             try:
                 proof_msg = await self.bot.wait_for('message', timeout=60, check=check)
+            # if overtime, send timeout message and return
             except asyncio.TimeoutError:
                 logging.info("%s took to long with the proof.", res.author.id)
                 await res.channel.send("I am sorry, you timed out. Please start the verify process again.")
                 return
 
-            # if overtime, send timeout message and return
+            if threads_enabled:
+                member_veri_ch = await member_veri_ch.create_thread(name="Proof: {}".format(res.author.name), type=ChannelType.public_thread)
+
             embed.description = "Additional proof"
             embed.set_image(url = proof_msg.attachments[0].url)
             await member_veri_ch.send(content=None, embed = embed)
+        #create thread if no additional proof required but thread enabled
+        elif threads_enabled:
+            member_veri_ch = await member_veri_ch.create_thread(name="Proof: {}".format(res.author.name), type=ChannelType.public_thread)
 
         # Send attachment and message to membership verification channel
         
@@ -527,7 +550,9 @@ class MembershipHandler:
         emoji = reaction.emoji
         embed = msg.embeds[0]
         automatic_role = self.db_cluster[str(msg.guild.id)]["settings"].find_one({"kind": "automatic_role"})["value"]
+        threads_enabled = self.db_cluster[str(msg.guild.id)]["settings"].find_one({"kind": "threads"})["value"]
         bot = self.bot
+        success = False
 
         
         # always only the id
@@ -546,53 +571,78 @@ class MembershipHandler:
                     await msg.clear_reactions()
                     await asyncio.sleep(0.21)
                     await msg.add_reaction(emoji='👌')
+                    success = True
+
         # wrong date
         elif emoji == u"\U0001F4C5":
             logging.info("Wrong date recognized in %s for user %s.", channel.guild.id, target_member_id)
 
-            m = "Please write the correct date from the screenshot in the format dd/mm/yyyy.\n"
-            m += "Type CANCEL to stop the process."
-            await channel.send(m, reference=msg, mention_author=False)
-            def check(m):
-                return m.author == user and m.channel == channel
-
-            date_msg = await bot.wait_for('message', check=check)
-
-            if date_msg.content.lower() != "cancel" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
-                await msg.clear_reactions()
-                await asyncio.sleep(0.21)
-                await msg.add_reaction(emoji='👍')
-            else:
-                logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
-                await reaction.remove(user)
-                await asyncio.sleep(0.21)
-                await channel.send("Stopped the process and removed reaction.")
+            success = await self.handle_wrong_date(channel, msg, user, reaction, bot, target_member_id)
 
         # deny option - fake / missing date
         elif emoji == u"\U0001F6AB":
             logging.info("Fake or without date in %s for user %s.", channel.guild.id, target_member_id)
+            success = await self.handle_denied(channel, msg, user, reaction, embed, automatic_role, bot, target_member_id)
 
-            m = "Please write a message that will be sent to the User."
-            m += "Type CANCEL to stop the process."
-            await channel.send(m, reference=msg, mention_author=False)
-            def check(m):
-                return m.author == user and m.channel == channel
+        if success and threads_enabled:
+            log_channel = bot.get_channel(self.db_cluster[str(msg.guild.id)]["settings"].find_one({"kind": "log_channel"})["value"])
+            embed.clear_fields()
+            embed.set_image(url = discord.Embed.Empty)
+            await log_channel.send(content=None, embed = embed)
+            await channel.edit(archived=True)
 
-            text_msg = await bot.wait_for('message', check=check)
-            if text_msg.content.lower() != "cancel":
-                target_member = bot.get_user(target_member_id)
-                await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
-                await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
 
-                if automatic_role:
-                    await self.del_membership(msg, target_member_id, None, False, False)
+
+
+    async def handle_wrong_date(self, channel, msg, user, reaction, bot, target_member_id) -> bool:
+        m = "Please write the correct date from the screenshot in the format dd/mm/yyyy.\n"
+        m += "Type CANCEL to stop the process."
+        await channel.send(m, reference=msg, mention_author=False)
+
+        def check(m):
+            return m.author == user and m.channel == channel
+
+        date_msg = await bot.wait_for('message', check=check)
+
+        if date_msg.content.lower() != "cancel" and await self.set_membership(msg, target_member_id, date_msg.content, False, user):
+            await msg.clear_reactions()
+            await asyncio.sleep(0.21)
+            await msg.add_reaction(emoji='👍')
+            return True
+        else:
+            logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
+            await reaction.remove(user)
+            await asyncio.sleep(0.21)
+            await channel.send("Stopped the process and removed reaction.")
+            return False
+
+
+
+    async def handle_denied(self, channel, msg, user, reaction, embed, automatic_role, bot, target_member_id) -> bool:
+        m = "Please write a message that will be sent to the User."
+        m += "Type CANCEL to stop the process."
+        await channel.send(m, reference=msg, mention_author=False)
+
+        def check(m):
+            return m.author == user and m.channel == channel
+
+        text_msg = await bot.wait_for('message', check=check)
+        if text_msg.content.lower() != "cancel":
+            target_member = bot.get_user(target_member_id)
+            await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
+            await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
+
+            if automatic_role:
+                await self.del_membership(msg, target_member_id, None, False, False)
                 # set embed
-                embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
-                await msg.edit(content = msg.content, embed = embed)
-                await asyncio.sleep(0.21)
-                await msg.clear_reactions()
-                await msg.add_reaction(emoji='👎')
-            else:
-                logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
-                await reaction.remove(user)
-                await channel.send("Stopped the process and removed reaction.")
+            embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
+            await msg.edit(content = msg.content, embed = embed)
+            await asyncio.sleep(0.21)
+            await msg.clear_reactions()
+            await msg.add_reaction(emoji='👎')
+            return True
+        else:
+            logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
+            await reaction.remove(user)
+            await channel.send("Stopped the process and removed reaction.")
+            return False
