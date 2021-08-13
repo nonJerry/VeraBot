@@ -159,6 +159,12 @@ async def on_guild_join(guild):
         json = {"kind": "logging", "value" : True}
         settings.insert_one(json)
 
+        json = {"kind": "threads", "value" : False}
+        settings.insert_one(json)
+
+        json = {"kind": "proof_channel", "value" : 0}
+        settings.insert_one(json)
+
         logging.info("Created database for %s", guild.id)
 
 
