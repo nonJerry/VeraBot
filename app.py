@@ -67,11 +67,15 @@ async def determine_prefix(bot, message):
 # Set up bot
 bot = commands.Bot(command_prefix=determine_prefix, description='Bot to verify and manage Memberships.\nlogChannel, Vtuber name and memberRole need to be set!', intents=intents, case_insensitive=True, owner_id=owner_id)
 
-# listen to other bots while testing
+# 2 tries per 50s as default
+verify_tries = 2
 
+# listen to other bots while testing
 if stage == "TEST":
     from distest.patches import patch_target
     bot = patch_target(bot)
+    # to not run into cooldown limit
+    verify_tries = 1000
     logging.info("Listining to bots too. Only for testing purposes!!!")
 
 
@@ -332,7 +336,7 @@ def dm_or_test_only():
 	brief=" Tries to verify a screenshot for membership in the DMs"
 )
 @dm_or_test_only()
-@commands.cooldown(2, 50, commands.BucketType.user)
+@commands.cooldown(verify_tries, 50, commands.BucketType.user)
 async def verify(ctx, *args):
     """
     Command in the DMs that tries to verify a screenshot for membership.
