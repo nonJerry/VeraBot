@@ -203,7 +203,7 @@ async def verify(ctx, *args):
         await dm_lg_ch.send(attachment.url)
 
     if args:
-        server = map_vtuber_to_server(args[0])
+        server = Utility.map_vtuber_to_server(args[0])
 
         if len(args) > 1:
             language = map_language(args[1])
@@ -308,12 +308,6 @@ async def proof_error(ctx, error):
     embed = Utility.create_supported_vtuber_embed()
     await ctx.send(content=None, embed=embed)
 
-
-def map_vtuber_to_server(name) -> Optional[int]:
-    settings_db = db_cluster["settings"]["general"]
-    result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
-    if 'supported_idols' in result:
-        return result['supported_idols'][0]['guild_id']
 
 def map_language(lang: str) -> str:
     supported = {

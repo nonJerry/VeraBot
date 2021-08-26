@@ -46,6 +46,10 @@ class Utility:
         if dates:
             return dates[0][1].replace(tzinfo = timezone.utc)
 
+    @classmethod
+    def map_vtuber_to_server(cls, name) -> Optional[int]:
+        return cls.db.get_vtuber_guild(name)
+
     @staticmethod
     def cut_to_date(s: str, lang: str) -> str:
         # on membership page in several languages
