@@ -7,7 +7,7 @@ from datetime import datetime as dtime
 from datetime import timezone
 from dateutil.relativedelta import relativedelta
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from database import Database
 
 
@@ -19,13 +19,13 @@ class Utility:
     embed_color = None
 
     @classmethod
-    def setup(cls, bot, embed_color):
+    def setup(cls, bot, embed_color) -> None:
         cls.bot = bot
         cls.db = Database()
         cls.embed_color = embed_color
 
     @staticmethod
-    def is_integer(s):
+    def is_integer(s) -> bool:
         # check if a string is an integer (includes negative integers)
         try: 
             int(s)
@@ -123,7 +123,7 @@ class Utility:
 
 
     @staticmethod
-    def text_to_boolean(flag):
+    def text_to_boolean(flag) -> Union[bool, str]:
         if flag in ['True', 'true']:
             return True
         elif flag in [ 'False', 'false']:
@@ -135,7 +135,7 @@ class Utility:
         cls.db.get_vtuber(guild_id)
 
     @classmethod
-    def create_supported_vtuber_embed(cls):
+    def create_supported_vtuber_embed(cls) -> discord.Embed:
         array = cls.db.get_vtuber_list()
 
         # list every vtuber like "- <vtuber>"
