@@ -206,7 +206,7 @@ async def verify(ctx, *args):
         server = Utility.map_vtuber_to_server(args[0])
 
         if len(args) > 1:
-            language = map_language(args[1])
+            language = Utility.map_language(args[1])
         else:
             language = "eng"
 
@@ -308,18 +308,6 @@ async def proof_error(ctx, error):
     embed = Utility.create_supported_vtuber_embed()
     await ctx.send(content=None, embed=embed)
 
-
-def map_language(lang: str) -> str:
-    supported = {
-        "eng": ["en", "eng", "english"],
-        "jpn": ["jp", "jap", "jpn", "japanese"],
-        "chi_sim": ["zh", "chi", "chinese"],
-        "rus": ["ru", "rus", "russian"]
-    }
-    for tuple in supported.items():
-        if lang.lower() in tuple[1]:
-            return tuple[0]
-    return "eng"
 
 #Time in status
 async def jst_clock():
