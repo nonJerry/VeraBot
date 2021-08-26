@@ -180,6 +180,7 @@ class ServerDatabase:
     def remove_member(self, member):
         if isinstance(member, int):
             return self.__get_member_collection().delete_one({"id": member}).deleted_count
+        # has to be Member
         self.__get_member_collection().delete_one(member.to_dict())
 
     def informed(self, member: Member) -> None:
