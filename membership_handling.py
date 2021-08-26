@@ -59,7 +59,7 @@ class MembershipHandler:
         end_text += "Thank you so much for your continued support!"
         message_image = server_db.get_picture()
 
-
+        # only needs to check those that are already expired to save ressources
         for member in server_db.get_members(only_expired=True):
             try:
                 # For each member
@@ -229,8 +229,6 @@ class MembershipHandler:
 
 
     async def verify_membership(self, res, server_id, lang):
-
-        guild = self.bot.get_guild(server_id)
         server_db = self.db.get_server_db(server_id)
 
         # if member exists, update date
@@ -238,72 +236,45 @@ class MembershipHandler:
 
         new_membership_date = await self.detect_membership_date(res, lang)
 
-
-        if not new_membership_date:
-            desc = "{}\n{}".format(str(res.author), "Date not detected")
-            membership_date_text = "None"
-        else:
-            membership_date_text = new_membership_date.strftime(self.DATE_FORMAT)
-            desc = "{}\n{}".format(str(res.author), membership_date_text)
-
-            #substract month for db
-            new_membership_date = new_membership_date  - relativedelta(months=1)
+        new_membership_date, membership_date_text, desc = self.process_date(res, new_membership_date)
         
 
-        FORGOTTEN_SETTINGS_TEXT = "Please contact the staff of your server, they forgot to set some settings"
         threads_enabled = server_db.get_threads_enabled()
         # check if permissions are okay
-        # TODO: externalize
         if threads_enabled:
-            if self.bot.get_cog('Settings').check_thread_permissions():
-                pass
-            member_veri_ch = self.bot.get_channel(server_db.get_proof_channel())
-            permissions = member_veri_ch.permissions_for(member_veri_ch.guild.me)
-            if not permissions.use_threads:
-                res.channel.send(FORGOTTEN_SETTINGS_TEXT)
-                member_veri_ch.send("You need to activate use_public_threads for VeraBot on this channel. Or deactivate the threads feature.")
-                logging.info("%s: Did not have Threads permission enabled.", server_id)
-                return
+            if self.bot.get_cog('Settings').check_thread_permissions(server_id):
+                member_veri_ch = self.bot.get_channel(server_db.get_proof_channel())
+            else:
+                logging.info("%s: Has Threads enabled but perms are missing.", server_id)
         else:
             #verification channel of the server
             member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
             
         
         if not member_veri_ch:
-            res.channel.send(FORGOTTEN_SETTINGS_TEXT)
+            res.channel.send("Please contact the staff of your server, they forgot to set some settings")
             return
 
         automatic_role = server_db.get_automatic()
-        require_additional_proof = server_db.get_additional_proof()
 
         title = res.author.id
         embed = discord.Embed(title = title, colour = self.embed_color)
 
-        if require_additional_proof:
-            m = "This server requires you to send additional proof.\n"
-            m += "Please send a screenshot as specified by them."
-            await res.channel.send(m)
-            logging.info("Requiring additional proof from %s for server %s.", res.author.id, server_id)
-
-            def check(m):
-                return len(m.attachments) > 0 and m.author == res.author and isinstance(m.channel, discord.DMChannel)
-            try:
-                proof_msg = await self.bot.wait_for('message', timeout=60, check=check)
-            # if overtime, send timeout message and return
-            except asyncio.TimeoutError:
-                logging.info("%s took to long with the proof.", res.author.id)
-                await res.channel.send("I am sorry, you timed out. Please start the verify process again.")
-                return
-
-            if threads_enabled:
-                member_veri_ch = await member_veri_ch.create_thread(name="Proof: {}".format(res.author.name), type=ChannelType.public_thread)
-
-            embed.description = "Additional proof"
-            embed.set_image(url = proof_msg.attachments[0].url)
-            await member_veri_ch.send(content=None, embed = embed)
-        #create thread if no additional proof required but thread enabled
-        elif threads_enabled:
+        #create thread if setting enabled
+        if threads_enabled:
             member_veri_ch = await member_veri_ch.create_thread(name="Proof: {}".format(res.author.name), type=ChannelType.public_thread)
+
+        try:
+            if server_db.get_additional_proof():
+                proof_url = await self.handle_additional_proof(res, server_id)
+                embed.description = "Additional proof"
+                embed.set_image(url = proof_url)
+                await member_veri_ch.send(content=None, embed = embed)
+        # if overtime, send timeout message and return
+        except asyncio.TimeoutError:
+            logging.info("%s took to long with the proof.", res.author.id)
+            await res.channel.send("I am sorry, you timed out. Please start the verify process again.")
+            return
 
         # Send attachment and message to membership verification channel
         
@@ -317,34 +288,40 @@ class MembershipHandler:
         logging.info("Sent embed with reactions to %s", server_id)
 
 
-        # should not get the role yet
-        if not new_membership_date:
-            logging.info("Date for %s on server %s was missing.", res.author.id, server_id)
+
+        # starting here only if automatic role is enabled
+        if not automatic_role:
             return
 
-        # automatic role not allowed
-        if not automatic_role:
+        # no date = no automatic role/manual judgement needed
+        if not new_membership_date:
+            logging.info("Date for %s on server %s was missing.", res.author.id, server_id)
             return
 
         # no need to update if new date is not newer
         if member and new_membership_date < member.last_membership:
             return
 
-        server_db.update_member(member.id, new_membership_date)
-        
-        
-        # add role
+        return await self.handle_role(res, server_id, new_membership_date)
+
+    async def handle_role(self, res, server_id, new_membership_date):
+        guild = self.bot.get_guild(server_id)
         author = guild.get_member(res.author.id)
+
+        # if author not part of guild do nothing
         if author:
+            server_db = self.db.get_server_db(server_id)
             logging.info("Adding role automatically for %s on server %s", res.author.id, server_id)
 
             role_id = server_db.get_member_role()
             role = guild.get_role(role_id)
 
             if not role:
-                res.channel.send(FORGOTTEN_SETTINGS_TEXT)
+                res.channel.send("Please contact the staff of your server, they forgot to set a membership role")
                 return
-                
+            
+            # add role and update db entry
+            server_db.update_member(res.author.id, new_membership_date)
             await author.add_roles(role)
 
             # DM user that the verification process is complete
@@ -357,8 +334,38 @@ class MembershipHandler:
             await res.channel.send("You are not part of this server!")
 
 
-    async def set_membership(self, res, member_id, date, manual=True, actor=None) -> bool:
+    async def handle_additional_proof(self, res, server_id):
+            m = "This server requires you to send additional proof.\n"
+            m += "Please send a screenshot as specified by them."
+            await res.channel.send(m)
+            logging.info("Requiring additional proof from %s for server %s.", res.author.id, server_id)
 
+            # check if message by user
+            def check(m):
+                return len(m.attachments) > 0 and m.author == res.author and isinstance(m.channel, discord.DMChannel)
+            
+            # wait for message by user
+            proof_msg = await self.bot.wait_for('message', timeout=60, check=check)
+            
+            return proof_msg.attachments[0].url
+
+            
+
+    def process_date(self, res, new_membership_date) -> Tuple[dtime, str, str]:
+        if not new_membership_date:
+            desc = "{}\n{}".format(str(res.author), "Date not detected")
+            membership_date_text = "None"
+        else:
+            membership_date_text = new_membership_date.strftime(self.DATE_FORMAT)
+            desc = "{}\n{}".format(str(res.author), membership_date_text)
+
+            #substract month for db
+            new_membership_date = new_membership_date  - relativedelta(months=1)
+
+        return (new_membership_date, membership_date_text, desc)
+
+
+    async def set_membership(self, res, member_id, date, manual=True, actor=None) -> bool:
         dates = date.split("/")
 
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
@@ -405,7 +412,6 @@ class MembershipHandler:
         
 
     async def del_membership(self, res, member_id: int, text, dm_flag=True, manual=True):
-
         server_db = self.db.get_server_db(res.guild.id)
 
         # Delete from db
@@ -445,7 +451,6 @@ class MembershipHandler:
          
 
     async def delete_expired_memberships(self, forced=False):
-
         # get data of last checked timestamp
         last_checked = self.db.get_last_checked()
 
