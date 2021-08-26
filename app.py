@@ -1,4 +1,5 @@
 #External
+from database import Database
 import discord
 from discord.ext import commands
 from discord.ext.commands.errors import CommandNotFound
@@ -57,7 +58,7 @@ async def determine_prefix(bot, message):
     guild = message.guild
     if guild:
         try:
-            prefixes = db_cluster[str(guild.id)]["settings"].find_one({"kind": "prefixes"})["values"]
+            prefixes = database.get_server_db(guild.id).get_prefixes()
         except TypeError:
             return "$"
         if prefixes:
@@ -80,13 +81,14 @@ db_cluster = MongoClient(db_url.format(db_user, db_pass))
 
 
 # set up classes
-member_handler = MembershipHandler(bot, db_cluster, embed_color)
-Utility.setup(bot, db_cluster, embed_color)
+database = Database(db_cluster)
+member_handler = MembershipHandler(bot, embed_color)
+Utility.setup(bot, embed_color)
 OCR.setup(bot, local)
 Sending.setup(bot, embed_color)
 
 #add cogs
-bot.add_cog(Settings(bot, db_cluster))
+bot.add_cog(Settings(bot))
 bot.add_cog(Membership(bot, member_handler))
 logging.info("Cogs added")
 
@@ -122,50 +124,9 @@ async def on_guild_join(guild):
     """
     logging.info("Joined new Guild: %s (%s)", guild.name , guild.id)
 
-    dbnames = db_cluster.list_database_names()
-    
-    if not str(guild.id) in dbnames:
-        new_guild_db = db_cluster[str(guild.id)]
-        settings = new_guild_db["settings"]
+    database.create_new_server(guild.id)
 
-        # Create base configuration
-        json = { "kind": "prefixes", "values" : ['$']}
-        settings.insert_one(json)
-
-        json = {"kind": "member_role", "value" : 0}
-        settings.insert_one(json)
-
-        json = {"kind": "log_channel", "value" : 0}
-        settings.insert_one(json)
-
-        json = {"kind": "mod_role", "value" : 0}
-        settings.insert_one(json)
-
-        json = {"kind": "picture_link", "value" : "https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg"} #hololive logo
-        settings.insert_one(json)
-
-        json = {"kind": "automatic_role", "value" : False}
-        settings.insert_one(json)
-
-        json = {"kind": "require_additional_proof", "value" : False}
-        settings.insert_one(json)
-
-        json = {"kind": "tolerance_duration", "value" : 1}
-        settings.insert_one(json)
-
-        json = {"kind": "inform_duration", "value" : 1}
-        settings.insert_one(json)
-
-        json = {"kind": "logging", "value" : True}
-        settings.insert_one(json)
-
-        json = {"kind": "threads", "value" : False}
-        settings.insert_one(json)
-
-        json = {"kind": "proof_channel", "value" : 0}
-        settings.insert_one(json)
-
-        logging.info("Created database for %s", guild.id)
+    logging.info("Created database for %s", guild.id)
 
 
 @bot.event
@@ -174,8 +135,7 @@ async def on_guild_remove(guild):
     Removes the guild from the supported idols so that memberships are not checked.
     """
     logging.info("Left Guild: %s (%s)", guild.name , guild.id)
-    settings = db_cluster["settings"]["general"]
-    settings.update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild.id}}})
+    database.remove_vtuber(guild.id)
 
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -274,7 +234,7 @@ async def verify_error(ctx, error):
 async def check(ctx):
     logging.info("Checked supported VTuber!")
     Utility.create_supported_vtuber_embed()
-    await ctx.send(db_cluster['settings']['general'].find_one()['supported_idols'])
+    await ctx.send(database.get_vtuber_list())
 
 def owner_or_test(ctx):
     return ctx.author.id == 846648298093936641 or ctx.author.id == owner_id
@@ -289,15 +249,15 @@ async def force_member_check(ctx):
 @bot.command(hidden = True, name = "broadcast")
 @commands.is_owner()
 async def broadcast(ctx, title, text):
-    serverlist = db_cluster["settings"]['general'].find_one({'name': "supported_idols"})['supported_idols']
+    serverlist = database.get_vtuber_list()
 
     #create Embed
     embed = discord.Embed(title = title, description = text, colour = embed_color)
 
     #send to every server
     for server in serverlist:
-        server_db = db_cluster[str(server['guild_id'])]
-        lg_ch = bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
+        server_db = database.get_server_db(server['guild_id'])
+        lg_ch = bot.get_channel(server_db.get_log_channel())
 
         await lg_ch.send(content = None, embed = embed)
     logging.info("Sent broadcast to all servers.")
@@ -324,8 +284,8 @@ async def send_proof(ctx, vtuber: str):
     if not ctx.message.attachments:
         await ctx.send("Please include a screenshot of the proof!")
         return
-    server_id = map_vtuber_to_server(vtuber)
-    member_veri_ch = bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+    server_id = Utility.map_vtuber_to_server(vtuber)
+    member_veri_ch = bot.get_channel(database.get_server_db(server_id).get_log_channel())
 
     # Send attachment and message to membership verification channel
     desc = "{}\n{}".format(str(ctx.author), "Additional proof")

@@ -1,4 +1,5 @@
 #External
+from os import stat
 import discord
 from dateparser.search import search_dates
 #Python
@@ -7,18 +8,20 @@ from datetime import timezone
 from dateutil.relativedelta import relativedelta
 import logging
 from typing import Optional, Tuple
+from database import Database
+
 
 
 class Utility:
 
     bot = None
-    db_cluster = None
+    db = None
     embed_color = None
 
     @classmethod
-    def setup(cls, bot, db_cluster, embed_color):
+    def setup(cls, bot, embed_color):
         cls.bot = bot
-        cls.db_cluster = db_cluster
+        cls.db = Database()
         cls.embed_color = embed_color
 
     @staticmethod
@@ -111,18 +114,11 @@ class Utility:
 
     @classmethod
     def get_vtuber(cls, guild_id) -> str:
-        settings_db = cls.db_cluster["settings"]["general"]
-        result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'guild_id' : guild_id}}})
-        if 'supported_idols' in result:
-            return result['supported_idols'][0]['name'].title()
-        else:
-            logging.warn("Not supported server on getVtuber!")
-            return "not supported server"
+        cls.db.get_vtuber(guild_id)
 
     @classmethod
     def create_supported_vtuber_embed(cls):
-        settings = cls.db_cluster['settings']['general']
-        array = settings.find_one({}, {'supported_idols'})['supported_idols']
+        array = cls.db.get_vtuber_list()
 
         # list every vtuber like "- <vtuber>"
         vtuber_list = "- " + '\n- '.join(element['name'].title() for element in array)
