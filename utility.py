@@ -51,6 +51,20 @@ class Utility:
         return cls.db.get_vtuber_guild(name)
 
     @staticmethod
+    def map_language(lang: str) -> str:
+        supported = {
+            "eng": ["en", "eng", "english"],
+            "jpn": ["jp", "jap", "jpn", "japanese"],
+            "chi_sim": ["zh", "chi", "chinese"],
+            "rus": ["ru", "rus", "russian"]
+        }
+        for tuple in supported.items():
+            if lang.lower() in tuple[1]:
+                return tuple[0]
+        return "eng"
+    
+
+    @staticmethod
     def cut_to_date(s: str, lang: str) -> str:
         # on membership page in several languages
         BILLING_DATE = "billing date"
