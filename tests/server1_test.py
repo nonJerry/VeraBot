@@ -56,6 +56,7 @@ async def setup(interface):
         .add_field(name='Require Additional Proof', value="False", inline=True)
         .add_field(name='Tolerance Duration', value="1", inline=True)
         .add_field(name='Prior Notice Duration', value="1", inline=True)
+        .add_field(name='Logging enabled', value="True", inline=True)
     )
 
     await interface.send_message("$settings")
@@ -76,15 +77,10 @@ async def send_and_get_verify(interface, vtuber, filepath):
         raise NoResponseError
     return msg
 
-@test_collector()
-async def test_verify(interface):
-    # NOTE: IMPORTANT WAY TO SEND DMS
-    # client = interface.client
-    # await client.get_user(517732773943836682).send("aaa")
-    # target -> user !!!
-    # interface.client._channel -> channel for commands
-    
-    msg = await send_and_get_verify(interface, "lamy", 'tests/pictures/test1.png')
+
+async def assert_proof(interface, vtuber: str, picture: str, expected_date: str):
+
+    msg = await send_and_get_verify(interface, vtuber, picture)
 
     patterns = {
         "title": str(interface.client.user.id),
@@ -93,7 +89,24 @@ async def test_verify(interface):
     await interface.assert_embed_regex(msg, patterns)
 
     #  make sure the date is correct
-    await interface.assert_message_contains(msg, "06/06/2021")
+    await interface.assert_message_contains(msg, expected_date)
+
+
+@test_collector()
+async def test_verify(interface):
+    # NOTE: interface.client._channel -> channel for commands
+
+    LAMY = "lamy"
+    await assert_proof(interface, LAMY, 'tests/pictures/test1.png', "06/06/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test2.png', "11/06/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test3.png', "26/05/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test4.png', "29/05/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test5.png', "26/05/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test6.png', "15/06/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test7.png', "14/06/2069")
+    await assert_proof(interface, LAMY, 'tests/pictures/test10.png', "Date not detected")
+
+
 
 @test_collector()
 async def revert_vtuber(interface):
