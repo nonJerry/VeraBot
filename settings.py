@@ -1,4 +1,5 @@
 # External
+from database import Database
 import discord
 from discord.ext import commands
 # Python
@@ -8,9 +9,9 @@ from utility import Utility
 
 class Settings(commands.Cog):
 
-    def __init__(self, bot, db_cluster):
+    def __init__(self, bot):
         self.bot = bot
-        self.db_cluster = db_cluster
+        self.db = Database()
 
     @commands.command(name="viewSettings", aliases=["settings", "allSettings", "showSettings"],
         help="Shows all settings of this server.",
@@ -22,48 +23,56 @@ class Settings(commands.Cog):
 
         title = "Current Settings"
         embed = discord.Embed(title = title, description = None)
-        settings = self.db_cluster[str(ctx.guild.id)]["settings"]
+        server_db = self.db.get_server_db(ctx.guild.id)
 
         # VTuber
-        vtuber = Utility.get_vtuber(ctx.guild.id)
+        vtuber = server_db.get_vtuber()
         embed.add_field(name="VTuber", value=vtuber)
         
         #get prefixes
-        prefixes = settings.find_one({'kind' : 'prefixes'})['values']
+        prefixes = server_db.get_prefixes()
         prefixes = ', '.join(element for element in prefixes)
         embed.add_field(name='Prefixes', value=prefixes, inline=True)
 
         # Member Role
-        member_role = settings.find_one({'kind' : 'member_role'})['value']
+        member_role = server_db.get_member_role()
         embed.add_field(name='Member Role ID', value=str(member_role), inline=True)
 
         # Log Channel
-        log_channel = settings.find_one({'kind' : 'log_channel'})['value']
+        log_channel = server_db.get_log_channel()
         embed.add_field(name='Log Channel ID', value=str(log_channel), inline=True)
 
         # current picture (als image anhängen)
-        picture_url = settings.find_one({'kind' : 'picture_link'})['value']
+        picture_url = server_db.get_picture()
         embed.set_image(url=picture_url)
 
         # automatic role
-        automatic_role = settings.find_one({'kind' : 'automatic_role'})['value']
+        automatic_role = server_db.get_automatic()
         embed.add_field(name='Auto Role Flag', value=str(automatic_role), inline=True)
 
         # require additional proof
-        additional_proof = settings.find_one({'kind' : 'require_additional_proof'})['value']
+        additional_proof = server_db.get_additional_proof()
         embed.add_field(name='Require Additional Proof', value=str(additional_proof), inline=True)
 
         # tolerance duration
-        tolerance_duration = settings.find_one({'kind' : 'tolerance_duration'})['value']
+        tolerance_duration = server_db.get_tolerance_duration()
         embed.add_field(name='Tolerance Duration', value=str(tolerance_duration), inline=True)
 
         # inform duration
-        inform_duration = settings.find_one({'kind' : 'inform_duration'})['value']
+        inform_duration = server_db.get_inform_duration()
         embed.add_field(name='Prior Notice Duration', value=str(inform_duration), inline=True)
 
         # logging
-        enable_logging = settings.find_one({'kind' : 'logging'})['value']
+        enable_logging = server_db.get_logging()
         embed.add_field(name='Logging enabled', value=str(enable_logging), inline=True)
+
+        # threads
+        enable_threads = server_db.get_threads_enabled()
+        embed.add_field(name='Threads enabled', value=str(enable_threads), inline=True)
+
+        # proof channel
+        proof_channel = server_db.get_proof_channel()
+        embed.add_field(name='Proof Channel ID', value=str(proof_channel), inline=True)
 
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
         m += "For a full explanation of the settings please refer to:\n"
@@ -76,8 +85,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def set_prefix(self, ctx, prefix: str):
-        settings = self.db_cluster[str(ctx.guild.id)]["settings"]
-        settings.update_one({"kind": "prefixes"}, {'$push': {'values': prefix}})
+        self.db.get_server_db(ctx.guild.id).set_prefix(prefix)
+
         await ctx.send("Prefix " + prefix + " added")
         logging.debug("%s added %s as prefix.", ctx.guild.id, prefix)
 
@@ -93,9 +102,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def remove_prefix(self, ctx, prefix: str):
-        settings = self.db_cluster[str(ctx.guild.id)]["settings"]
 
-        if settings.update_one({"kind": "prefixes"}, {'$pull': {'values': prefix}}).matched_count == 0:
+        if self.db.get_server_db(ctx.guild.id).remove_prefix(prefix) == 0:
             await ctx.send("Prefix not found")
         else:
             await ctx.send(prefix +" removed")
@@ -108,9 +116,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def show_prefix(self, ctx):
-        settings = self.db_cluster[str(ctx.guild.id)]["settings"]
 
-        await ctx.send("Those prefixes are set: " + str(settings.find_one({"kind": "prefixes"})['values']))
+        await ctx.send("Those prefixes are set: " + str(self.db.get_server_db(ctx.guild.id).get_prefixes()))
         logging.debug("%s viewed their prefixes.", ctx.guild.id)
 
 
@@ -120,16 +127,14 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def set_idol(self, ctx, vtuber_name: str):
-        settings = self.db_cluster["settings"]["general"]
+
         # always only one entry
-        for element in settings.find_one({}, {'supported_idols'})['supported_idols']:
+        for element in self.db.get_vtuber_list():
             if vtuber_name.lower() in element['name']:
                 await ctx.send("This Vtuber is already mapped to a server!")
                 return
-        if settings.find_one( { 'supported_idols.guild_id': ctx.guild.id}):
-            settings.update_one({'supported_idols.guild_id': ctx.guild.id}, {'$set': {'supported_idols.$': {"name": vtuber_name.lower(), "guild_id": ctx.guild.id}}})
-        else:
-            settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": vtuber_name.lower(), "guild_id": ctx.guild.id}}})
+        self.db.set_vtuber(vtuber_name, ctx.guild.id)
+
         await ctx.send("Set VTuber name to " + vtuber_name)
         logging.info("%s (%s) -> New Vtuber added: %s", ctx.guild.name, ctx.guild.id, vtuber_name)
 
@@ -141,7 +146,7 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_member_role(self, ctx, role_id: int):
         if self.check_role_integrity(ctx, role_id):
-            self.set_value_in_server_settings(ctx, "member_role", role_id)
+            self.db.get_server_db(ctx.guild.id).set_member_role(role_id)
 
             await ctx.send("Member role id set to " + str(role_id))
         else:
@@ -155,22 +160,14 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def set_log_channel(self, ctx, channel_id: int):
-        self.set_value_in_server_settings(ctx, "log_channel", channel_id)
-        logging.info("%s set %s as log channel.", ctx.guild.id, channel_id)
-
-        await ctx.send("Log Channel id set to " + str(channel_id))
-
-
-    @commands.command(hidden = True, name="modRole")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_mod_role(self, ctx, role_id: int):
-        if self.check_role_integrity(ctx, role_id):
-            self.set_value_in_server_settings(ctx, "mod_role", role_id)
-
-            await ctx.send("Mod role id set to " + str(role_id))
+        if self.check_channel_integrity(channel_id):
+            self.db.get_server_db(ctx.guild.id).set_log_channel(channel_id)
+            logging.info("%s set %s as log channel.", ctx.guild.id, channel_id)
+            await ctx.send("Log Channel id set to " + str(channel_id))
         else:
-            await ctx.send("ID does not refer to a legit role")
+            await ctx.send("ID does not refer to a legit channel")
+            logging.info("%s used a wrong ID as log channel.", ctx.guild.id)
+
 
 
     @commands.command(name="picture", aliases=["setPicture"],
@@ -184,7 +181,7 @@ class Settings(commands.Cog):
         from re import search
         match = search(r"http[s]?://[a-zA-Z0-9\_\-\.]+/[a-zA-Z0-9\_\-/]+\.(png|jpeg|jpg)", link)
         if match:
-            self.set_value_in_server_settings(ctx, "picture_link", link)
+            self.db.get_server_db(ctx.guild.id).set_picture(link)
             await ctx.send("Image for expiration message set.")
         else:
             await ctx.send("Please send a legit link. Only jpg, jpeg and png are accepted.")
@@ -201,7 +198,8 @@ class Settings(commands.Cog):
         if not isinstance(flag, bool):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
-        self.set_value_in_server_settings(ctx, "automatic_role", flag)
+
+        self.db.get_server_db(ctx.guild.id).set_automatic(flag)
         logging.info("%s set auto to %s", ctx.guild.id, str(flag))
 
         await ctx.send("Flag for automatic role handling set to " + str(flag))
@@ -218,7 +216,8 @@ class Settings(commands.Cog):
         if not isinstance(flag, bool):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
-        self.set_value_in_server_settings(ctx, "require_additional_proof", flag)
+
+        self.db.get_server_db(ctx.guild.id).set_additional_proof(flag)
         logging.info("%s set additional Proof to %s", ctx.guild.id, str(flag))
 
         await ctx.send("Flag for additional Proof set to " + str(flag))
@@ -233,7 +232,8 @@ class Settings(commands.Cog):
         if(time < 0):
             await ctx.send("This value needs to be at least 0 days.")
             return
-        self.set_value_in_server_settings(ctx, "tolerance_duration", time)
+
+        self.db.get_server_db(ctx.guild.id).set_tolerance_duration(time)
         logging.info("%s set Tolerance to %s", ctx.guild.id, time)
 
         await ctx.send("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)))
@@ -248,7 +248,8 @@ class Settings(commands.Cog):
         if(time < 0):
             await ctx.send("This value needs to be at least 0 days.")
             return
-        self.set_value_in_server_settings(ctx, "inform_duration", time)
+
+        self.db.get_server_db(ctx.guild.id).set_inform_duration(time)
         logging.info("%s set prior Notice to %s", ctx.guild.id, time)
 
         await ctx.send("Users will be notified " + str(time) + " days before their membership ends.")
@@ -263,7 +264,8 @@ class Settings(commands.Cog):
         if not isinstance(flag, bool):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
             return
-        self.set_value_in_server_settings(ctx, "logging", flag)
+        
+        self.db.get_server_db(ctx.guild.id).set_logging(flag)
         logging.info("%s set logging to %s", ctx.guild.id, str(flag))
 
         await ctx.send("Flag for logging set to " + str(flag))
@@ -287,7 +289,7 @@ class Settings(commands.Cog):
             await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
             return
 
-        self.set_value_in_server_settings(ctx, "proof_channel", channel_id)
+        self.db.get_server_db(ctx.guild.id).set_proof_channel(channel_id)
         logging.info("%s set %s as proof channel.", ctx.guild.id, channel_id)
 
         await ctx.send("Proof Channel id set to " + str(channel_id))
@@ -306,7 +308,7 @@ class Settings(commands.Cog):
             return
 
         if flag:
-            channel = self.bot.get_channel(self.db_cluster[str(ctx.guild.id)]["settings"].find_one({"kind": "proof_channel"})["value"])
+            channel = self.bot.get_channel(self.db.get_server_db(ctx.guild.id).get_proof_channel())
             if not channel:
                 await ctx.send("Please set a proof channel first!")
                 return
@@ -317,10 +319,18 @@ class Settings(commands.Cog):
                 await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
                 return
         # set value
-        self.set_value_in_server_settings(ctx, "threads", flag)
+        self.db.get_server_db(ctx.guild.id).set_threads_enabled(flag)
         logging.info("%s set threads to %s", ctx.guild.id, str(flag))
 
         await ctx.send("Flag for using threads set to " + str(flag))
+
+    async def check_thread_permissions(self, guild_id: int) -> bool:
+        member_veri_ch = self.bot.get_channel(self.db.get_server_db(guild_id).get_proof_channel())
+        permissions = member_veri_ch.permissions_for(member_veri_ch.guild.me)
+        if not permissions.use_threads:
+            logging.info("%s: Did not have Threads permission enabled.", guild_id)
+            return False
+        return True
 
 
     @set_idol.error
@@ -350,10 +360,11 @@ class Settings(commands.Cog):
             return True
         return False
 
-    def set_value_in_server_settings(self, ctx, setting: str, value):
-        settings_db = self.db_cluster[str(ctx.guild.id)]["settings"]
-
-        settings_db.update_one({'kind': setting}, {'$set': {'value': value}})
+    def check_channel_integrity(self, channel_id: int):
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            return False
+        return True
 
     @commands.command(hidden = True, name = "createNewSetting")
     @commands.is_owner()
@@ -365,19 +376,12 @@ class Settings(commands.Cog):
             if isinstance(tmp, bool):
                 value = tmp
 
-        dbnames = self.db_cluster.list_database_names()
-
-        for server in dbnames:
-            if Utility.is_integer(server):
-                server_db = self.db_cluster[str(server)]
-                settings = server_db["settings"]
-
-                # Create base configuration
-                json = { "kind": kind, "value" : value}
-                settings.insert_one(json)
+        self.db.create_new_setting(kind, value)
 
         logging.info("Added %s with default value %s", kind, str(value))
         await ctx.send("Added " + kind + " with default value " + str(value))
+
+    
 
     @commands.command(hidden = True, name = "newMemberSetting")
     @commands.is_owner()
@@ -389,17 +393,12 @@ class Settings(commands.Cog):
             if isinstance(tmp, bool):
                 value = tmp
 
-        dbnames = self.db_cluster.list_database_names()
-
-        for server in dbnames:
-            if Utility.is_integer(server):
-                server_db = self.db_cluster[str(server)]
-                for member in server_db['members'].find():
-                    # Create base configuration
-                    server_db['members'].update_one({"id": member['id']}, {"$set": {kind: value}})
+        self.db.create_new_member_setting(kind, value)
 
         logging.info("Member: Added %s with default value %s", kind, str(value))            
         await ctx.send("Member: Added " + kind + " with default value " + str(value))
+
+    
 
     @commands.command(hidden = True, name = "servers")
     @commands.is_owner()
