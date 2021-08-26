@@ -457,21 +457,28 @@ class MembershipHandler:
 
         #execute for every server
         for server in serverlist:
-            logging.info("Checking Memberships for %s.", server['guild_id'])
+            server_id = server['guild_id']
+            logging.info("Checking Memberships for %s.", server_id)
 
-            server_db = self.db.get_server_db(server['guild_id'])
-            lg_ch = self.bot.get_channel(server_db.get_log_channel())
+            server_db = self.db.get_server_db(server_id)
             logging_enabled = server_db.get_logging()
             expired_memberships = await self._check_membership_dates(server)
 
             if logging_enabled:
-                if not forced:
-                    await lg_ch.send("Performing membership check, last check was {}".format(last_checked))
-                else:
-                    await lg_ch.send("Forced Membership check")
+                lg_ch = self.bot.get_channel(server_db.get_log_channel())
+                try:
+                    if not forced:
+                        await lg_ch.send("Performing membership check, last check was {}".format(last_checked))
+                    else:
+                        await lg_ch.send("Forced Membership check")
 
-                content = ["{}".format(d["id"]) for d in expired_memberships]
-                await self.send_expired_info(lg_ch, content)
+                    content = ["{}".format(d["id"]) for d in expired_memberships]
+                    await self.send_expired_info(lg_ch, content)
+                    
+                except discord.errors.Forbidden:
+                    logging.info("{}: ERROR - Cannot post in Log Channel!!!".format(server_id))
+                except Exception:
+                    logging.info("{}: Other ERROR occured during membership check!".format)
 
         # add wait time
         dt = date.today()
