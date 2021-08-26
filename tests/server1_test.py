@@ -1,5 +1,6 @@
 import asyncio
 from distest import TestCollector
+from distest.exceptions import NoResponseError
 from distest import run_dtest_bot
 from discord import Embed
 import discord
@@ -66,7 +67,7 @@ async def send_and_get_verify(interface, vtuber, filepath):
     try:
         msg = await client.wait_for('message', check=check, timeout=90.0)
     except asyncio.TimeoutError:
-        msg = None
+        raise NoResponseError
     return msg
 
 @test_collector()
