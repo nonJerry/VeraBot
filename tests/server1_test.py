@@ -18,7 +18,7 @@ async def setup(interface):
     # making sure it does not run into problems
     await interface.channel.send(content="$setVTuber Aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     # wait that it does not conflict with first test
-    asyncio.sleep(5)
+    await asyncio.sleep(5)
 
     # initial settings tests
     await interface.assert_reply_contains("$setVTuber Lamy", "Set VTuber name to Lamy")
@@ -98,7 +98,7 @@ async def test_verify(interface):
 
     LAMY = "lamy"
     await assert_proof(interface, LAMY, 'tests/pictures/test1.png', "06/06/2021")
-    await assert_proof(interface, LAMY, 'tests/pictures/test2.png', "11/06/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test2.jpg', "11/06/2021")
     await assert_proof(interface, LAMY, 'tests/pictures/test3.png', "26/05/2021")
     await assert_proof(interface, LAMY, 'tests/pictures/test4.png', "29/05/2021")
     await assert_proof(interface, LAMY, 'tests/pictures/test5.png', "26/05/2021")
