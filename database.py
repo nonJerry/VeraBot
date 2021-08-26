@@ -248,11 +248,11 @@ class Database(metaclass=Singleton):
     def get_server_db(self, server_id: int) -> ServerDatabase:
         return ServerDatabase(self.db_cluster, server_id)
 
-    def _get_settings_db(self):
+    def __get_settings_db(self):
         return self.db_cluster["settings"]
 
     def _get_general_settings(self):
-        return self._get_settings_db()["general"]
+        return self.__get_settings_db()["general"]
 
     def get_last_checked(self) -> Optional[dtime]:
         return self._get_general_settings().find_one({"name": "member_check"}).get("last_checked", None)
@@ -280,7 +280,8 @@ class Database(metaclass=Singleton):
             return result['supported_idols'][0]['guild_id']
 
     def set_vtuber(self, name: str, guild_id: int) -> None:
-        settings = self._get_settings_db()
+        logging.debug("Set VTuber in Database")
+        settings = self._get_general_settings()
         if settings.find_one( { 'supported_idols.guild_id': guild_id}):
             settings.update_one({'supported_idols.guild_id': guild_id}, {'$set': {'supported_idols.$': {"name": name.lower(), "guild_id": guild_id}}})
         else:
