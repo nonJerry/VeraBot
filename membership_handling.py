@@ -302,7 +302,7 @@ class MembershipHandler:
         if member and new_membership_date < member.last_membership:
             return
 
-        return await self.handle_role(res, server_id, new_membership_date)
+        await self.handle_role(res, server_id, new_membership_date)
 
     async def handle_role(self, res, server_id, new_membership_date):
         guild = self.bot.get_guild(server_id)
@@ -349,8 +349,6 @@ class MembershipHandler:
             
             return proof_msg.attachments[0].url
 
-            
-
     def process_date(self, res, new_membership_date) -> Tuple[dtime, str, str]:
         if not new_membership_date:
             desc = "{}\n{}".format(str(res.author), "Date not detected")
@@ -371,7 +369,7 @@ class MembershipHandler:
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
             logging.info("%s used a wrong date format to set the membership.", res.author.id)
 
-            await res.channel.send("Please provide a valid date (dd/mm/yyyy) or integer days (+/- integer).")
+            await res.channel.send("Please provide a valid date (dd/mm/yyyy).")
             return False
         try:
             new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
