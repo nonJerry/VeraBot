@@ -15,6 +15,10 @@ test_collector = TestCollector()
 @test_collector()
 async def setup(interface):
 
+    # making sure it does not run into problems
+    await interface.channel.send(content="$setVTuber Aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
+    # initial settings tests
     await interface.assert_reply_contains("$setVTuber Lamy", "Set VTuber name to Lamy")
 
     await interface.assert_reply_contains("$setVTuber Lamy", "This Vtuber is already mapped to a server!")
