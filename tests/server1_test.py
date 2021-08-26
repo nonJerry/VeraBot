@@ -18,8 +18,8 @@ async def setup(interface):
     # making sure it does not run into problems
     await interface.channel.send(content="$setVTuber Aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     # wait that it does not conflict with first test
-    asyncio.sleep(2)
-    
+    asyncio.sleep(5)
+
     # initial settings tests
     await interface.assert_reply_contains("$setVTuber Lamy", "Set VTuber name to Lamy")
 
