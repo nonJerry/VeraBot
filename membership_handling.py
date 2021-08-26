@@ -71,7 +71,7 @@ class MembershipHandler:
                     message_desc += end_text
 
                     # Delete from database
-                    server_db.remove_member(member.to_dict())
+                    server_db.remove_member(member)
 
                     # Remove member role from user
                     guild = self.bot.get_guild(server['guild_id'])
