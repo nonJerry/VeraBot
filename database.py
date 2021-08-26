@@ -14,7 +14,7 @@ class Member:
         self.informed = informed
         self.expiry_sent = expiry_sent
 
-    def __repr__(self):
+    def to_dict(self) -> dict:
         return {"id": self.id, "last_membership" : self.last_membership, "informed": self.informed, "expiry_sent": self.expiry_sent}
 
     @staticmethod
@@ -180,14 +180,14 @@ class ServerDatabase:
     def remove_member(self, member):
         if isinstance(member, int):
             return self.__get_member_collection().delete_one({"id": member}).deleted_count
-        self.__get_member_collection().delete_one(member)
+        self.__get_member_collection().delete_one(member.to_dict())
 
     def informed(self, member: Member) -> None:
-        self.__get_member_collection().update_one(member, {"$set": {"informed": True}})
+        self.__get_member_collection().update_one(member.to_dict(), {"$set": {"informed": True}})
         member.informed = True
 
     def expiry_sent(self, member: Member) -> None:
-        self.__get_member_collection().update_one(member, {"$set": {"expiry_sent": True}})
+        self.__get_member_collection().update_one(member.to_dict(), {"$set": {"expiry_sent": True}})
         member.expiry_sent = True
 
 
