@@ -1,11 +1,11 @@
 #External
+from database import Database
 import discord
 from discord.ext import commands
 from discord.ext.commands.errors import CommandNotFound
 from pymongo import MongoClient
 #Python
 import asyncio
-from typing import Optional
 from datetime import datetime as dtime
 from datetime import timezone, timedelta
 import os
@@ -57,7 +57,7 @@ async def determine_prefix(bot, message):
     guild = message.guild
     if guild:
         try:
-            prefixes = db_cluster[str(guild.id)]["settings"].find_one({"kind": "prefixes"})["values"]
+            prefixes = database.get_server_db(guild.id).get_prefixes()
         except TypeError:
             return "$"
         if prefixes:
@@ -67,11 +67,15 @@ async def determine_prefix(bot, message):
 # Set up bot
 bot = commands.Bot(command_prefix=determine_prefix, description='Bot to verify and manage Memberships.\nlogChannel, Vtuber name and memberRole need to be set!', intents=intents, case_insensitive=True, owner_id=owner_id)
 
-# listen to other bots while testing
+# 2 tries per 50s as default
+verify_tries = 2
 
+# listen to other bots while testing
 if stage == "TEST":
     from distest.patches import patch_target
     bot = patch_target(bot)
+    # to not run into cooldown limit
+    verify_tries = 1000
     logging.info("Listining to bots too. Only for testing purposes!!!")
 
 
@@ -80,13 +84,14 @@ db_cluster = MongoClient(db_url.format(db_user, db_pass))
 
 
 # set up classes
-member_handler = MembershipHandler(bot, db_cluster, embed_color)
-Utility.setup(bot, db_cluster, embed_color)
+database = Database(db_cluster)
+member_handler = MembershipHandler(bot, embed_color)
+Utility.setup(bot, embed_color)
 OCR.setup(bot, local)
 Sending.setup(bot, embed_color)
 
 #add cogs
-bot.add_cog(Settings(bot, db_cluster))
+bot.add_cog(Settings(bot))
 bot.add_cog(Membership(bot, member_handler))
 logging.info("Cogs added")
 
@@ -122,44 +127,9 @@ async def on_guild_join(guild):
     """
     logging.info("Joined new Guild: %s (%s)", guild.name , guild.id)
 
-    dbnames = db_cluster.list_database_names()
-    
-    if not str(guild.id) in dbnames:
-        new_guild_db = db_cluster[str(guild.id)]
-        settings = new_guild_db["settings"]
+    database.create_new_server(guild.id)
 
-        # Create base configuration
-        json = { "kind": "prefixes", "values" : ['$']}
-        settings.insert_one(json)
-
-        json = {"kind": "member_role", "value" : 0}
-        settings.insert_one(json)
-
-        json = {"kind": "log_channel", "value" : 0}
-        settings.insert_one(json)
-
-        json = {"kind": "mod_role", "value" : 0}
-        settings.insert_one(json)
-
-        json = {"kind": "picture_link", "value" : "https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg"} #hololive logo
-        settings.insert_one(json)
-
-        json = {"kind": "automatic_role", "value" : False}
-        settings.insert_one(json)
-
-        json = {"kind": "require_additional_proof", "value" : False}
-        settings.insert_one(json)
-
-        json = {"kind": "tolerance_duration", "value" : 1}
-        settings.insert_one(json)
-
-        json = {"kind": "inform_duration", "value" : 1}
-        settings.insert_one(json)
-
-        json = {"kind": "logging", "value" : True}
-        settings.insert_one(json)
-
-        logging.info("Created database for %s", guild.id)
+    logging.info("Created database for %s", guild.id)
 
 
 @bot.event
@@ -168,20 +138,26 @@ async def on_guild_remove(guild):
     Removes the guild from the supported idols so that memberships are not checked.
     """
     logging.info("Left Guild: %s (%s)", guild.name , guild.id)
-    settings = db_cluster["settings"]["general"]
-    settings.update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild.id}}})
+    database.remove_vtuber(guild.id)
 
 @bot.event
 async def on_raw_reaction_add(payload):
-    # get reaction from payload
+    
     if not payload.guild_id:
         return
+
+    # ignore if not one of the wanted emotes
+    if str(payload.emoji) not in ('✅', u"\U0001F4C5", u"\U0001F6AB"):
+        return
+
     channel = bot.get_channel(payload.channel_id)
     permissions = channel.permissions_for(channel.guild.me)
     
+    # abort if not able to read messages in the channel of reaction
     if not permissions.read_message_history:
         return
 
+    # get reaction from payload
     try:
         msg = await channel.fetch_message(payload.message_id)
         reaction = discord.utils.get(msg.reactions, emoji=payload.emoji.name)
@@ -197,7 +173,7 @@ async def on_raw_reaction_add(payload):
                 return
             if msg.embeds:
                 user = bot.get_user(payload.user_id)
-                await member_handler.process_reaction(channel, msg, user, reaction)
+                await process_reaction(channel, msg, reaction, user)
                     
     except discord.errors.Forbidden:
         logging.info("%s: forbidden on reaction in %s", payload.guild_id, channel.id)
@@ -205,6 +181,150 @@ async def on_raw_reaction_add(payload):
     except discord.errors.NotFound:
         logging.info("%s: message not found on reaction in %s", payload.guild_id, channel.id)
         return
+    except discord.errors.DiscordServerError:
+        logging.info("%s: Discord Server has some problems", payload.guild_id)
+
+
+async def process_reaction(channel, msg, reaction, user):
+    emoji = reaction.emoji
+    embed = msg.embeds[0]
+    server_db = database.get_server_db(msg.guild.id)
+    threads_enabled = server_db.get_threads_enabled()
+    success = False
+
+    # always only the id
+    target_member_id = int(embed.title)
+
+    # correct date
+    if emoji == '✅':
+        logging.info("Recognized date correct in %s for user %s.", channel.guild.id, target_member_id)
+        
+        if server_db.get_automatic():
+            await msg.clear_reactions()
+            await asyncio.sleep(0.21)
+            await msg.add_reaction(emoji='👌')
+        else:
+            membership_date = embed.fields[0].value
+
+            # set membership
+            if await member_handler.set_membership(msg, target_member_id, membership_date, False, user):
+                await asyncio.sleep(0.21)
+                await msg.clear_reactions()
+                await asyncio.sleep(0.21)
+                await msg.add_reaction(emoji='👌')
+        success = True
+
+    # wrong date
+    elif emoji == u"\U0001F4C5":
+        logging.info("Wrong date recognized in %s for user %s.", channel.guild.id, target_member_id)
+
+        success = await handle_wrong_date(channel, msg, reaction, target_member_id, user)
+
+    # deny option - fake / missing date
+    elif emoji == u"\U0001F6AB":
+        logging.info("Fake or without date in %s for user %s.", channel.guild.id, target_member_id)
+        success = await handle_denied(channel, msg, reaction, embed, target_member_id, user)
+
+    if success and threads_enabled:
+        log_channel = bot.get_channel(server_db.get_log_channel())
+        embed.clear_fields()
+        embed.set_image(url = discord.Embed.Empty)
+        await log_channel.send(content=None, embed = embed)
+        await channel.edit(archived=True)
+
+async def handle_wrong_date(channel, msg, reaction, target_member_id: int, user) -> bool:
+    """Process if the date was recognized wrongly
+    
+    Parameters
+    ----------
+    channel:
+        The channel of the proof message
+    msg:
+        The proof message
+    reaction:
+        The reaction that was added
+    target_member_id: int
+        The id of the member whose proof is being processed
+
+    Returns
+    -------
+    bool
+        Whether the process was ended successfully (no abort)
+    """
+
+    m = "Please write the correct date from the screenshot in the format dd/mm/yyyy.\n"
+    m += "Type CANCEL to stop the process."
+    await channel.send(m, reference=msg, mention_author=False)
+
+    def check(m):
+        return m.author == user and m.channel == channel
+
+    date_msg = await bot.wait_for('message', check=check)
+
+    if date_msg.content.lower() != "cancel" and await member_handler.set_membership(msg, target_member_id, date_msg.content, False, user):
+        await msg.clear_reactions()
+        await asyncio.sleep(0.21)
+        await msg.add_reaction(emoji='👍')
+        return True
+    else:
+        logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
+        await reaction.remove(user)
+        await asyncio.sleep(0.21)
+        await channel.send("Stopped the process and removed reaction.")
+        return False
+
+
+
+async def handle_denied(channel, msg, reaction, embed, target_member_id: int, user) -> bool:
+    """Process if the proof is denied
+    
+    Parameters
+    ----------
+    channel:
+        The channel of the proof message
+    msg:
+        The proof message
+    reaction:
+        The reaction that was added
+    embed:
+        The edited embed
+    target_member_id: int
+        The id of the member whose proof is being processed
+
+    Returns
+    -------
+    bool
+        Whether the process was ended successfully (no abort)
+    """
+
+    m = "Please write a message that will be sent to the User."
+    m += "Type CANCEL to stop the process."
+    await channel.send(m, reference=msg, mention_author=False)
+
+    def check(m):
+        return m.author == user and m.channel == channel
+
+    text_msg = await bot.wait_for('message', check=check)
+    if text_msg.content.lower() != "cancel":
+        target_member = bot.get_user(target_member_id)
+        await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
+        await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
+
+        if database.get_server_db(msg.guild.id).get_automatic():
+            await member_handler.del_membership(msg, target_member_id, None, False, False)
+            # set embed
+        embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
+        await msg.edit(content = msg.content, embed = embed)
+        await asyncio.sleep(0.21)
+        await msg.clear_reactions()
+        await msg.add_reaction(emoji='👎')
+        return True
+    else:
+        logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
+        await reaction.remove(user)
+        await channel.send("Stopped the process and removed reaction.")
+        return False
+
 
 def dm_or_test_only():
     def predicate(ctx):
@@ -217,7 +337,7 @@ def dm_or_test_only():
 	brief=" Tries to verify a screenshot for membership in the DMs"
 )
 @dm_or_test_only()
-@commands.cooldown(2, 50, commands.BucketType.user)
+@commands.cooldown(verify_tries, 50, commands.BucketType.user)
 async def verify(ctx, *args):
     """
     Command in the DMs that tries to verify a screenshot for membership.
@@ -235,10 +355,10 @@ async def verify(ctx, *args):
         await dm_lg_ch.send(attachment.url)
 
     if args:
-        server = map_vtuber_to_server(args[0])
+        server = Utility.map_vtuber_to_server(args[0])
 
         if len(args) > 1:
-            language = map_language(args[1])
+            language = Utility.map_language(args[1])
         else:
             language = "eng"
 
@@ -266,7 +386,7 @@ async def verify_error(ctx, error):
 async def check(ctx):
     logging.info("Checked supported VTuber!")
     Utility.create_supported_vtuber_embed()
-    await ctx.send(db_cluster['settings']['general'].find_one()['supported_idols'])
+    await ctx.send(database.get_vtuber_list())
 
 def owner_or_test(ctx):
     return ctx.author.id == 846648298093936641 or ctx.author.id == owner_id
@@ -281,15 +401,15 @@ async def force_member_check(ctx):
 @bot.command(hidden = True, name = "broadcast")
 @commands.is_owner()
 async def broadcast(ctx, title, text):
-    serverlist = db_cluster["settings"]['general'].find_one({'name': "supported_idols"})['supported_idols']
+    serverlist = database.get_vtuber_list()
 
     #create Embed
     embed = discord.Embed(title = title, description = text, colour = embed_color)
 
     #send to every server
     for server in serverlist:
-        server_db = db_cluster[str(server['guild_id'])]
-        lg_ch = bot.get_channel(server_db['settings'].find_one({'kind': "log_channel"})['value'])
+        server_db = database.get_server_db(server['guild_id'])
+        lg_ch = bot.get_channel(server_db.get_log_channel())
 
         await lg_ch.send(content = None, embed = embed)
     logging.info("Sent broadcast to all servers.")
@@ -316,8 +436,8 @@ async def send_proof(ctx, vtuber: str):
     if not ctx.message.attachments:
         await ctx.send("Please include a screenshot of the proof!")
         return
-    server_id = map_vtuber_to_server(vtuber)
-    member_veri_ch = bot.get_channel(db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+    server_id = Utility.map_vtuber_to_server(vtuber)
+    member_veri_ch = bot.get_channel(database.get_server_db(server_id).get_log_channel())
 
     # Send attachment and message to membership verification channel
     desc = "{}\n{}".format(str(ctx.author), "Additional proof")
@@ -340,24 +460,6 @@ async def proof_error(ctx, error):
     embed = Utility.create_supported_vtuber_embed()
     await ctx.send(content=None, embed=embed)
 
-
-def map_vtuber_to_server(name) -> Optional[int]:
-    settings_db = db_cluster["settings"]["general"]
-    result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
-    if 'supported_idols' in result:
-        return result['supported_idols'][0]['guild_id']
-
-def map_language(lang: str) -> str:
-    supported = {
-        "eng": ["en", "eng", "english"],
-        "jpn": ["jp", "jap", "jpn", "japanese"],
-        "chi_sim": ["zh", "chi", "chinese"],
-        "rus": ["ru", "rus", "russian"]
-    }
-    for tuple in supported.items():
-        if lang.lower() in tuple[1]:
-            return tuple[0]
-    return "eng"
 
 #Time in status
 async def jst_clock():

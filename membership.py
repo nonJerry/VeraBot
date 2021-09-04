@@ -1,5 +1,6 @@
 # External
 import asyncio
+from database import Database
 from dateutil.relativedelta import relativedelta
 import discord
 from discord.ext import commands
@@ -62,6 +63,17 @@ class Membership(commands.Cog):
         logging.info("%s used delMember in %s", ctx.author.id, ctx.guild.id)
         await self.member_handler.del_membership(ctx.message, member_id, text)
 
+
+    @commands.command(name="purgeMember", aliases=["purge"],
+    brief="Initiates a Membership Check",
+    help="This will initiate a membership check which also removes members that MIGHT already have lost their membership.\n" +
+    "CAUTION: This will also hit many members that are still valid (Timezones and exact time of membering ...)")
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def purge_members(self, ctx):
+        await self.member_handler.purge_memberships(ctx.guild.id)
+        await ctx.send("This was a hard check, it might have hit many members that still have a valid membership.")
+
     @del_membership.error
     @view_members.error
     async def id_error(self, ctx, error):
@@ -84,7 +96,7 @@ class Membership(commands.Cog):
         embed = discord.Embed(title = str(user_id))
 
         # Send attachment and message to membership verification channel
-        member_veri_ch = self.bot.get_channel(self.member_handler.db_cluster[str(server_id)]["settings"].find_one({"kind": "log_channel"})["value"])
+        member_veri_ch = self.bot.get_channel(Database().get_server_db(server_id).get_log_channel())
 
         author = self.bot.get_user(user_id)
         desc = "{}\n{}".format(str(author), "Date not detected")
@@ -114,16 +126,16 @@ class Membership(commands.Cog):
             if not worksheet:
                 worksheet = sh.add_worksheet(title="Member Dump", rows="300", cols="20")
 
-            server_db = self.member_handler.db_cluster[str(ctx.guild.id)]
+            server_db = Database().get_server_db(ctx.guild.id)
             count = 0
             entries = []
-            for member in server_db['members'].find():
+            for member in server_db.get_members():
                     count += 1
 
-                    target_member = ctx.guild.get_member(member["id"])
-                    date = member["last_membership"] + relativedelta(months = 1)
+                    target_member = ctx.guild.get_member(member.id)
+                    date = member.last_membership + relativedelta(months = 1)
 
-                    member_id = str(member['id'])
+                    member_id = str(member.id)
                     name = str(target_member)
                     date = date.strftime(r"%d/%m/%Y")
 

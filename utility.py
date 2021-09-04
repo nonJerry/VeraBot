@@ -6,23 +6,25 @@ from datetime import datetime as dtime
 from datetime import timezone
 from dateutil.relativedelta import relativedelta
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
+from database import Database
+
 
 
 class Utility:
 
     bot = None
-    db_cluster = None
+    db = None
     embed_color = None
 
     @classmethod
-    def setup(cls, bot, db_cluster, embed_color):
+    def setup(cls, bot, embed_color) -> None:
         cls.bot = bot
-        cls.db_cluster = db_cluster
+        cls.db = Database()
         cls.embed_color = embed_color
 
     @staticmethod
-    def is_integer(s):
+    def is_integer(s) -> bool:
         # check if a string is an integer (includes negative integers)
         try: 
             int(s)
@@ -42,6 +44,24 @@ class Utility:
         dates = search_dates(s, settings={'RELATIVE_BASE': usual_date})
         if dates:
             return dates[0][1].replace(tzinfo = timezone.utc)
+
+    @classmethod
+    def map_vtuber_to_server(cls, name) -> Optional[int]:
+        return cls.db.get_vtuber_guild(name)
+
+    @staticmethod
+    def map_language(lang: str) -> str:
+        supported = {
+            "eng": ["en", "eng", "english"],
+            "jpn": ["jp", "jap", "jpn", "japanese"],
+            "chi_sim": ["zh", "chi", "chinese"],
+            "rus": ["ru", "rus", "russian"]
+        }
+        for aliases in supported.items():
+            if lang.lower() in aliases[1]:
+                return aliases[0]
+        return "eng"
+    
 
     @staticmethod
     def cut_to_date(s: str, lang: str) -> str:
@@ -102,7 +122,7 @@ class Utility:
 
 
     @staticmethod
-    def text_to_boolean(flag):
+    def text_to_boolean(flag) -> Union[bool, str]:
         if flag in ['True', 'true']:
             return True
         elif flag in [ 'False', 'false']:
@@ -111,18 +131,11 @@ class Utility:
 
     @classmethod
     def get_vtuber(cls, guild_id) -> str:
-        settings_db = cls.db_cluster["settings"]["general"]
-        result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'guild_id' : guild_id}}})
-        if 'supported_idols' in result:
-            return result['supported_idols'][0]['name'].title()
-        else:
-            logging.warn("Not supported server on getVtuber!")
-            return "not supported server"
+        cls.db.get_vtuber(guild_id)
 
     @classmethod
-    def create_supported_vtuber_embed(cls):
-        settings = cls.db_cluster['settings']['general']
-        array = settings.find_one({}, {'supported_idols'})['supported_idols']
+    def create_supported_vtuber_embed(cls) -> discord.Embed:
+        array = cls.db.get_vtuber_list()
 
         # list every vtuber like "- <vtuber>"
         vtuber_list = "- " + '\n- '.join(element['name'].title() for element in array)

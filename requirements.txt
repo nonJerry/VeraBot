@@ -1,5 +1,5 @@
 distest==0.6.2
-discord.py==1.7.2
+git+git://github.com/Rapptz/discord.py@master
 dnspython==2.1.0
 gspread==3.7.0
 requests==2.25.1
