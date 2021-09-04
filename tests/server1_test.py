@@ -1,4 +1,6 @@
+import asyncio
 from distest import TestCollector
+from distest.exceptions import NoResponseError
 from distest import run_dtest_bot
 from discord import Embed
 import discord
@@ -13,6 +15,12 @@ test_collector = TestCollector()
 @test_collector()
 async def setup(interface):
 
+    # making sure it does not run into problems
+    await interface.channel.send(content="$setVTuber Aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    # wait that it does not conflict with first test
+    await asyncio.sleep(5)
+
+    # initial settings tests
     await interface.assert_reply_contains("$setVTuber Lamy", "Set VTuber name to Lamy")
 
     await interface.assert_reply_contains("$setVTuber Lamy", "This Vtuber is already mapped to a server!")
@@ -48,6 +56,7 @@ async def setup(interface):
         .add_field(name='Require Additional Proof', value="False", inline=True)
         .add_field(name='Tolerance Duration', value="1", inline=True)
         .add_field(name='Prior Notice Duration', value="1", inline=True)
+        .add_field(name='Logging enabled', value="True", inline=True)
     )
 
     await interface.send_message("$settings")
@@ -62,17 +71,16 @@ async def send_and_get_verify(interface, vtuber, filepath):
     def check(m):
         return m.author == interface.target and m.channel == client.get_channel(log_channel_id) # verify channel
 
-    return await client.wait_for('message', check=check, timeout=90.0)
+    try:
+        msg = await client.wait_for('message', check=check, timeout=90.0)
+    except asyncio.TimeoutError:
+        raise NoResponseError
+    return msg
 
-@test_collector()
-async def test_verify(interface):
-    # NOTE: IMPORTANT WAY TO SEND DMS
-    # client = interface.client
-    # await client.get_user(517732773943836682).send("aaa")
-    # target -> user !!!
-    # interface.client._channel -> channel for commands
-    
-    msg = await send_and_get_verify(interface, "lamy", 'tests/pictures/test1.png')
+
+async def assert_proof(interface, vtuber: str, picture: str, expected_date: str):
+
+    msg = await send_and_get_verify(interface, vtuber, picture)
 
     patterns = {
         "title": str(interface.client.user.id),
@@ -81,7 +89,24 @@ async def test_verify(interface):
     await interface.assert_embed_regex(msg, patterns)
 
     #  make sure the date is correct
-    await interface.assert_message_contains(msg, "06/06/2021")
+    await interface.assert_message_contains(msg, expected_date)
+
+
+@test_collector()
+async def test_verify(interface):
+    # NOTE: interface.client._channel -> channel for commands
+
+    LAMY = "lamy"
+    await assert_proof(interface, LAMY, 'tests/pictures/test1.png', "06/06/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test2.jpg', "11/06/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test3.png', "26/05/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test4.png', "29/05/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test5.png', "26/05/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test6.png', "15/06/2021")
+    await assert_proof(interface, LAMY, 'tests/pictures/test7.png', "14/06/2069")
+    await assert_proof(interface, LAMY, 'tests/pictures/test10.png', "Date not detected")
+
+
 
 @test_collector()
 async def revert_vtuber(interface):
