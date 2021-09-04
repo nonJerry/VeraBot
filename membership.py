@@ -63,6 +63,17 @@ class Membership(commands.Cog):
         logging.info("%s used delMember in %s", ctx.author.id, ctx.guild.id)
         await self.member_handler.del_membership(ctx.message, member_id, text)
 
+
+    @commands.command(name="purgeMember", aliases=["purge"],
+    brief="Initiates a Membership Check",
+    help="This will initiate a membership check which also removes members that MIGHT already have lost their membership.\n" +
+    "CAUTION: This will also hit many members that are still valid (Timezones and exact time of membering ...)")
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def purge_members(self, ctx):
+        await self.member_handler.purge_memberships(ctx.guild.id)
+        await ctx.send("This was a hard check, it might have hit many members that still have a valid membership.")
+
     @del_membership.error
     @view_members.error
     async def id_error(self, ctx, error):

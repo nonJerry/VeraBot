@@ -1,6 +1,7 @@
 #External
-from typing import Optional, Tuple
-from database import Database
+from typing import List, Optional, Tuple
+
+from database import Database, Member
 import discord
 #Python
 import asyncio
@@ -38,7 +39,7 @@ class MembershipHandler:
         m += "You will get a message when your role is applied."
         await res.channel.send(m)
 
-    async def _check_membership_dates(self, server, res = None, msg = None):
+    async def _check_membership_dates(self, server: dict, purge = False) -> List[Member]:
         # Performs a mass check on membership dates and delete expired membership with a default message
         # Returns an expired_membership list {id, last_membership}
 
@@ -50,13 +51,21 @@ class MembershipHandler:
         tolerance_duration = server_db.get_tolerance_duration()
 
         expired_memberships = []
-        expiry_date = dtime.now(tz = timezone.utc) - relativedelta(months=1) - timedelta(days=1)
+        expiry_date = dtime.now(tz = timezone.utc) - relativedelta(months=1)
+
+        if purge:
+            tolerance_date = expiry_date
+        else:
+            expiry_date = expiry_date - timedelta(days=1)
+            tolerance_date = expiry_date - timedelta(days=tolerance_duration)
         notify_date = expiry_date + timedelta(days=inform_duration)
-        tolerance_date = expiry_date - timedelta(days=tolerance_duration)
 
         message_title = idol.title() + " Membership {}!"
-        end_text = "You may renew your membership by sending another updated verification photo using the ``$verify`` command."
+        end_text = "You may renew your membership by sending another updated verification photo using the ``$verify`` command.\n"
         end_text += "Thank you so much for your continued support!"
+        if purge:
+            end_text = "This expiration may be too soon. It was initiated by the server to avoid illegit access during e.g. a membership stream.\n"
+
         message_image = server_db.get_picture()
 
         # only needs to check those that are already expired to save ressources
@@ -84,6 +93,9 @@ class MembershipHandler:
                         await target_member.remove_roles(member_role)
                         #send dm
                         await Sending.dm_member(member.id, title, message_desc.format(idol.title(), str(inform_duration)), embed = True, attachment_url = message_image)
+
+                        if purge:
+                            expired_memberships.append(member)
                 
                 # else notify
                 elif inform_duration != 0 and last_membership <= notify_date and not member.informed:
@@ -270,6 +282,7 @@ class MembershipHandler:
                 embed.description = "Additional proof"
                 embed.set_image(url = proof_url)
                 await member_veri_ch.send(content=None, embed = embed)
+                await res.channel.send("Your additional proof was delivered to the server, please wait for the staff to check your proof.")
         # if overtime, send timeout message and return
         except asyncio.TimeoutError:
             logging.info("%s took to long with the proof.", res.author.id)
@@ -446,7 +459,15 @@ class MembershipHandler:
             res.channel.send("User is not on this server!")
             logging.info("%s not on server %s.", member_id, res.guild.id)
 
-         
+    async def purge_memberships(self, server_id: int):
+        server = {'guild_id': server_id, 'name': self.db.get_vtuber(server_id)}
+        lg_ch = self.bot.get_channel(self.db.get_server_db(server_id).get_log_channel())
+
+        expired_memberships = await self._check_membership_dates(server, purge=True)
+
+        content = ["{}".format(d.id) for d in expired_memberships]
+        await self.send_expired_info(lg_ch, content)
+
 
     async def delete_expired_memberships(self, forced=False):
         # get data of last checked timestamp
@@ -472,7 +493,7 @@ class MembershipHandler:
                     else:
                         await lg_ch.send("Forced Membership check")
 
-                    content = ["{}".format(d["id"]) for d in expired_memberships]
+                    content = ["{}".format(d.id) for d in expired_memberships]
                     await self.send_expired_info(lg_ch, content)
                     
                 except discord.errors.Forbidden:
