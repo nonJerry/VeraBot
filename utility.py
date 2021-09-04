@@ -57,9 +57,9 @@ class Utility:
             "chi_sim": ["zh", "chi", "chinese"],
             "rus": ["ru", "rus", "russian"]
         }
-        for tuple in supported.items():
-            if lang.lower() in tuple[1]:
-                return tuple[0]
+        for aliases in supported.items():
+            if lang.lower() in aliases[1]:
+                return aliases[0]
         return "eng"
     
 
