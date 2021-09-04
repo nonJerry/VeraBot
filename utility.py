@@ -1,5 +1,4 @@
 #External
-from os import stat
 import discord
 from dateparser.search import search_dates
 #Python
