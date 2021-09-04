@@ -172,7 +172,8 @@ async def on_raw_reaction_add(payload):
             if not reaction.me:
                 return
             if msg.embeds:
-                await process_reaction(channel, msg, reaction)
+                user = bot.get_user(payload.user_id)
+                await process_reaction(channel, msg, reaction, user)
                     
     except discord.errors.Forbidden:
         logging.info("%s: forbidden on reaction in %s", payload.guild_id, channel.id)
@@ -184,7 +185,7 @@ async def on_raw_reaction_add(payload):
         logging.info("%s: Discord Server has some problems", payload.guild_id)
 
 
-async def process_reaction(channel, msg, reaction):
+async def process_reaction(channel, msg, reaction, user):
     emoji = reaction.emoji
     embed = msg.embeds[0]
     server_db = database.get_server_db(msg.guild.id)
@@ -199,26 +200,30 @@ async def process_reaction(channel, msg, reaction):
         logging.info("Recognized date correct in %s for user %s.", channel.guild.id, target_member_id)
         
         if server_db.get_automatic():
+            await msg.clear_reactions()
+            await asyncio.sleep(0.21)
+            await msg.add_reaction(emoji='👌')
+        else:
             membership_date = embed.fields[0].value
 
             # set membership
-            if await member_handler.set_membership(msg, target_member_id, membership_date, False, msg.author):
+            if await member_handler.set_membership(msg, target_member_id, membership_date, False, user):
                 await asyncio.sleep(0.21)
                 await msg.clear_reactions()
                 await asyncio.sleep(0.21)
                 await msg.add_reaction(emoji='👌')
-                success = True
+        success = True
 
     # wrong date
     elif emoji == u"\U0001F4C5":
         logging.info("Wrong date recognized in %s for user %s.", channel.guild.id, target_member_id)
 
-        success = await handle_wrong_date(channel, msg, reaction, target_member_id)
+        success = await handle_wrong_date(channel, msg, reaction, target_member_id, user)
 
     # deny option - fake / missing date
     elif emoji == u"\U0001F6AB":
         logging.info("Fake or without date in %s for user %s.", channel.guild.id, target_member_id)
-        success = await handle_denied(channel, msg, reaction, embed, target_member_id)
+        success = await handle_denied(channel, msg, reaction, embed, target_member_id, user)
 
     if success and threads_enabled:
         log_channel = bot.get_channel(server_db.get_log_channel())
@@ -227,7 +232,7 @@ async def process_reaction(channel, msg, reaction):
         await log_channel.send(content=None, embed = embed)
         await channel.edit(archived=True)
 
-async def handle_wrong_date(channel, msg, reaction, target_member_id: int) -> bool:
+async def handle_wrong_date(channel, msg, reaction, target_member_id: int, user) -> bool:
     """Process if the date was recognized wrongly
     
     Parameters
@@ -251,8 +256,6 @@ async def handle_wrong_date(channel, msg, reaction, target_member_id: int) -> bo
     m += "Type CANCEL to stop the process."
     await channel.send(m, reference=msg, mention_author=False)
 
-    user = msg.author
-
     def check(m):
         return m.author == user and m.channel == channel
 
@@ -272,7 +275,7 @@ async def handle_wrong_date(channel, msg, reaction, target_member_id: int) -> bo
 
 
 
-async def handle_denied(channel, msg, reaction, embed, target_member_id: int) -> bool:
+async def handle_denied(channel, msg, reaction, embed, target_member_id: int, user) -> bool:
     """Process if the proof is denied
     
     Parameters
@@ -297,8 +300,6 @@ async def handle_denied(channel, msg, reaction, embed, target_member_id: int) ->
     m = "Please write a message that will be sent to the User."
     m += "Type CANCEL to stop the process."
     await channel.send(m, reference=msg, mention_author=False)
-
-    user = msg.author
 
     def check(m):
         return m.author == user and m.channel == channel
