@@ -10,7 +10,7 @@
 
 **VeraBot** manages the awarding of a role for membership-only content. <br>
 For this it uses OCR to verify the valid access with a sent screenshot.
-This bot is only available for the VTuber fanserver network.
+This bot is mainly made for VTuber Fanservers. It does not matter whether Indie or part of e.g. Hololive or Nijisanji!
 
 ## Getting started
 
