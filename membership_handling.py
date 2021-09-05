@@ -117,12 +117,12 @@ class MembershipHandler:
                     expired_memberships.append(member)
 
                     # dm expired membership
-                    await Sending.dm_member(member["id"], title, message_desc.format(idol.title(), str(tolerance_duration)), embed = True, attachment_url = message_image)
+                    await Sending.dm_member(member.id, title, message_desc.format(idol.title(), str(tolerance_duration)), embed = True, attachment_url = message_image)
 
                     server_db.expiry_sent(member)
 
             except discord.errors.Forbidden:
-                logging.warn("Could not send DM to %s", member["id"])
+                logging.warn("Could not send DM to %s", member.id)
                 member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
                 user = self.bot.get_user(member.id)
                 await member_veri_ch.send("Could not send reminder to {}.".format(user.mention))
