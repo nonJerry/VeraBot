@@ -32,11 +32,11 @@ class ServerDatabase:
         self.db = db_cluster[str(server_id)]
         self.server_id = server_id
 
-    def __get_settings(self) -> Collection:
+    def _get_settings(self) -> Collection:
         return self.db["settings"]
 
     def __get_setting(self, setting_name: str) -> Any:
-        return self.__get_settings().find_one({'kind' : setting_name})['value']
+        return self._get_settings().find_one({'kind' : setting_name})['value']
 
     def __get_member_collection(self) -> Collection:
         return self.db['members']
@@ -44,7 +44,7 @@ class ServerDatabase:
     # getter settings
 
     def get_prefixes(self) -> List:
-        return self.__get_settings().find_one({'kind' : 'prefixes'})['values']
+        return self._get_settings().find_one({'kind' : 'prefixes'})['values']
         
     def get_member_role(self) -> int:
         return self.__get_setting("member_role")
@@ -79,7 +79,7 @@ class ServerDatabase:
     # setter settings
 
     def __set_setting(self, setting_name: str, value) -> None:
-        self.__get_settings().update_one({'kind': setting_name}, {'$set': {'value': value}})
+        self._get_settings().update_one({'kind': setting_name}, {'$set': {'value': value}})
 
     def set_member_role(self, role_id: int):
         return self.__set_setting("member_role", role_id)
@@ -112,7 +112,7 @@ class ServerDatabase:
         return self.__set_setting("threads", value)
 
     def set_prefix(self, prefix: str):
-        self.__get_settings().update_one({"kind": "prefixes"}, {'$push': {'values': prefix}})
+        self._get_settings().update_one({"kind": "prefixes"}, {'$push': {'values': prefix}})
 
     def remove_prefix(self, prefix: str) -> int:
         """Removes the given prefix from the database
@@ -128,7 +128,7 @@ class ServerDatabase:
             The Number of removed prefixes
         """
 
-        return self.__get_settings().update_one({"kind": "prefixes"}, {'$pull': {'values': prefix}}).matched_count
+        return self._get_settings().update_one({"kind": "prefixes"}, {'$pull': {'values': prefix}}).matched_count
 
     # other getter
 
@@ -206,7 +206,7 @@ class ServerDatabase:
 
         # Create base configuration
         json = { "kind": kind, "value" : value}
-        self.__get_settings().insert_one(json)
+        self._get_settings().insert_one(json)
 
 
     def create_new_member_setting(self, kind: str, value):
@@ -346,7 +346,7 @@ class Database(metaclass=Singleton):
 
             # default: $
             json = { "kind": "prefixes", "values" : ['$']}
-            new_guild_db.__get_settings().insert_one(json)
+            new_guild_db._get_settings().insert_one(json)
 
             # default: needs to be set
             new_guild_db.create_new_setting("member_role", 0)
