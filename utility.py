@@ -131,7 +131,7 @@ class Utility:
 
     @classmethod
     def get_vtuber(cls, guild_id) -> str:
-        cls.db.get_vtuber(guild_id)
+        return cls.db.get_vtuber(guild_id)
 
     @classmethod
     def create_supported_vtuber_embed(cls) -> discord.Embed:
