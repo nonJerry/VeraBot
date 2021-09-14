@@ -178,8 +178,8 @@ class Settings(commands.Cog):
     @commands.guild_only()
     async def set_picture(self, ctx, link: str):
         logging.info("{} set their picture: {}".format(str(ctx.guild.id), link))
-        from re import search
-        match = search(r"http[s]?://[a-zA-Z0-9\_\-\.]+/[a-zA-Z0-9\_\-/]+\.(png|jpeg|jpg)", link)
+        from re import fullmatch
+        match = fullmatch(r"http[s]?://[a-zA-Z0-9\_\-\.]+/[a-zA-Z0-9\_\-/]+\.(png|jpeg|jpg)", link)
         if match:
             self.db.get_server_db(ctx.guild.id).set_picture(link)
             await ctx.send("Image for expiration message set.")
