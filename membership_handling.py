@@ -35,7 +35,7 @@ class MembershipHandler:
         self.verify_deque.append([res, server_id, lang])
         logging.info("Proof from %s added to queue for server: %s", res.author.id, server_id)
 
-        m = "Your proof is added to the queue now and will be processed later.\n"
+        m = "Your proof has been added to the queue and will be processed later.\n"
         m += "You will get a message when your role is applied."
         await res.channel.send(m)
 
@@ -101,7 +101,7 @@ class MembershipHandler:
                 elif inform_duration != 0 and last_membership <= notify_date and not member.informed:
                     title = message_title.format("expires soon!")
                     message_desc = "Your membership to {} will expire within the next {} hours.\n"
-                    message_desc += "If you do not want to lose this membership please don't forget to anew it!"
+                    message_desc += "If you do not want to lose this membership please don't forget to renew it!"
                     await Sending.dm_member(member.id, title, message_desc.format(idol.title(), str(inform_duration * 24)), embed = True, attachment_url = message_image)
 
                     server_db.informed(member)
