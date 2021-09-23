@@ -285,7 +285,7 @@ class Settings(commands.Cog):
 
         #check whether use_public_thread is allowed
         permissions = channel.permissions_for(channel.guild.me)
-        if not permissions.use_threads:
+        if not permissions.create_public_threads:
             await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
             return
 
@@ -315,7 +315,7 @@ class Settings(commands.Cog):
 
             #check whether use_public_thread is allowed
             permissions = channel.permissions_for(channel.guild.me)
-            if not permissions.use_threads:
+            if not permissions.create_public_threads:
                 await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
                 return
         # set value
@@ -327,7 +327,7 @@ class Settings(commands.Cog):
     async def check_thread_permissions(self, guild_id: int) -> bool:
         member_veri_ch = self.bot.get_channel(self.db.get_server_db(guild_id).get_proof_channel())
         permissions = member_veri_ch.permissions_for(member_veri_ch.guild.me)
-        if not permissions.use_threads:
+        if not permissions.create_public_threads:
             logging.info("%s: Did not have Threads permission enabled.", guild_id)
             return False
         return True
