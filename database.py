@@ -231,9 +231,10 @@ class ServerDatabase:
     def exists_multi_talent_log_channel(self, log_id: int) -> bool:
         if not self.get_multi_talents():
             return False
-        if self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'log_id' : log_id}}}):
-            return True
-        return False
+        # only has `values` if the log_channel is matched
+        if hasattr(self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'log_channel' : log_id}}}), 'values'):
+            return False
+        return True
 
 
     
