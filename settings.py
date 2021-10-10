@@ -332,6 +332,44 @@ class Settings(commands.Cog):
             return False
         return True
 
+    @commands.command(name="enableMultiServer", aliases=["enableMulti"],
+    help="Will activate the possibility to support several talents on one server.",
+    brief="Will activate the possibility to support several talents on one server.")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def enable_multi_server(self, ctx):
+        if self.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to enable the multi-talent function again.", ctx.guild.id)
+            await ctx.send("Your server already has enabled the usage of multiple talents!")
+            return
+
+        self.db.add_multi_server(ctx.guild.id)
+        logging.info("%s: Enabled the multi-talent function.", ctx.guild.id)
+
+        await ctx.send("Management of several talents was activated for this server!")
+
+    @commands.command(name="disableMultiServer", aliases=["disableMulti"],
+    help="Will disable the possibility to support several talents on one server.",
+    brief="Will disable the possibility to support several talents on one server.")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def disable_multi_server(self, ctx):
+        if not self.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", ctx.guild.id)
+            await ctx.send("Your server has not enabled the usage of multiple talents!")
+            return
+
+        self.db.remove_multi_server(ctx.guild.id)
+        logging.info("%s: Disabled the multi-talent function.", ctx.guild.id)
+
+        await ctx.send("Management of several talents was disabled for this server!")
+
+    def is_multi_server(self, guild_id: int) -> bool:
+        if not guild_id in self.db.get_multi_server():
+            return False
+        return True
+
+
 
     @set_idol.error
     @set_log_channel.error
@@ -346,6 +384,8 @@ class Settings(commands.Cog):
     @set_logging.error
     @toggle_threads.error
     @set_proof_channel.error
+    @enable_multi_server.error
+    @disable_multi_server.error
     #@toggle_threads.error
     async def general_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
