@@ -198,18 +198,23 @@ class ServerDatabase:
         if not self.get_multi_talents():
             self._get_settings().insert_one({ "kind": "multi_server", "values": []})
         self._get_settings().update_one({"kind": "multi_server"},{'$push': {'values': {"idol": name.lower(), "log_channel": log_id, "role_id": role_id}}})
-        #TODO Check with already existing log channel
+
+
+    def remove_multi_talent(self, name: str) -> bool:
+        if not self.get_multi_talents():
+            return False
+        if self._get_settings().update_one({"kind": "multi_server"},{'$pull': {'values': {"idol": name.lower()}}}).modified_count:
+            return True
+        return False
         
     
     def get_multi_talents(self) -> Optional[dict]:
         talent_settings = self._get_settings().find_one({'kind' : "multi_server"})
         if hasattr(talent_settings, 'values'):
-            print(talent_settings)
             return talent_settings['values']
 
     def get_multi_talent_infos(self, name: str) -> Optional[dict]:
         if not self.get_multi_talents():
-            print("test")
             return
         return self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'idol' : name.lower()}}})['values']
 
@@ -330,7 +335,10 @@ class Database(metaclass=Singleton):
             settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": name.lower(), "guild_id": guild_id}}})
 
     def remove_vtuber(self, guild_id: int):
-        self._get_general_settings().update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild_id}}})
+        self._get_general_settings().update({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild_id}}})
+
+    def remove_multi_talent_vtuber(self, guild_id: int, name: str):
+        self._get_general_settings().update({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'name': name, 'guild_id': guild_id}}})
 
     def add_multi_server(self, guild_id: int):
         self._get_general_settings().update_one({"name": "multi_server"}, {'$push': {'ids': guild_id}})
