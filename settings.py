@@ -129,14 +129,21 @@ class Settings(commands.Cog):
     async def set_idol(self, ctx, vtuber_name: str):
 
         # always only one entry
-        for element in self.db.get_vtuber_list():
-            if vtuber_name.lower() == element['name']:
-                await ctx.send("This Vtuber is already mapped to a server!")
-                return
+        if self.check_vtuber(vtuber_name):           
+            await ctx.send("This Vtuber is already mapped to a server!")
+            return
+
         self.db.set_vtuber(vtuber_name, ctx.guild.id)
 
         await ctx.send("Set VTuber name to " + vtuber_name)
         logging.info("%s (%s) -> New Vtuber added: %s", ctx.guild.name, ctx.guild.id, vtuber_name)
+
+    def check_vtuber(self, vtuber_name) -> bool:
+        for element in self.db.get_vtuber_list():
+            logging.debug(element)
+            if vtuber_name.lower() == element['name']:
+                return True
+        return False
 
 
     @commands.command(name="memberRole", aliases=["setMemberRole"],
@@ -369,6 +376,46 @@ class Settings(commands.Cog):
             return False
         return True
 
+
+    @commands.command(name="addTalent", aliases=["addVTuber", "addIdol"],
+    help="Adds new Talent to be supported. Also needs the log channel and role id. Function only for Multi-Talent servers!",
+    brief="Adds new Talent to be supported. Function only for Multi-Talent servers!")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def add_idol(self, ctx, name: str, log_id: int, role_id: int):
+        if not self.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to use mutli-talent ADD without having it enabled.", ctx.guild.id)
+            await ctx.send("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.")
+            return
+        logging.info("Multi-Server %s: Trying to add %s as talent.", ctx.guild.id, name)
+
+        # Check for integrity
+        if self.check_vtuber(name):       
+            logging.info("%s: Talent %s already exists.", ctx.guild.id, name)   
+            await ctx.send("This Vtuber is already mapped to a server!")
+            return
+
+        if self.db.get_server_db(ctx.guild.id).exists_multi_talent_log_channel(log_id):
+            logging.info("%s: Log Channel %s already used.", ctx.guild.id, log_id)   
+            await ctx.send("This Channel is already used for another Talent on your server!")
+            return
+
+        if not self.bot.get_channel(log_id):
+            await ctx.send("Please use a proper Channel!")
+            return
+
+        if not self.check_role_integrity(ctx, role_id):
+            return
+
+        # Finally add to db
+        self.db.get_server_db(ctx.guild.id).add_multi_talent(name, log_id, role_id)
+        self.db.set_vtuber(name, ctx.guild.id)
+        logging.info("%s: Added %s with %s as Log Channel and %s as Role.", ctx.guild.id, name, log_id, role_id)
+
+        await ctx.send("Successfully added the new talent!")
+        
+
+        
 
 
     @set_idol.error

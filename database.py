@@ -191,6 +191,48 @@ class ServerDatabase:
         self.__get_member_collection().update_one(member.to_dict(), {"$set": {"expiry_sent": True}})
         member.expiry_sent = True
 
+    # multi server
+
+    
+    def add_multi_talent(self, name: str, log_id: int, role_id: int):
+        if not self.get_multi_talents():
+            self._get_settings().insert_one({ "kind": "multi_server", "values": []})
+        self._get_settings().update_one({"kind": "multi_server"},{'$push': {'values': {"idol": name.lower(), "log_channel": log_id, "role_id": role_id}}})
+        #TODO Check with already existing log channel
+        
+    
+    def get_multi_talents(self) -> Optional[dict]:
+        talent_settings = self._get_settings().find_one({'kind' : "multi_server"})
+        if hasattr(talent_settings, 'values'):
+            print(talent_settings)
+            return talent_settings['values']
+
+    def get_multi_talent_infos(self, name: str) -> Optional[dict]:
+        if not self.get_multi_talents():
+            print("test")
+            return
+        return self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'idol' : name.lower()}}})['values']
+
+    def get_multi_talent_log_channel(self, name: str) -> int:
+        infos = self.get_multi_talent_infos(name)
+        if infos:
+            return infos['log_channel']
+
+    def get_multi_talent_role(self, name: str) -> int:
+        infos = self.get_multi_talent_infos(name)
+        if infos:
+            return infos['role_id']
+
+    def exists_multi_talent_log_channel(self, log_id: int) -> bool:
+        if not self.get_multi_talents():
+            return False
+        if self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'log_id' : log_id}}}):
+            return True
+        return False
+
+
+    
+
 
     def create_new_setting(self, kind, value):
         """Create a new setting for this server
