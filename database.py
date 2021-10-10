@@ -330,7 +330,8 @@ class Database(metaclass=Singleton):
     def set_vtuber(self, name: str, guild_id: int) -> None:
         logging.debug("Set VTuber in Database")
         settings = self._get_general_settings()
-        if settings.find_one( { 'supported_idols.guild_id': guild_id}):
+        # not already set for single talent servers
+        if settings.find_one( { 'supported_idols.guild_id': guild_id}) and not guild_id in self.get_multi_server():
             settings.update_one({'supported_idols.guild_id': guild_id}, {'$set': {'supported_idols.$': {"name": name.lower(), "guild_id": guild_id}}})
         else:
             settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": name.lower(), "guild_id": guild_id}}})
