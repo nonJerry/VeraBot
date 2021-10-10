@@ -433,6 +433,7 @@ class Settings(commands.Cog):
     @set_proof_channel.error
     @enable_multi_server.error
     @disable_multi_server.error
+    @add_idol.error
     #@toggle_threads.error
     async def general_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):
