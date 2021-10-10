@@ -413,10 +413,24 @@ class Settings(commands.Cog):
         logging.info("%s: Added %s with %s as Log Channel and %s as Role.", ctx.guild.id, name, log_id, role_id)
 
         await ctx.send("Successfully added the new talent!")
-        
 
-        
 
+    @commands.command(name="removeTalent", aliases=["removeVTuber", "removeIdol"],
+    help="Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!",
+    brief="Removes the Talent. Function only for Multi-Talent servers!")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def remove_idol(self, ctx, name: str):
+        if not self.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to remove a mutli-talent without having it enabled.", ctx.guild.id)
+            await ctx.send("Your server has not enabled the usage of multiple talents.")
+            return
+        if self.db.get_server_db(ctx.guild.id).remove_multi_talent(name):
+            self.db.remove_multi_talent_vtuber(ctx.guild.id, name)
+            logging.info("Removed %s from VTuber list", name)
+            await ctx.send("Successfully removed {}!".format(name))
+        else:
+            await ctx.send("Could not remove {}!".format(name))
 
     @set_idol.error
     @set_log_channel.error
