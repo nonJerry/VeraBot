@@ -290,6 +290,18 @@ class Database(metaclass=Singleton):
     def remove_vtuber(self, guild_id: int):
         self._get_general_settings().update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild_id}}})
 
+    def add_multi_server(self, guild_id: int):
+        self._get_general_settings().update_one({"name": "multi_server"}, {'$push': {'ids': guild_id}})
+
+    def remove_multi_server(self, guild_id: int):
+         self._get_general_settings().update_one({'name': 'multi_server'}, {'$pull':  {'ids': guild_id}})
+
+    def get_multi_server(self) -> list:
+        return self._get_general_settings().find_one({'name': "multi_server"})['ids']
+
+
+
+
     def create_new_setting(self, kind, value):
         """Create a new setting for every server
 
