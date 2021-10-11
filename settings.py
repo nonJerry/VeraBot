@@ -130,7 +130,7 @@ class Settings(commands.Cog):
 
         # always only one entry
         for element in self.db.get_vtuber_list():
-            if vtuber_name.lower() in element['name']:
+            if vtuber_name.lower() == element['name']:
                 await ctx.send("This Vtuber is already mapped to a server!")
                 return
         self.db.set_vtuber(vtuber_name, ctx.guild.id)
