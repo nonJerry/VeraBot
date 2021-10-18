@@ -29,10 +29,10 @@ class MembershipHandler:
         # deque for data
         self.verify_deque = deque()
 
-    async def add_to_queue(self, res, server_id=None, lang="eng"):
+    async def add_to_queue(self, res, server_id=None, lang="eng", vtuber: Optional[str] = None):
         
         # Check if there is a valid attachment
-        self.verify_deque.append([res, server_id, lang])
+        self.verify_deque.append([res, server_id, lang, vtuber])
         logging.info("Proof from %s added to queue for server: %s", res.author.id, server_id)
 
         m = "Your proof has been added to the queue and will be processed later.\n"
@@ -239,8 +239,8 @@ class MembershipHandler:
         if img_date:
             return (img_date)
 
-
-    async def verify_membership(self, res, server_id, lang):
+    # vtuber only given if server is multi_Server
+    async def verify_membership(self, res, server_id, lang, vtuber: Optional[str] = None):
         server_db = self.db.get_server_db(server_id)
 
         # if member exists, update date
@@ -250,8 +250,8 @@ class MembershipHandler:
 
         new_membership_date, membership_date_text, desc = self.process_date(res, new_membership_date)
         
-
         threads_enabled = server_db.get_threads_enabled()
+
         # check if permissions are okay
         if threads_enabled:
             if self.bot.get_cog('Settings').check_thread_permissions(server_id):
@@ -260,7 +260,10 @@ class MembershipHandler:
                 logging.info("%s: Has Threads enabled but perms are missing.", server_id)
         else:
             #verification channel of the server
-            member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
+            if vtuber:
+                member_veri_ch = self.bot.get_channel(server_db.get_multi_talent_log_channel(vtuber))
+            else:
+                member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
             
         
         if not member_veri_ch:
@@ -553,7 +556,7 @@ class MembershipHandler:
                 while self.verify_deque:
                     verify = self.verify_deque.popleft()
                     if verify[1]:
-                        await self.verify_membership(verify[0], verify[1], verify[2])
+                        await self.verify_membership(verify[0], verify[1], verify[2], verify[3])
                     else:
                         await self.verify_membership_with_server_detection(verify[0], verify[2])
                     del verify
