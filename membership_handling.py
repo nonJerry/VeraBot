@@ -407,13 +407,21 @@ class MembershipHandler:
         # update/create member in db
         server_db.update_member(member_id, db_date)
         
-        role_id = server_db.get_member_role()
+        # if multi-server get role depending on channel
+        if Utility.is_multi_server(res.guild.id):
+            role_id = server_db.get_multi_talent_role(res.channel.id)
+            vtuber = server_db.get_multi_talent_vtuber(res.channel.id)
+        else:
+            role_id = server_db.get_member_role()
+            vtuber = server_db.get_vtuber()
+            
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)
         logging.info("Added member role to user %s on server %s.", member_id, res.guild.id)
 
         await asyncio.sleep(0.21)
-        await target_member.send("You have been granted access to the membership channel of {}.".format(server_db.get_vtuber()))
+
+        await target_member.send("You have been granted access to the membership channel of {}.".format(vtuber))
 
         await asyncio.sleep(0.21)
         if manual:
