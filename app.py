@@ -364,7 +364,8 @@ async def verify(ctx, *args):
 
         if server:
             if Utility.is_user_on_server(ctx.author.id, server):
-                await member_handler.add_to_queue(ctx.message, server, language)
+                # only give vtuber name if it is a multi-server
+                await member_handler.add_to_queue(ctx.message, server, language, args[0] if Utility.is_multi_server(server) else None)
             else:
                 logging.info("%s tried to verify for a server they are not on.", ctx.author.id)
                 await ctx.send("You are not on {} server!".format(args[0].title()))
