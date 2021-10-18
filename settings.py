@@ -345,7 +345,7 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def enable_multi_server(self, ctx):
-        if self.is_multi_server(ctx.guild.id):
+        if Utility.is_multi_server(ctx.guild.id):
             logging.info("%s: Tried to enable the multi-talent function again.", ctx.guild.id)
             await ctx.send("Your server already has enabled the usage of multiple talents!")
             return
@@ -361,7 +361,7 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def disable_multi_server(self, ctx):
-        if not self.is_multi_server(ctx.guild.id):
+        if not Utility.is_multi_server(ctx.guild.id):
             logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", ctx.guild.id)
             await ctx.send("Your server has not enabled the usage of multiple talents!")
             return
@@ -383,7 +383,7 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def add_idol(self, ctx, name: str, log_id: int, role_id: int):
-        if not self.is_multi_server(ctx.guild.id):
+        if not Utility.is_multi_server(ctx.guild.id):
             logging.info("%s: Tried to use mutli-talent ADD without having it enabled.", ctx.guild.id)
             await ctx.send("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.")
             return
@@ -421,7 +421,7 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def remove_idol(self, ctx, name: str):
-        if not self.is_multi_server(ctx.guild.id):
+        if not Utility.is_multi_server(ctx.guild.id):
             logging.info("%s: Tried to remove a mutli-talent without having it enabled.", ctx.guild.id)
             await ctx.send("Your server has not enabled the usage of multiple talents.")
             return
