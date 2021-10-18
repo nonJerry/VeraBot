@@ -309,6 +309,12 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def toggle_threads(self, ctx, flag):
+        # multi-server cannot use threads
+        if Utility.is_multi_server(ctx.guild.id):
+            await ctx.send("You cannot enable threads as mutli-server!")
+            logging.info("%s tried to enable Threads as multi-server.", ctx.guild.id)
+            return
+
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
@@ -332,6 +338,10 @@ class Settings(commands.Cog):
         await ctx.send("Flag for using threads set to " + str(flag))
 
     async def check_thread_permissions(self, guild_id: int) -> bool:
+        if Utility.is_multi_server(guild_id):
+            logging.info("%s ended in check thread permission. It is not allowed for multi servers!", guild_id)
+            return False
+
         member_veri_ch = self.bot.get_channel(self.db.get_server_db(guild_id).get_proof_channel())
         permissions = member_veri_ch.permissions_for(member_veri_ch.guild.me)
         if not permissions.use_threads:
@@ -348,6 +358,10 @@ class Settings(commands.Cog):
         if Utility.is_multi_server(ctx.guild.id):
             logging.info("%s: Tried to enable the multi-talent function again.", ctx.guild.id)
             await ctx.send("Your server already has enabled the usage of multiple talents!")
+            return
+        if self.db.get_server_db(ctx.guild.id).get_threads_enabled():
+            await ctx.send("You cannot enable multi server with threads enabled!")
+            logging.info("%s: Tried to enable the multi-talent function with threads enabled.", ctx.guild.id)
             return
 
         self.db.add_multi_server(ctx.guild.id)
@@ -371,10 +385,7 @@ class Settings(commands.Cog):
 
         await ctx.send("Management of several talents was disabled for this server!")
 
-    def is_multi_server(self, guild_id: int) -> bool:
-        if not guild_id in self.db.get_multi_server():
-            return False
-        return True
+    
 
 
     @commands.command(name="addTalent", aliases=["addVTuber", "addIdol"],
