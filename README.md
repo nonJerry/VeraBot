@@ -6,7 +6,9 @@
 [![Test Status Master](https://github.com/nonJerry/VeraBot/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/nonJerry/VeraBot/actions/workflows/ci.yaml)
 <br>
 
-*The invite is not active anymore. If you want to invite this bot please contact me on Discord nonJerry#0001.*
+Anyone can invite this bot as long as their server doesn't share doxxing information and sticks to discord's TOS. I reserve the right to have the bot leave a server and/or close the invite again if I notice abusive beahvior.<br>
+**IMPORTANT**: It is possible that the name you want to use is already taken by another server, if this is the case you will need to think of another name/variation.<br>
+
 
 **VeraBot** manages the awarding of a role for membership-only content. <br>
 For this it uses OCR to verify the valid access with a sent screenshot.
