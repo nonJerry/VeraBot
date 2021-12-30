@@ -36,3 +36,5 @@ class Sending:
             logging.debug("Sent DM to %s", member_id)
         except AttributeError:
             logging.info("User {} does not exist.".format(member_id))
+        except Exception:
+            logging.info("Something went wrong with user {} a DM".format(member_id))
