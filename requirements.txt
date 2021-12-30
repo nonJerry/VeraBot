@@ -1,4 +1,4 @@
-distest==0.6.2
+distest>=0.6.1
 git+git://github.com/Rapptz/discord.py@master --install-option="--ignore-installed"
 dnspython==2.1.0
 gspread==3.7.0
