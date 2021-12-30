@@ -9,3 +9,4 @@ dateparser==1.0.0
 discord==1.0.1
 Pillow>=8.3.2
 python-decouple==3.4
+distest==0.6.2 --install-option="--no-deps --ignore-installed"
