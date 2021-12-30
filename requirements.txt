@@ -1,4 +1,5 @@
-git+git://github.com/Rapptz/discord.py@master
+distest==0.6.2 --install-option="--ignore-installed"
+git+git://github.com/Rapptz/discord.py@master --install-option="--ignore-installed"
 dnspython==2.1.0
 gspread==3.7.0
 requests==2.25.1
@@ -9,4 +10,4 @@ dateparser==1.0.0
 discord==1.0.1
 Pillow>=8.3.2
 python-decouple==3.4
-distest==0.6.2 --install-option="--no-deps --ignore-installed"
+
