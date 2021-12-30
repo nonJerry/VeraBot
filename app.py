@@ -72,8 +72,19 @@ verify_tries = 2
 
 # listen to other bots while testing
 if stage == "TEST":
-    from distest.patches import patch_target
-    bot = patch_target(bot)
+    """
+    Patches the target bot. It changes the ``process_commands`` function to remove the check if the received message
+    author is a bot or not.
+    :param discord.ext.commands.Bot bot:
+    :return: The patched bot.
+    """
+    from discord.ext.commands.bot import Bot
+    async def process_commands(self, message):
+        ctx = await self.get_context(message)
+        await self.invoke(ctx)
+    if type(bot) == Bot:
+        bot.process_commands = process_commands.__get__(bot, Bot)
+
     # to not run into cooldown limit
     verify_tries = 1000
     logging.info("Listining to bots too. Only for testing purposes!!!")
