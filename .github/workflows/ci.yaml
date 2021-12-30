@@ -54,6 +54,7 @@ jobs:
 
       - name: Push and Run Main Bot
         run: |
+          heroku run pip install distest --no-deps --ignore-installed
           git push heroku ${GITHUB_REF##*/}:master --force
           heroku ps:scale worker=1
           sleep 20
