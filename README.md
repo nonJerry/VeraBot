@@ -20,7 +20,7 @@ This bot is mainly made for VTuber Fanservers. It does not matter whether Indie 
 
 To invite the bot please follow the link above and grant the permissions wanted.
 
-If you run into problems or have any suggestions, contact me on Discord at nonJerry#0001.
+If you run into problems or have any suggestions, contact me on Discord at nonJerry#2416.
 
 ## Setup at the beginning
 
@@ -39,7 +39,7 @@ Furthermore is it recommended to set an individual picture which will be sent wi
 This can be done by using `$picture <Link to picture>`. Accepted formats are png, jpg and jpeg.
 
 It is also recommended to discuss with the staff whether the bot should be able to give the role automatically to the user if it recognizes the date.
-By default this is set to True but if it is not wanted it can be set to false by using `$verify False`.
+By default this is set to False but if it is wanted it can be set to true by using `$verify True`.
 
 ## Other commands
 
