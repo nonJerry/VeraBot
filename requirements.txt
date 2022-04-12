@@ -1,4 +1,4 @@
-git+git://github.com/Rapptz/discord.py@master
+git+https://github.com/Rapptz/discord.py@master
 dnspython==2.1.0
 gspread==3.7.0
 requests==2.25.1
