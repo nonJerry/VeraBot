@@ -57,6 +57,8 @@ async def setup(interface):
         .add_field(name='Tolerance Duration', value="1", inline=True)
         .add_field(name='Prior Notice Duration', value="1", inline=True)
         .add_field(name='Logging enabled', value="True", inline=True)
+        .add_field(name='Threads enabled', value="False", inline=True)
+        .add_field(name='Proof Channel ID', value=log_channel_id, inline=True)
     )
 
     await interface.send_message("$settings")
