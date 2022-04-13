@@ -1,12 +1,11 @@
 git+https://github.com/Rapptz/discord.py@master
-dnspython==2.1.0
-gspread==3.7.0
-requests==2.25.1
-tesserocr==2.5.1
-pymongo>=3.11.4
-pytesseract==0.3.7
-dateparser==1.0.0
-discord==1.0.1
-Pillow>=8.3.2
-python-decouple==3.4
+dnspython==2.2.1
+gspread==5.3.2
+requests==2.27.1
+tesserocr==2.5.2
+pymongo>=4.1.0
+pytesseract==0.3.9
+dateparser==1.1.1
+Pillow>=9.1.0
+python-decouple==3.6
 
