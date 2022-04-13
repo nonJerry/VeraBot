@@ -500,7 +500,7 @@ async def background_main():
 
 async def main():
     async with bot:
-    bot.loop.create_task(background_main())
-    await bot.start(token)
+        bot.loop.create_task(background_main())
+        await bot.start(token)
 
 asyncio.run(main())
