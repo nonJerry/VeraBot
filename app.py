@@ -496,5 +496,9 @@ async def background_main():
     await bot.wait_until_ready()
     await asyncio.gather(*coroutines)
 
-bot.loop.create_task(background_main())
-bot.run(token)
+async def main():
+    async with bot:
+        bot.loop.create_task(background_main())
+        await bot.start(token)
+
+asyncio.run(main())
