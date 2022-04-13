@@ -102,8 +102,10 @@ OCR.setup(bot, local)
 Sending.setup(bot, embed_color)
 
 #add cogs
-bot.add_cog(Settings(bot))
-bot.add_cog(Membership(bot, member_handler))
+async def add_cogs():
+    await bot.add_cog(Settings(bot))
+    await bot.add_cog(Membership(bot, member_handler))
+
 logging.info("Cogs added")
 
 
@@ -487,6 +489,7 @@ async def jst_clock():
 
 # List Coroutines to be executed
 coroutines = (
+    add_cogs(),
     jst_clock(),
     member_handler.check_membership_routine(),
     member_handler.handle_verifies()
