@@ -105,8 +105,7 @@ Sending.setup(bot, embed_color)
 async def add_cogs():
     await bot.add_cog(Settings(bot))
     await bot.add_cog(Membership(bot, member_handler))
-
-logging.info("Cogs added")
+    logging.info("Cogs added")
 
 
 @bot.event
