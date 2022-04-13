@@ -488,7 +488,6 @@ async def jst_clock():
 
 # List Coroutines to be executed
 coroutines = (
-    add_cogs(),
     jst_clock(),
     member_handler.check_membership_routine(),
     member_handler.handle_verifies()
@@ -496,6 +495,7 @@ coroutines = (
 
 # Main Coroutine
 async def background_main():
+    await add_cogs()
     await bot.wait_until_ready()
     await asyncio.gather(*coroutines)
 
