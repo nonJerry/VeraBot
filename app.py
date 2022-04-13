@@ -102,9 +102,10 @@ OCR.setup(bot, local)
 Sending.setup(bot, embed_color)
 
 #add cogs
-bot.add_cog(Settings(bot))
-bot.add_cog(Membership(bot, member_handler))
-logging.info("Cogs added")
+async def add_cogs():
+    await bot.add_cog(Settings(bot))
+    await bot.add_cog(Membership(bot, member_handler))
+    logging.info("Cogs added")
 
 
 @bot.event
@@ -493,8 +494,13 @@ coroutines = (
 
 # Main Coroutine
 async def background_main():
+    await add_cogs()
     await bot.wait_until_ready()
     await asyncio.gather(*coroutines)
 
-bot.loop.create_task(background_main())
-bot.run(token)
+async def main():
+    async with bot:
+        bot.loop.create_task(background_main())
+        await bot.start(token)
+
+asyncio.run(main())
