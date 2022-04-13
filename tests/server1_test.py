@@ -44,7 +44,6 @@ async def setup(interface):
     embed = (
         Embed(
             title="Current Settings",
-            description="None"
         )
         .set_image(
             url="https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg"
