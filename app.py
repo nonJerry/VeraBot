@@ -50,6 +50,7 @@ intents.integrations = False
 intents.webhooks = False
 intents.voice_states = False
 intents.guild_typing = False
+intents.message_content = True
 
 async def determine_prefix(bot, message):
     if isinstance(message.channel, discord.channel.DMChannel):
