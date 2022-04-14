@@ -50,6 +50,7 @@ intents.integrations = False
 intents.webhooks = False
 intents.voice_states = False
 intents.guild_typing = False
+intents.message_content = True
 
 async def determine_prefix(bot, message):
     if isinstance(message.channel, discord.channel.DMChannel):
@@ -214,7 +215,7 @@ async def process_reaction(channel, msg, reaction, user):
         if server_db.get_automatic():
             await msg.clear_reactions()
             await asyncio.sleep(0.21)
-            await msg.add_reaction(emoji='👌')
+            await msg.add_reaction('👌')
         else:
             membership_date = embed.fields[0].value
 
@@ -223,7 +224,7 @@ async def process_reaction(channel, msg, reaction, user):
                 await asyncio.sleep(0.21)
                 await msg.clear_reactions()
                 await asyncio.sleep(0.21)
-                await msg.add_reaction(emoji='👌')
+                await msg.add_reaction('👌')
         success = True
 
     # wrong date
@@ -276,7 +277,7 @@ async def handle_wrong_date(channel, msg, reaction, target_member_id: int, user)
     if date_msg.content.lower() != "cancel" and await member_handler.set_membership(msg, target_member_id, date_msg.content, False, user):
         await msg.clear_reactions()
         await asyncio.sleep(0.21)
-        await msg.add_reaction(emoji='👍')
+        await msg.add_reaction('👍')
         return True
     else:
         logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
@@ -329,7 +330,7 @@ async def handle_denied(channel, msg, reaction, embed, target_member_id: int, us
         await msg.edit(content = msg.content, embed = embed)
         await asyncio.sleep(0.21)
         await msg.clear_reactions()
-        await msg.add_reaction(emoji='👎')
+        await msg.add_reaction('👎')
         return True
     else:
         logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)

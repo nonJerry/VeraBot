@@ -105,8 +105,8 @@ class Membership(commands.Cog):
         embed.add_field(name="Recognized Date", value = "None")
         embed.set_image(url = ctx.message.attachments[0].url)
         message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
-        await message.add_reaction(emoji=u"\U0001F4C5") # calendar
-        await message.add_reaction(emoji=u"\U0001F6AB") # no entry
+        await message.add_reaction(u"\U0001F4C5")  # calendar
+        await message.add_reaction(u"\U0001F6AB")  # no entry
         logging.info("Relayed the verify to %s", server_id)
 
     
