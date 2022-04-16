@@ -100,7 +100,6 @@ This data is collected automatically. It is used for the bot to function correct
 
 This data is collected optionally when certain bot user enables or uses certain features.
 
-- Links to artworks shared in art channels with enabled repost detection (stored in RAM from 1 day up to 2 weeks, configurable)
 - Discord Role IDs to know who is allowed to use the bot and what role to add after a successful verification
 - Discord channel IDs for logging and check whether it should react to a message/reaction
 - Image link coupled with the id/tag of the user who sent it and the target name
