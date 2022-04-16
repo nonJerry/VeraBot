@@ -149,7 +149,12 @@ class ServerDatabase:
             if member and member.last_membership <= notify_date or not only_expired:
                 member_list.append(member)
         return member_list
-                
+
+    def get_member_multi(self, member_id: int, vtuber) -> Optional[Member]:
+        # ka wofür ich das wollte
+        member = self.__get_member_collection().find_one({"id": member_id, "idol": vtuber})
+        if member:
+            return Member.create_member(member)            
 
     def get_vtuber(self) -> str:
         return Database().get_vtuber(self.server_id)
