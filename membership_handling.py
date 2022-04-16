@@ -44,6 +44,8 @@ class MembershipHandler:
         # Returns an expired_membership list {id, last_membership}
 
         server_db= self.db.get_server_db(server['guild_id'])
+
+        # Single-server only (will be set to 'none' for multi-server)
         idol = server['name']
 
 
@@ -71,6 +73,10 @@ class MembershipHandler:
         # only needs to check those that are already expired to save ressources
         for member in server_db.get_members(only_expired=True):
             try:
+                # Get the actual membership which is expiring for multi-server
+                if Utility.is_multi_server(server['guild_id']):
+                    idol = member['idol']
+                    message_title = idol.title() + " Membership {}!"
                 # For each member
                 last_membership = member.last_membership
                 # need to remove role?
@@ -87,7 +93,10 @@ class MembershipHandler:
                     target_member = guild.get_member(member.id)
 
                     if target_member:
-                        role_id = server_db.get_member_role()
+                        if Utility.is_multi_server(guild):
+                            role_id = server_db.get_multi_talent_role_from_name(idol)
+                        else:
+                            role_id = server_db.get_member_role()
                         member_role = guild.get_role(role_id)
 
                         await target_member.remove_roles(member_role)
