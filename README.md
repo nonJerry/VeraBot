@@ -86,8 +86,44 @@ After selecting the bot will tell you what to do and add `VERIFIED: <verificatio
 ![DENIED example](https://user-images.githubusercontent.com/79670160/121267177-149a5e80-c8bc-11eb-9ea7-f0d40b67ad49.png)
 
 
+## Privacy policy
 
+The following entails the privacy policy and agreement that you accept when adding any of VeraBot to a server, or as a member of such a server.
 
+### Essential data collecting
+
+This data is collected automatically. It is used for the bot to function correctly or to troubleshoot bugs that may occur in runtime.
+
+- Server id to create a segment in the database
+
+### Optional data collecting
+
+This data is collected optionally when certain bot user enables or uses certain features.
+
+- Links to artworks shared in art channels with enabled repost detection (stored in RAM from 1 day up to 2 weeks, configurable)
+- Discord Role IDs to know who is allowed to use the bot and what role to add after a successful verification
+- Discord channel IDs for logging and check whether it should react to a message/reaction
+- Image link coupled with the id/tag of the user who sent it and the target name
+- Message sent with the verification command including all ids and attachments, id of the targeted server, used language for the text recognition and optionally a identifier string (temporarily until the process finshed - a few minutes at max)
+- After a successful verification process the stored elements are:
+  - user id
+  - the detected date of the last membership update
+  - whether the user already was informed that their membership is about to expire. Default: False
+  - whether the user already was informed that their membership already expired. Default: False
+  - optionally the identifier string
+  - reference for what server through the DB structure
+
+### Can I request data deletion?
+
+Most data mentioned above (only data stored in RAM is an exception) can be permanently removed upon your request, that includes temporary stored logged data in a given timeframe. Please send nonJerry#2416 a message.
+
+### Data storage
+
+All stored data is kept on protected servers and it's kept on a password secured cloud storage (MongoDB Atlas). Please keep in mind that even with these protections, no data can ever be 100% secure. All efforts are taken to keep your data secure and private, but its absolute security cannot be guaranteed.
+
+### Agreement
+
+By adding VeraBot to your server you are consenting to the policies outlined in this document. If you, the server manager, do not agree to this document, you may remove the bot(s) from the server. If you, the server member, do not agree to this document, you may leave the server that contains the bot.
 
 
 ## License
