@@ -409,7 +409,7 @@ class MembershipHandler:
         return (new_membership_date, membership_date_text, desc)
 
 
-    async def set_membership(self, res, member_id, date, manual=True, actor=None) -> bool:
+    async def set_membership(self, res, member_id, date, manual=True, actor=None, vtuber=None) -> bool:
         dates = date.split("/")
 
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
@@ -435,12 +435,14 @@ class MembershipHandler:
         server_db = self.db.get_server_db(res.guild.id)
 
         # update/create member in db
-        server_db.update_member(member_id, db_date)
-        
-        # if multi-server get role depending on channel
         if Utility.is_multi_server(res.guild.id):
-            role_id = server_db.get_multi_talent_role(res.channel.id)
-            vtuber = server_db.get_multi_talent_vtuber(res.channel.id)
+            server_db.update_member_multi(member_id, db_date, vtuber)
+        else:
+            server_db.update_member(member_id, db_date)
+        
+        # if multi-server get role depending on name
+        if Utility.is_multi_server(res.guild.id):
+            role_id = server_db.get_multi_talent_role_from_name(vtuber)
         else:
             role_id = server_db.get_member_role()
             vtuber = server_db.get_vtuber()
