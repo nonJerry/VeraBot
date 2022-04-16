@@ -406,11 +406,6 @@ class Settings(commands.Cog):
             await ctx.send("This Vtuber is already mapped to a server!")
             return
 
-        if self.db.get_server_db(ctx.guild.id).exists_multi_talent_log_channel(log_id):
-            logging.info("%s: Log Channel %s already used.", ctx.guild.id, log_id)   
-            await ctx.send("This Channel is already used for another Talent on your server!")
-            return
-
         if not self.bot.get_channel(log_id):
             await ctx.send("Please use a proper Channel!")
             return
