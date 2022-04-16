@@ -388,6 +388,10 @@ class Database(metaclass=Singleton):
 
     def add_multi_server(self, guild_id: int):
         self._get_general_settings().update_one({"name": "multi_server"}, {'$push': {'ids': guild_id}})
+        server_db = self.get_server_db(guild_id)
+        set_vtuber = server_db.get_vtuber()
+        if (set_vtuber != "not supported server"):
+            server_db.add_multi_talent(set_vtuber, server_db.get_log_channel(), server_db.get_member_role())
 
     def remove_multi_server(self, guild_id: int):
         self._get_general_settings().update_one({'name': 'multi_server'}, {'$pull':  {'ids': guild_id}})
