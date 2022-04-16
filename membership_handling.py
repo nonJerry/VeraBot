@@ -74,8 +74,8 @@ class MembershipHandler:
         for member in server_db.get_members(only_expired=True):
             try:
                 # Get the actual membership which is expiring for multi-server
-                if Utility.is_multi_server(server['guild_id']):
-                    idol = member['idol']
+                if Utility.is_multi_server(server['guild_id']) and member.idol:
+                    idol = member.idol
                     message_title = idol.title() + " Membership {}!"
                 # For each member
                 last_membership = member.last_membership
