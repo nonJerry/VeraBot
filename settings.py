@@ -73,6 +73,10 @@ class Settings(commands.Cog):
         # proof channel
         proof_channel = server_db.get_proof_channel()
         embed.add_field(name='Proof Channel ID', value=str(proof_channel), inline=True)
+        
+        # is multi server
+        is_multi = Utility.is_multi_server(ctx.guild.id)
+        embed.add_field(name='Multi Server', value=str(is_multi), inline=True)
 
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
         m += "For a full explanation of the settings please refer to:\n"
@@ -379,7 +383,7 @@ class Settings(commands.Cog):
             logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", ctx.guild.id)
             await ctx.send("Your server has not enabled the usage of multiple talents!")
             return
-
+        
         self.db.remove_multi_server(ctx.guild.id)
         logging.info("%s: Disabled the multi-talent function.", ctx.guild.id)
 
