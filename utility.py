@@ -150,3 +150,9 @@ class Utility:
         if member:
             return True
         return False
+
+    @classmethod
+    def is_multi_server(cls, guild_id: int) -> bool:
+        if not guild_id in cls.db.get_multi_server():
+            return False
+        return True

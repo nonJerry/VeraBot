@@ -73,6 +73,10 @@ class Settings(commands.Cog):
         # proof channel
         proof_channel = server_db.get_proof_channel()
         embed.add_field(name='Proof Channel ID', value=str(proof_channel), inline=True)
+        
+        # is multi server
+        is_multi = Utility.is_multi_server(ctx.guild.id)
+        embed.add_field(name='Multi Server', value=str(is_multi), inline=True)
 
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
         m += "For a full explanation of the settings please refer to:\n"
@@ -129,14 +133,21 @@ class Settings(commands.Cog):
     async def set_idol(self, ctx, vtuber_name: str):
 
         # always only one entry
-        for element in self.db.get_vtuber_list():
-            if vtuber_name.lower() == element['name']:
-                await ctx.send("This Vtuber is already mapped to a server!")
-                return
+        if self.check_vtuber(vtuber_name):           
+            await ctx.send("This Vtuber is already mapped to a server!")
+            return
+
         self.db.set_vtuber(vtuber_name, ctx.guild.id)
 
         await ctx.send("Set VTuber name to " + vtuber_name)
         logging.info("%s (%s) -> New Vtuber added: %s", ctx.guild.name, ctx.guild.id, vtuber_name)
+
+    def check_vtuber(self, vtuber_name) -> bool:
+        for element in self.db.get_vtuber_list():
+            logging.debug(element)
+            if vtuber_name.lower() == element['name']:
+                return True
+        return False
 
 
     @commands.command(name="memberRole", aliases=["setMemberRole"],
@@ -302,6 +313,12 @@ class Settings(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def toggle_threads(self, ctx, flag):
+        # multi-server cannot use threads
+        if Utility.is_multi_server(ctx.guild.id):
+            await ctx.send("You cannot enable threads as mutli-server!")
+            logging.info("%s tried to enable Threads as multi-server.", ctx.guild.id)
+            return
+
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
             await ctx.send(self.BOOLEAN_ONLY_TEXT)
@@ -325,6 +342,10 @@ class Settings(commands.Cog):
         await ctx.send("Flag for using threads set to " + str(flag))
 
     async def check_thread_permissions(self, guild_id: int) -> bool:
+        if Utility.is_multi_server(guild_id):
+            logging.info("%s ended in check thread permission. It is not allowed for multi servers!", guild_id)
+            return False
+
         member_veri_ch = self.bot.get_channel(self.db.get_server_db(guild_id).get_proof_channel())
         permissions = member_veri_ch.permissions_for(member_veri_ch.guild.me)
         if not permissions.create_public_threads:
@@ -332,6 +353,94 @@ class Settings(commands.Cog):
             return False
         return True
 
+    @commands.command(name="enableMultiServer", aliases=["enableMulti"],
+    help="Will activate the possibility to support several talents on one server.",
+    brief="Will activate the possibility to support several talents on one server.")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def enable_multi_server(self, ctx):
+        if Utility.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to enable the multi-talent function again.", ctx.guild.id)
+            await ctx.send("Your server already has enabled the usage of multiple talents!")
+            return
+        if self.db.get_server_db(ctx.guild.id).get_threads_enabled():
+            await ctx.send("You cannot enable multi server with threads enabled!")
+            logging.info("%s: Tried to enable the multi-talent function with threads enabled.", ctx.guild.id)
+            return
+
+        self.db.add_multi_server(ctx.guild.id)
+        logging.info("%s: Enabled the multi-talent function.", ctx.guild.id)
+
+        await ctx.send("Management of several talents was activated for this server!")
+
+    @commands.command(name="disableMultiServer", aliases=["disableMulti"],
+    help="Will disable the possibility to support several talents on one server.",
+    brief="Will disable the possibility to support several talents on one server.")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def disable_multi_server(self, ctx):
+        if not Utility.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", ctx.guild.id)
+            await ctx.send("Your server has not enabled the usage of multiple talents!")
+            return
+        
+        self.db.remove_multi_server(ctx.guild.id)
+        logging.info("%s: Disabled the multi-talent function.", ctx.guild.id)
+
+        await ctx.send("Management of several talents was disabled for this server! For this all added VTubers were removed. Please add the one wanted again using $setVtuber")
+
+    
+
+
+    @commands.command(name="addTalent", aliases=["addVTuber", "addIdol"],
+    help="Adds new Talent to be supported. Also needs the log channel and role id. Function only for Multi-Talent servers!",
+    brief="Adds new Talent to be supported. Function only for Multi-Talent servers!")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def add_idol(self, ctx, name: str, log_id: int, role_id: int):
+        if not Utility.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to use mutli-talent ADD without having it enabled.", ctx.guild.id)
+            await ctx.send("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.")
+            return
+        logging.info("Multi-Server %s: Trying to add %s as talent.", ctx.guild.id, name)
+
+        # Check for integrity
+        if self.check_vtuber(name):       
+            logging.info("%s: Talent %s already exists.", ctx.guild.id, name)   
+            await ctx.send("This Vtuber is already mapped to a server!")
+            return
+
+        if not self.bot.get_channel(log_id):
+            await ctx.send("Please use a proper Channel!")
+            return
+
+        if not self.check_role_integrity(ctx, role_id):
+            return
+
+        # Finally add to db
+        self.db.get_server_db(ctx.guild.id).add_multi_talent(name, log_id, role_id)
+        self.db.set_vtuber(name, ctx.guild.id)
+        logging.info("%s: Added %s with %s as Log Channel and %s as Role.", ctx.guild.id, name, log_id, role_id)
+
+        await ctx.send("Successfully added the new talent!")
+
+
+    @commands.command(name="removeTalent", aliases=["removeVTuber", "removeIdol"],
+    help="Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!",
+    brief="Removes the Talent. Function only for Multi-Talent servers!")
+    @commands.has_permissions(administrator=True)
+    @commands.guild_only()
+    async def remove_idol(self, ctx, name: str):
+        if not Utility.is_multi_server(ctx.guild.id):
+            logging.info("%s: Tried to remove a mutli-talent without having it enabled.", ctx.guild.id)
+            await ctx.send("Your server has not enabled the usage of multiple talents.")
+            return
+        if self.db.get_server_db(ctx.guild.id).remove_multi_talent(name):
+            self.db.remove_multi_talent_vtuber(ctx.guild.id, name)
+            logging.info("Removed %s from VTuber list", name)
+            await ctx.send("Successfully removed {}!".format(name))
+        else:
+            await ctx.send("Could not remove {}!".format(name))
 
     @set_idol.error
     @set_log_channel.error
@@ -346,6 +455,9 @@ class Settings(commands.Cog):
     @set_logging.error
     @toggle_threads.error
     @set_proof_channel.error
+    @enable_multi_server.error
+    @disable_multi_server.error
+    @add_idol.error
     #@toggle_threads.error
     async def general_error(self, ctx, error):
         if isinstance(error, commands.BadArgument):

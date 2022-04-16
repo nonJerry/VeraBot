@@ -58,6 +58,7 @@ async def setup(interface):
         .add_field(name='Logging enabled', value="True", inline=True)
         .add_field(name='Threads enabled', value="False", inline=True)
         .add_field(name='Proof Channel ID', value=875848307119902780, inline=True)
+        .add_field(name='Multi Server', value='False', inline=True)
     )
 
     await interface.send_message("$settings")
