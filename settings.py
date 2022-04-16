@@ -387,7 +387,7 @@ class Settings(commands.Cog):
         self.db.remove_multi_server(ctx.guild.id)
         logging.info("%s: Disabled the multi-talent function.", ctx.guild.id)
 
-        await ctx.send("Management of several talents was disabled for this server!")
+        await ctx.send("Management of several talents was disabled for this server! For this all added VTubers were removed. Please add the one wanted again using $setVtuber")
 
     
 

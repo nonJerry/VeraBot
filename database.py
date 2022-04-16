@@ -391,6 +391,10 @@ class Database(metaclass=Singleton):
 
     def remove_multi_server(self, guild_id: int):
          self._get_general_settings().update_one({'name': 'multi_server'}, {'$pull':  {'ids': guild_id}})
+         server_db = self.get_server_db(guild_id)
+         for data_set in server_db.get_multi_talents():
+             server_db.remove_multi_talent(data_set['idol'])
+             self.remove_vtuber(guild_id)
 
     def get_multi_server(self) -> list:
         return self._get_general_settings().find_one({'name': "multi_server"})['ids']
