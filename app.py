@@ -319,6 +319,7 @@ async def handle_denied(channel, msg, reaction, embed, target_member_id: int, us
     bool
         Whether the process was ended successfully (no abort)
     """
+    embed = msg.embeds[0]
 
     m = "Please write a message that will be sent to the User."
     m += "Type CANCEL to stop the process."
