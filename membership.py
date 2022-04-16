@@ -43,7 +43,7 @@ class Membership(commands.Cog):
     @commands.guild_only()
     async def set_membership(self, ctx, member_id: int, date, vtuber=None):
         logging.info("%s used addMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.set_membership(ctx.message, member_id, date, True, True, vtuber)
+        await self.member_handler.set_membership(ctx.message, member_id, date, manual = True, vtuber = vtuber)
 
     @set_membership.error
     async def set_membership_error(self, ctx, error):
@@ -63,7 +63,7 @@ class Membership(commands.Cog):
     @commands.guild_only()
     async def del_membership(self, ctx, member_id: int, vtuber=None, *text):
         logging.info("%s used delMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.del_membership(ctx.message, member_id, text, True, True, vtuber)
+        await self.member_handler.del_membership(ctx.message, member_id, text, manual = True, vtuber = vtuber)
 
 
     @commands.command(name="purgeMember", aliases=["purge"],
