@@ -41,9 +41,9 @@ class Membership(commands.Cog):
         brief="Gives the membership role to a user")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def set_membership(self, ctx, member_id: int, date):
+    async def set_membership(self, ctx, member_id: int, date, vtuber=None):
         logging.info("%s used addMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.set_membership(ctx.message, member_id, date)
+        await self.member_handler.set_membership(ctx.message, member_id, date, True, True, vtuber)
 
     @set_membership.error
     async def set_membership_error(self, ctx, error):
@@ -61,9 +61,9 @@ class Membership(commands.Cog):
         brief="Removes the membership role from the user")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def del_membership(self, ctx, member_id: int, *text):
+    async def del_membership(self, ctx, member_id: int, vtuber=None, *text):
         logging.info("%s used delMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.del_membership(ctx.message, member_id, text)
+        await self.member_handler.del_membership(ctx.message, member_id, text, True, True, vtuber)
 
 
     @commands.command(name="purgeMember", aliases=["purge"],
