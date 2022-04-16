@@ -238,14 +238,33 @@ class ServerDatabase:
         if infos:
             return infos['role_id']
 
-    def exists_multi_talent_log_channel(self, log_id: int) -> Optional[bool]:
-        if not self.get_multi_talents():
-            return False
-        # only has `values` if the log_channel is matched
-        if hasattr(self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'log_channel' : log_id}}}), 'values'):
-            return False
-        return True
+    def update_member_multi(self, member_id, db_date, vtuber):
+        # Check if id exists with vtuber
+        target_membership = self.get_member_multi(member_id, vtuber)
+        if not target_membership:
+            logging.info("Creating new membership for %s to talent %s on server %s with last membership: %s.", member_id, vtuber, self.server_id, db_date)
+            self.__get_member_collection().insert_one({
+                "id": member_id,
+                "idol": vtuber,
+                "last_membership": db_date,
+                "informed": False,
+                "expiry_sent": False
+            })
+        else:
+            logging.info("Updating membership for %s to talent %s on server %s with last membership: %s.", member_id, vtuber, self.server_id, db_date)
+            self.__get_member_collection().update_one({"id": member_id, "idol": vtuber}, {"$set": {"last_membership": db_date, "informed": False, "expiry_sent": False}})
 
+    @overload
+    def remove_member_multi(self, member: int, vtuber) -> int:
+        ...
+    @overload
+    def remove_member_multi(self, member: Member, vtuber) -> None:
+        ...
+    def remove_member_multi(self, member, vtuber):
+        if isinstance(member, int):
+            return self.__get_member_collection().delete_one({"id": member, "idol": vtuber}).deleted_count
+        # has to be Member
+        self.__get_member_collection().delete_one(member.to_dict())
 
     
 
