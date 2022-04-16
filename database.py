@@ -353,7 +353,7 @@ class Database(metaclass=Singleton):
 
     def get_vtuber(self, server_id: int) -> str:
         settings_db = self._get_general_settings()
-        result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'guild_id' : server_id}}})
+        result = settings_db.find_one({'name': 'supported_idols'}, {'supported_idols' : { '$elemMatch': {'guild_id' : server_id}}})
 
         if 'supported_idols' in result:
             return result['supported_idols'][0]['name'].title()
@@ -362,7 +362,7 @@ class Database(metaclass=Singleton):
             return "not supported server"
 
     def get_vtuber_guild(self, name: str) -> Optional[int]:
-        result = self._get_general_settings().find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
+        result = self._get_general_settings().find_one({'name': 'supported_idols'}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
         if 'supported_idols' in result:
             return result['supported_idols'][0]['guild_id']
 
