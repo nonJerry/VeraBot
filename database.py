@@ -233,6 +233,11 @@ class ServerDatabase:
             return
         return self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'log_channel' : log_channel_id}}})['values'][0]
 
+    def get_multi_talent_log_channel(self, name: str) -> Optional[int]:
+        infos = self.get_multi_talent_infos(name)
+        if infos:
+            return infos['log_channel']
+
     def get_multi_talent_role_from_name(self, name: str) -> Optional[int]:
         infos = self.get_multi_talent_infos(name)
         if infos:
