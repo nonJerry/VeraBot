@@ -465,27 +465,38 @@ class MembershipHandler:
         return True
         
 
-    async def del_membership(self, res, member_id: int, text, dm_flag=True, manual=True):
+    async def del_membership(self, res, member_id: int, text, dm_flag=True, manual=True, vtuber=None):
         server_db = self.db.get_server_db(res.guild.id)
+        result = 0
 
         # Delete from db
-        if server_db.remove_member(member_id) == 0:
+        if Utility.is_multi_server(res.guild.id) and vtuber:
+            result = server_db.remove_member_multi(member_id, vtuber)
+        else:
+            result = server_db.remove_member(member_id)
+        if result == 0:
             logging.info("Requested user does not have membership; by %s.", res.author.id)
             await res.channel.send(self.ID_NOT_FOUND_TEXT)
             return
-        logging.info("Deleted membership on %s: %s", res.guild.id, member_id)
+        if Utility.is_multi_server(res.guild.id):
+            logging.info("Deleted membership on %s: %s for %s", res.guild.id, member_id, vtuber)
+        else:
+            logging.info("Deleted membership on %s: %s", res.guild.id, member_id)
 
         # Remove member role from user
         guild = res.guild
         target_member = guild.get_member(member_id)
 
-        role_id = server_db.get_member_role()
+        if Utility.is_multi_server(res.guild.id):
+            role_id = server_db.get_multi_talent_role_from_name(vtuber)
+        else:
+            role_id = server_db.get_member_role()
         role = guild.get_role(role_id)
 
         if target_member:
             try: 
                 await target_member.remove_roles(role)
-                logging.info("Removing role from %s on server %s.", member_id, res.guild.id)
+                logging.info("Removing role %s from %s on server %s.", role.name, member_id, res.guild.id)
 
                 if manual:
                     await res.channel.send("Membership successfully deleted.")
@@ -503,7 +514,10 @@ class MembershipHandler:
             logging.info("%s not on server %s.", member_id, res.guild.id)
 
     async def purge_memberships(self, server_id: int):
-        server = {'guild_id': server_id, 'name': self.db.get_vtuber(server_id)}
+        if Utility.is_multi_server(server_id):
+            server = {'guild_id': server_id, 'name': "none"}
+        else:
+            server = {'guild_id': server_id, 'name': self.db.get_vtuber(server_id)}
         lg_ch = self.bot.get_channel(self.db.get_server_db(server_id).get_log_channel())
 
         expired_memberships = await self._check_membership_dates(server, purge=True)
