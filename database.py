@@ -381,10 +381,10 @@ class Database(metaclass=Singleton):
             settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": name.lower(), "guild_id": guild_id}}})
 
     def remove_vtuber(self, guild_id: int):
-        self._get_general_settings().update({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild_id}}})
+        self._get_general_settings().update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild_id}}})
 
     def remove_multi_talent_vtuber(self, guild_id: int, name: str):
-        self._get_general_settings().update({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'name': name, 'guild_id': guild_id}}})
+        self._get_general_settings().update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'name': name, 'guild_id': guild_id}}})
 
     def add_multi_server(self, guild_id: int):
         self._get_general_settings().update_one({"name": "multi_server"}, {'$push': {'ids': guild_id}})
