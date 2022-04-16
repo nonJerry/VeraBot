@@ -141,7 +141,7 @@ class MembershipHandler:
         return expired_memberships
 
 
-    async def view_membership(self, res, member_id=None):
+    async def view_membership(self, res, member_id=None, vtuber=None):
         # if msg is empty, show all members
         server_db = self.db.get_server_db(res.guild.id)
 
@@ -149,6 +149,8 @@ class MembershipHandler:
             count = 0
             m = ""
             for member in server_db.get_members():
+                if Utility.is_multi_server(res.guild.id) and vtuber is not None and member.idol != vtuber:
+                    continue
                 count += 1
                 member_id = member.id
                 membership_date = member.last_membership + relativedelta(months=1)
@@ -166,7 +168,10 @@ class MembershipHandler:
             return
 
         # Check if zoopass in database and delete
-        target_membership = server_db.get_member(member_id)
+        if Utility.is_multi_server(res.guild.id):
+            target_membership = server_db.get_member_multi(member_id, vtuber)
+        else:
+            target_membership = server_db.get_member(member_id)
         if not target_membership:
             await res.channel.send(self.ID_NOT_FOUND_TEXT)
             return
@@ -191,6 +196,7 @@ class MembershipHandler:
     """
     {
         "id": int
+        "idol": String --Multi-server only
         "last_membership": datetime
         "informed": bool
         "expiry_sent": bool
