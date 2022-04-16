@@ -73,6 +73,10 @@ class Settings(commands.Cog):
         # proof channel
         proof_channel = server_db.get_proof_channel()
         embed.add_field(name='Proof Channel ID', value=str(proof_channel), inline=True)
+        
+        # is multi server
+        is_multi = Utility.is_multi_server(ctx.guild.id)
+        embed.add_field(name='Multi Server', value=str(is_multi), inline=True)
 
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
         m += "For a full explanation of the settings please refer to:\n"
@@ -141,7 +145,7 @@ class Settings(commands.Cog):
     def check_vtuber(self, vtuber_name) -> bool:
         for element in self.db.get_vtuber_list():
             logging.debug(element)
-            if vtuber_name.lower() in element['name']:
+            if vtuber_name.lower() == element['name']:
                 return True
         return False
 
@@ -292,7 +296,7 @@ class Settings(commands.Cog):
 
         #check whether use_public_thread is allowed
         permissions = channel.permissions_for(channel.guild.me)
-        if not permissions.use_threads:
+        if not permissions.create_public_threads:
             await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
             return
 
@@ -328,7 +332,7 @@ class Settings(commands.Cog):
 
             #check whether use_public_thread is allowed
             permissions = channel.permissions_for(channel.guild.me)
-            if not permissions.use_threads:
+            if not permissions.create_public_threads:
                 await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
                 return
         # set value
@@ -344,7 +348,7 @@ class Settings(commands.Cog):
 
         member_veri_ch = self.bot.get_channel(self.db.get_server_db(guild_id).get_proof_channel())
         permissions = member_veri_ch.permissions_for(member_veri_ch.guild.me)
-        if not permissions.use_threads:
+        if not permissions.create_public_threads:
             logging.info("%s: Did not have Threads permission enabled.", guild_id)
             return False
         return True
@@ -379,7 +383,7 @@ class Settings(commands.Cog):
             logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", ctx.guild.id)
             await ctx.send("Your server has not enabled the usage of multiple talents!")
             return
-
+        
         self.db.remove_multi_server(ctx.guild.id)
         logging.info("%s: Disabled the multi-talent function.", ctx.guild.id)
 
@@ -404,11 +408,6 @@ class Settings(commands.Cog):
         if self.check_vtuber(name):       
             logging.info("%s: Talent %s already exists.", ctx.guild.id, name)   
             await ctx.send("This Vtuber is already mapped to a server!")
-            return
-
-        if self.db.get_server_db(ctx.guild.id).exists_multi_talent_log_channel(log_id):
-            logging.info("%s: Log Channel %s already used.", ctx.guild.id, log_id)   
-            await ctx.send("This Channel is already used for another Talent on your server!")
             return
 
         if not self.bot.get_channel(log_id):

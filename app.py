@@ -50,6 +50,7 @@ intents.integrations = False
 intents.webhooks = False
 intents.voice_states = False
 intents.guild_typing = False
+intents.message_content = True
 
 async def determine_prefix(bot, message):
     if isinstance(message.channel, discord.channel.DMChannel):
@@ -72,8 +73,19 @@ verify_tries = 2
 
 # listen to other bots while testing
 if stage == "TEST":
-    from distest.patches import patch_target
-    bot = patch_target(bot)
+    """
+    Patches the target bot. It changes the ``process_commands`` function to remove the check if the received message
+    author is a bot or not.
+    :param discord.ext.commands.Bot bot:
+    :return: The patched bot.
+    """
+    from discord.ext.commands.bot import Bot
+    async def process_commands(self, message):
+        ctx = await self.get_context(message)
+        await self.invoke(ctx)
+    if type(bot) == Bot:
+        bot.process_commands = process_commands.__get__(bot, Bot)
+
     # to not run into cooldown limit
     verify_tries = 1000
     logging.info("Listining to bots too. Only for testing purposes!!!")
@@ -91,9 +103,10 @@ OCR.setup(bot, local)
 Sending.setup(bot, embed_color)
 
 #add cogs
-bot.add_cog(Settings(bot))
-bot.add_cog(Membership(bot, member_handler))
-logging.info("Cogs added")
+async def add_cogs():
+    await bot.add_cog(Settings(bot))
+    await bot.add_cog(Membership(bot, member_handler))
+    logging.info("Cogs added")
 
 
 @bot.event
@@ -202,16 +215,20 @@ async def process_reaction(channel, msg, reaction, user):
         if server_db.get_automatic():
             await msg.clear_reactions()
             await asyncio.sleep(0.21)
-            await msg.add_reaction(emoji='👌')
+            await msg.add_reaction('👌')
         else:
             membership_date = embed.fields[0].value
 
             # set membership
-            if await member_handler.set_membership(msg, target_member_id, membership_date, False, user):
+            if Utility.is_multi_server(channel.guild.id):
+                vtuber = embed.fields[1].value
+            else:
+                vtuber = None
+            if await member_handler.set_membership(msg, target_member_id, membership_date, False, user, vtuber):
                 await asyncio.sleep(0.21)
                 await msg.clear_reactions()
                 await asyncio.sleep(0.21)
-                await msg.add_reaction(emoji='👌')
+                await msg.add_reaction('👌')
         success = True
 
     # wrong date
@@ -251,6 +268,7 @@ async def handle_wrong_date(channel, msg, reaction, target_member_id: int, user)
     bool
         Whether the process was ended successfully (no abort)
     """
+    embed = msg.embeds[0]
 
     m = "Please write the correct date from the screenshot in the format dd/mm/yyyy.\n"
     m += "Type CANCEL to stop the process."
@@ -261,10 +279,15 @@ async def handle_wrong_date(channel, msg, reaction, target_member_id: int, user)
 
     date_msg = await bot.wait_for('message', check=check)
 
-    if date_msg.content.lower() != "cancel" and await member_handler.set_membership(msg, target_member_id, date_msg.content, False, user):
+    if Utility.is_multi_server(channel.guild.id):
+        vtuber = embed.fields[1].value
+    else:
+        vtuber = None
+
+    if date_msg.content.lower() != "cancel" and await member_handler.set_membership(msg, target_member_id, date_msg.content, False, user, vtuber):
         await msg.clear_reactions()
         await asyncio.sleep(0.21)
-        await msg.add_reaction(emoji='👍')
+        await msg.add_reaction('👍')
         return True
     else:
         logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
@@ -296,6 +319,7 @@ async def handle_denied(channel, msg, reaction, embed, target_member_id: int, us
     bool
         Whether the process was ended successfully (no abort)
     """
+    embed = msg.embeds[0]
 
     m = "Please write a message that will be sent to the User."
     m += "Type CANCEL to stop the process."
@@ -307,17 +331,26 @@ async def handle_denied(channel, msg, reaction, embed, target_member_id: int, us
     text_msg = await bot.wait_for('message', check=check)
     if text_msg.content.lower() != "cancel":
         target_member = bot.get_user(target_member_id)
-        await target_member.send("{} server:\n{}".format(Utility.get_vtuber(msg.guild.id), text_msg.content))
+        if Utility.is_multi_server(msg.guild.id):
+            server = msg.guild.name
+        else:
+            server = Utility.get_vtuber(msg.guild.id) + server
+        await target_member.send("{}:\n{}".format(server, text_msg.content))
         await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
 
+        if Utility.is_multi_server(channel.guild.id):
+            vtuber = embed.fields[1].value
+        else:
+            vtuber = None
+        
         if database.get_server_db(msg.guild.id).get_automatic():
-            await member_handler.del_membership(msg, target_member_id, None, False, False)
+            await member_handler.del_membership(msg, target_member_id, None, False, False, vtuber)
             # set embed
         embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, user)
         await msg.edit(content = msg.content, embed = embed)
         await asyncio.sleep(0.21)
         await msg.clear_reactions()
-        await msg.add_reaction(emoji='👎')
+        await msg.add_reaction('👎')
         return True
     else:
         logging.info("Canceled reaction by user %s in %s.", user.id, channel.guild.id)
@@ -483,8 +516,13 @@ coroutines = (
 
 # Main Coroutine
 async def background_main():
+    await add_cogs()
     await bot.wait_until_ready()
     await asyncio.gather(*coroutines)
 
-bot.loop.create_task(background_main())
-bot.run(token)
+async def main():
+    async with bot:
+        bot.loop.create_task(background_main())
+        await bot.start(token)
+
+asyncio.run(main())

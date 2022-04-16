@@ -8,20 +8,25 @@ from pymongo.collection import Collection
 
 class Member:
 
-    def __init__(self, member_id: int, last_membership: dtime, informed: bool, expiry_sent: bool):
+    def __init__(self, member_id: int, idol: str, last_membership: dtime, informed: bool, expiry_sent: bool):
         self.id = member_id
+        self.idol = idol
         self.last_membership = last_membership
         self.informed = informed
         self.expiry_sent = expiry_sent
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "last_membership" : self.last_membership, "informed": self.informed, "expiry_sent": self.expiry_sent}
+        return {"id": self.id, "idol": self.idol, "last_membership" : self.last_membership, "informed": self.informed, "expiry_sent": self.expiry_sent}
 
     @staticmethod
     def create_member(data: dict) -> Optional['Member']:
         try:
             last_membership = data["last_membership"].replace(tzinfo = timezone.utc)
-            return Member(data["id"], last_membership, data["informed"], data['expiry_sent'])
+            if "idol" in data:
+                idol = data["idol"]
+            else:
+                idol = None
+            return Member(data["id"], idol, last_membership, data["informed"], data['expiry_sent'])
         except Exception:
             return
         
@@ -149,7 +154,12 @@ class ServerDatabase:
             if member and member.last_membership <= notify_date or not only_expired:
                 member_list.append(member)
         return member_list
-                
+
+    def get_member_multi(self, member_id: int, vtuber) -> Optional[Member]:
+        # ka wofür ich das wollte
+        member = self.__get_member_collection().find_one({"id": member_id, "idol": vtuber})
+        if member:
+            return Member.create_member(member)            
 
     def get_vtuber(self) -> str:
         return Database().get_vtuber(self.server_id)
@@ -243,14 +253,33 @@ class ServerDatabase:
         if infos:
             return infos['role_id']
 
-    def exists_multi_talent_log_channel(self, log_id: int) -> Optional[bool]:
-        if not self.get_multi_talents():
-            return False
-        # only has `values` if the log_channel is matched
-        if hasattr(self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'log_channel' : log_id}}}), 'values'):
-            return False
-        return True
+    def update_member_multi(self, member_id, db_date, vtuber):
+        # Check if id exists with vtuber
+        target_membership = self.get_member_multi(member_id, vtuber)
+        if not target_membership:
+            logging.info("Creating new membership for %s to talent %s on server %s with last membership: %s.", member_id, vtuber, self.server_id, db_date)
+            self.__get_member_collection().insert_one({
+                "id": member_id,
+                "idol": vtuber,
+                "last_membership": db_date,
+                "informed": False,
+                "expiry_sent": False
+            })
+        else:
+            logging.info("Updating membership for %s to talent %s on server %s with last membership: %s.", member_id, vtuber, self.server_id, db_date)
+            self.__get_member_collection().update_one({"id": member_id, "idol": vtuber}, {"$set": {"last_membership": db_date, "informed": False, "expiry_sent": False}})
 
+    @overload
+    def remove_member_multi(self, member: int, vtuber) -> int:
+        ...
+    @overload
+    def remove_member_multi(self, member: Member, vtuber) -> None:
+        ...
+    def remove_member_multi(self, member, vtuber):
+        if isinstance(member, int):
+            return self.__get_member_collection().delete_one({"id": member, "idol": vtuber}).deleted_count
+        # has to be Member
+        self.__get_member_collection().delete_one(member.to_dict())
 
     
 
@@ -329,7 +358,7 @@ class Database(metaclass=Singleton):
 
     def get_vtuber(self, server_id: int) -> str:
         settings_db = self._get_general_settings()
-        result = settings_db.find_one({}, {'supported_idols' : { '$elemMatch': {'guild_id' : server_id}}})
+        result = settings_db.find_one({'name': 'supported_idols'}, {'supported_idols' : { '$elemMatch': {'guild_id' : server_id}}})
 
         if 'supported_idols' in result:
             return result['supported_idols'][0]['name'].title()
@@ -338,7 +367,7 @@ class Database(metaclass=Singleton):
             return "not supported server"
 
     def get_vtuber_guild(self, name: str) -> Optional[int]:
-        result = self._get_general_settings().find_one({}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
+        result = self._get_general_settings().find_one({'name': 'supported_idols'}, {'supported_idols' : { '$elemMatch': {'name' : name.lower()}}})
         if 'supported_idols' in result:
             return result['supported_idols'][0]['guild_id']
 
@@ -365,8 +394,6 @@ class Database(metaclass=Singleton):
 
     def get_multi_server(self) -> list:
         return self._get_general_settings().find_one({'name': "multi_server"})['ids']
-
-
 
 
     def create_new_setting(self, kind, value):

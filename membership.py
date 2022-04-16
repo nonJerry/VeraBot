@@ -23,13 +23,25 @@ class Membership(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def view_members(self, ctx, *member_id: int):
-        # always only one id at max
         if member_id:
-            logging.info("%s used viewMember with ID in %s", ctx.author.id, ctx.guild.id)
-            await self.member_handler.view_membership(ctx.message, member_id[0])
+            logging.info(f"{ctx.author.id} used viewMember with ID in {ctx.guild.id}")
+            await self.member_handler.view_membership(ctx.message, member_id[0], None)
+        else:
+            logging.info(f"{ctx.author.id} viewed all members in {ctx.guild.id}")
+            await self.member_handler.view_membership(ctx.message, None)
+
+    @commands.command(name="viewMembersFor",
+        help = "Shows all user with the membership role. Or if a vtuber is given for that VTuber. Or if a id is given additionally this users data.",
+        brief = "Show membership(s)")
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def view_members_multi(self, ctx, vtuber=None, *member_id: int):
+        if vtuber:
+            logging.info("%s viewed all members in %s for %s", ctx.author.id, ctx.guild.id, vtuber)
+            await self.member_handler.view_membership(ctx.message, None, vtuber)
         else:
             logging.info("%s viewed all members in %s", ctx.author.id, ctx.guild.id)
-            await self.member_handler.view_membership(ctx.message, None)
+            await self.member_handler.view_membership(ctx.message, None, None)
 
 
     @commands.command(name="addMember", aliases=["set_membership", "setMember"],
@@ -39,9 +51,9 @@ class Membership(commands.Cog):
         brief="Gives the membership role to a user")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def set_membership(self, ctx, member_id: int, date):
+    async def set_membership(self, ctx, member_id: int, date, vtuber=None):
         logging.info("%s used addMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.set_membership(ctx.message, member_id, date)
+        await self.member_handler.set_membership(ctx.message, member_id, date, manual = True, vtuber = vtuber)
 
     @set_membership.error
     async def set_membership_error(self, ctx, error):
@@ -59,9 +71,9 @@ class Membership(commands.Cog):
         brief="Removes the membership role from the user")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def del_membership(self, ctx, member_id: int, *text):
+    async def del_membership(self, ctx, member_id: int, vtuber=None, *text):
         logging.info("%s used delMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.del_membership(ctx.message, member_id, text)
+        await self.member_handler.del_membership(ctx.message, member_id, text, manual = True, vtuber = vtuber)
 
 
     @commands.command(name="purgeMember", aliases=["purge"],
@@ -105,8 +117,8 @@ class Membership(commands.Cog):
         embed.add_field(name="Recognized Date", value = "None")
         embed.set_image(url = ctx.message.attachments[0].url)
         message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
-        await message.add_reaction(emoji=u"\U0001F4C5") # calendar
-        await message.add_reaction(emoji=u"\U0001F6AB") # no entry
+        await message.add_reaction(u"\U0001F4C5")  # calendar
+        await message.add_reaction(u"\U0001F6AB")  # no entry
         logging.info("Relayed the verify to %s", server_id)
 
     
