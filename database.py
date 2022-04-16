@@ -8,20 +8,25 @@ from pymongo.collection import Collection
 
 class Member:
 
-    def __init__(self, member_id: int, last_membership: dtime, informed: bool, expiry_sent: bool):
+    def __init__(self, member_id: int, idol: str, last_membership: dtime, informed: bool, expiry_sent: bool):
         self.id = member_id
+        self.idol = idol
         self.last_membership = last_membership
         self.informed = informed
         self.expiry_sent = expiry_sent
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "last_membership" : self.last_membership, "informed": self.informed, "expiry_sent": self.expiry_sent}
+        return {"id": self.id, "idol": self.idol, "last_membership" : self.last_membership, "informed": self.informed, "expiry_sent": self.expiry_sent}
 
     @staticmethod
     def create_member(data: dict) -> Optional['Member']:
         try:
             last_membership = data["last_membership"].replace(tzinfo = timezone.utc)
-            return Member(data["id"], last_membership, data["informed"], data['expiry_sent'])
+            if "idol" in data:
+                idol = data["idol"]
+            else:
+                idol = None
+            return Member(data["id"], idol, last_membership, data["informed"], data['expiry_sent'])
         except Exception:
             return
         
