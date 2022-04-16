@@ -29,10 +29,10 @@ class MembershipHandler:
         # deque for data
         self.verify_deque = deque()
 
-    async def add_to_queue(self, res, server_id=None, lang="eng"):
+    async def add_to_queue(self, res, server_id=None, lang="eng", vtuber: Optional[str] = None):
         
         # Check if there is a valid attachment
-        self.verify_deque.append([res, server_id, lang])
+        self.verify_deque.append([res, server_id, lang, vtuber])
         logging.info("Proof from %s added to queue for server: %s", res.author.id, server_id)
 
         m = "Your proof has been added to the queue and will be processed later.\n"
@@ -44,6 +44,8 @@ class MembershipHandler:
         # Returns an expired_membership list {id, last_membership}
 
         server_db= self.db.get_server_db(server['guild_id'])
+
+        # Single-server only (will be set to 'none' for multi-server)
         idol = server['name']
 
 
@@ -71,6 +73,10 @@ class MembershipHandler:
         # only needs to check those that are already expired to save ressources
         for member in server_db.get_members(only_expired=True):
             try:
+                # Get the actual membership which is expiring for multi-server
+                if Utility.is_multi_server(server['guild_id']) and member.idol:
+                    idol = member.idol
+                    message_title = idol.title() + " Membership {}!"
                 # For each member
                 last_membership = member.last_membership
                 # need to remove role?
@@ -87,7 +93,10 @@ class MembershipHandler:
                     target_member = guild.get_member(member.id)
 
                     if target_member:
-                        role_id = server_db.get_member_role()
+                        if Utility.is_multi_server(guild):
+                            role_id = server_db.get_multi_talent_role_from_name(idol)
+                        else:
+                            role_id = server_db.get_member_role()
                         member_role = guild.get_role(role_id)
 
                         await target_member.remove_roles(member_role)
@@ -132,7 +141,7 @@ class MembershipHandler:
         return expired_memberships
 
 
-    async def view_membership(self, res, member_id=None):
+    async def view_membership(self, res, member_id=None, vtuber=None):
         # if msg is empty, show all members
         server_db = self.db.get_server_db(res.guild.id)
 
@@ -140,6 +149,8 @@ class MembershipHandler:
             count = 0
             m = ""
             for member in server_db.get_members():
+                if Utility.is_multi_server(res.guild.id) and vtuber is not None and member.idol != vtuber:
+                    continue
                 count += 1
                 member_id = member.id
                 membership_date = member.last_membership + relativedelta(months=1)
@@ -157,7 +168,10 @@ class MembershipHandler:
             return
 
         # Check if zoopass in database and delete
-        target_membership = server_db.get_member(member_id)
+        if Utility.is_multi_server(res.guild.id):
+            target_membership = server_db.get_member_multi(member_id, vtuber)
+        else:
+            target_membership = server_db.get_member(member_id)
         if not target_membership:
             await res.channel.send(self.ID_NOT_FOUND_TEXT)
             return
@@ -182,6 +196,7 @@ class MembershipHandler:
     """
     {
         "id": int
+        "idol": String --Multi-server only
         "last_membership": datetime
         "informed": bool
         "expiry_sent": bool
@@ -239,19 +254,22 @@ class MembershipHandler:
         if img_date:
             return (img_date)
 
-
-    async def verify_membership(self, res, server_id, lang):
+    # vtuber only given if server is multi_Server
+    async def verify_membership(self, res, server_id, lang, vtuber: Optional[str] = None):
         server_db = self.db.get_server_db(server_id)
 
         # if member exists, update date
-        member = server_db.get_member(res.author.id)
+        if Utility.is_multi_server(server_id):
+            member = server_db.get_member_multi(res.author.id, vtuber)
+        else:
+            member = server_db.get_member(res.author.id)
 
         new_membership_date = await self.detect_membership_date(res, lang)
 
         new_membership_date, membership_date_text, desc = self.process_date(res, new_membership_date)
         
-
         threads_enabled = server_db.get_threads_enabled()
+
         # check if permissions are okay
         if threads_enabled:
             if self.bot.get_cog('Settings').check_thread_permissions(server_id):
@@ -260,7 +278,10 @@ class MembershipHandler:
                 logging.info("%s: Has Threads enabled but perms are missing.", server_id)
         else:
             #verification channel of the server
-            member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
+            if vtuber:
+                member_veri_ch = self.bot.get_channel(server_db.get_multi_talent_log_channel(vtuber))
+            else:
+                member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
             
         
         if not member_veri_ch:
@@ -293,6 +314,8 @@ class MembershipHandler:
         
         embed.description = "Main Proof\nUser: {}".format(res.author.mention)
         embed.add_field(name="Recognized Date", value = membership_date_text)
+        if Utility.is_multi_server(server_id):
+            embed.add_field(name="VTuber", value = vtuber)
         embed.set_image(url = res.attachments[0].url)
         message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
         await message.add_reaction('✅')
@@ -315,18 +338,25 @@ class MembershipHandler:
         if member and new_membership_date < member.last_membership:
             return
 
-        await self.handle_role(res, server_id, new_membership_date)
+        # set vtuber name if none is provided (single-server)
+        if vtuber is None:
+            vtuber = server_db.get_vtuber()
 
-    async def handle_role(self, res, server_id, new_membership_date):
+        await self.handle_role(res, server_id, new_membership_date, vtuber)
+
+    async def handle_role(self, res, server_id, new_membership_date, vtuber):
         guild = self.bot.get_guild(server_id)
         author = guild.get_member(res.author.id)
 
         # if author not part of guild do nothing
         if author:
             server_db = self.db.get_server_db(server_id)
-            logging.info("Adding role automatically for %s on server %s", res.author.id, server_id)
+            logging.info("Adding role automatically for %s on server %s for talent %s", res.author.id, server_id, vtuber)
 
-            role_id = server_db.get_member_role()
+            if Utility.is_multi_server(server_id):
+                role_id = server_db.get_multi_talent_role_from_name(vtuber)
+            else:
+                role_id = server_db.get_member_role()
             role = guild.get_role(role_id)
 
             if not role:
@@ -334,7 +364,10 @@ class MembershipHandler:
                 return
             
             # add role and update db entry
-            server_db.update_member(res.author.id, new_membership_date)
+            if Utility.is_multi_server(server_id):
+                server_db.update_member_multi(res.author.id, new_membership_date, vtuber)
+            else:
+                server_db.update_member(res.author.id, new_membership_date)
             await author.add_roles(role)
 
             # DM user that the verification process is complete
@@ -376,7 +409,7 @@ class MembershipHandler:
         return (new_membership_date, membership_date_text, desc)
 
 
-    async def set_membership(self, res, member_id, date, manual=True, actor=None) -> bool:
+    async def set_membership(self, res, member_id, date, manual=True, actor=None, vtuber=None) -> bool:
         dates = date.split("/")
 
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
@@ -402,15 +435,25 @@ class MembershipHandler:
         server_db = self.db.get_server_db(res.guild.id)
 
         # update/create member in db
-        server_db.update_member(member_id, db_date)
-        
-        role_id = server_db.get_member_role()
+        if Utility.is_multi_server(res.guild.id):
+            server_db.update_member_multi(member_id, db_date, vtuber)
+        else:
+            server_db.update_member(member_id, db_date)
+
+        # if multi-server get role depending on name
+        if Utility.is_multi_server(res.guild.id):
+            role_id = server_db.get_multi_talent_role_from_name(vtuber)
+        else:
+            role_id = server_db.get_member_role()
+            vtuber = server_db.get_vtuber()
+            
         role = res.guild.get_role(role_id)
         await target_member.add_roles(role)
         logging.info("Added member role to user %s on server %s.", member_id, res.guild.id)
 
         await asyncio.sleep(0.21)
-        await target_member.send("You have been granted access to the membership channel of {}.".format(server_db.get_vtuber()))
+
+        await target_member.send("You have been granted access to the membership channel of {}.".format(vtuber))
 
         await asyncio.sleep(0.21)
         if manual:
@@ -422,27 +465,38 @@ class MembershipHandler:
         return True
         
 
-    async def del_membership(self, res, member_id: int, text, dm_flag=True, manual=True):
+    async def del_membership(self, res, member_id: int, text, dm_flag=True, manual=True, vtuber=None):
         server_db = self.db.get_server_db(res.guild.id)
+        result = 0
 
         # Delete from db
-        if server_db.remove_member(member_id) == 0:
+        if Utility.is_multi_server(res.guild.id) and vtuber:
+            result = server_db.remove_member_multi(member_id, vtuber)
+        else:
+            result = server_db.remove_member(member_id)
+        if result == 0:
             logging.info("Requested user does not have membership; by %s.", res.author.id)
             await res.channel.send(self.ID_NOT_FOUND_TEXT)
             return
-        logging.info("Deleted membership on %s: %s", res.guild.id, member_id)
+        if Utility.is_multi_server(res.guild.id):
+            logging.info("Deleted membership on %s: %s for %s", res.guild.id, member_id, vtuber)
+        else:
+            logging.info("Deleted membership on %s: %s", res.guild.id, member_id)
 
         # Remove member role from user
         guild = res.guild
         target_member = guild.get_member(member_id)
 
-        role_id = server_db.get_member_role()
+        if Utility.is_multi_server(res.guild.id):
+            role_id = server_db.get_multi_talent_role_from_name(vtuber)
+        else:
+            role_id = server_db.get_member_role()
         role = guild.get_role(role_id)
 
         if target_member:
             try: 
                 await target_member.remove_roles(role)
-                logging.info("Removing role from %s on server %s.", member_id, res.guild.id)
+                logging.info("Removing role %s from %s on server %s.", role.name, member_id, res.guild.id)
 
                 if manual:
                     await res.channel.send("Membership successfully deleted.")
@@ -460,7 +514,10 @@ class MembershipHandler:
             logging.info("%s not on server %s.", member_id, res.guild.id)
 
     async def purge_memberships(self, server_id: int):
-        server = {'guild_id': server_id, 'name': self.db.get_vtuber(server_id)}
+        if Utility.is_multi_server(server_id):
+            server = {'guild_id': server_id, 'name': "none"}
+        else:
+            server = {'guild_id': server_id, 'name': self.db.get_vtuber(server_id)}
         lg_ch = self.bot.get_channel(self.db.get_server_db(server_id).get_log_channel())
 
         expired_memberships = await self._check_membership_dates(server, purge=True)
@@ -553,7 +610,7 @@ class MembershipHandler:
                 while self.verify_deque:
                     verify = self.verify_deque.popleft()
                     if verify[1]:
-                        await self.verify_membership(verify[0], verify[1], verify[2])
+                        await self.verify_membership(verify[0], verify[1], verify[2], verify[3])
                     else:
                         await self.verify_membership_with_server_detection(verify[0], verify[2])
                     del verify
