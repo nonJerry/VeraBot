@@ -259,7 +259,10 @@ class MembershipHandler:
         server_db = self.db.get_server_db(server_id)
 
         # if member exists, update date
-        member = server_db.get_member(res.author.id)
+        if Utility.is_multi_server(server_id):
+            member = server_db.get_member_multi(res.author.id, vtuber)
+        else:
+            member = server_db.get_member(res.author.id)
 
         new_membership_date = await self.detect_membership_date(res, lang)
 
@@ -311,6 +314,8 @@ class MembershipHandler:
         
         embed.description = "Main Proof\nUser: {}".format(res.author.mention)
         embed.add_field(name="Recognized Date", value = membership_date_text)
+        if Utility.is_multi_server(server_id):
+            embed.add_field(name="VTuber", value = vtuber)
         embed.set_image(url = res.attachments[0].url)
         message = await member_veri_ch.send(content = "```\n{}\n```".format(desc), embed = embed)
         await message.add_reaction('✅')
@@ -333,18 +338,25 @@ class MembershipHandler:
         if member and new_membership_date < member.last_membership:
             return
 
-        await self.handle_role(res, server_id, new_membership_date)
+        # set vtuber name if none is provided (single-server)
+        if vtuber is None:
+            vtuber = server_db.get_vtuber()
 
-    async def handle_role(self, res, server_id, new_membership_date):
+        await self.handle_role(res, server_id, new_membership_date, vtuber)
+
+    async def handle_role(self, res, server_id, new_membership_date, vtuber):
         guild = self.bot.get_guild(server_id)
         author = guild.get_member(res.author.id)
 
         # if author not part of guild do nothing
         if author:
             server_db = self.db.get_server_db(server_id)
-            logging.info("Adding role automatically for %s on server %s", res.author.id, server_id)
+            logging.info("Adding role automatically for %s on server %s for talent %s", res.author.id, server_id, vtuber)
 
-            role_id = server_db.get_member_role()
+            if Utility.is_multi_server(server_id):
+                role_id = server_db.get_multi_talent_role_from_name(vtuber)
+            else:
+                role_id = server_db.get_member_role()
             role = guild.get_role(role_id)
 
             if not role:
@@ -352,7 +364,10 @@ class MembershipHandler:
                 return
             
             # add role and update db entry
-            server_db.update_member(res.author.id, new_membership_date)
+            if Utility.is_multi_server(server_id):
+                server_db.update_member_multi(res.author.id, new_membership_date, vtuber)
+            else:
+                server_db.update_member(res.author.id, new_membership_date)
             await author.add_roles(role)
 
             # DM user that the verification process is complete
