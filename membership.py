@@ -22,14 +22,16 @@ class Membership(commands.Cog):
         brief = "Show membership(s)")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
-    async def view_members(self, ctx, *member_id: int):
-        # always only one id at max
-        if member_id:
+    async def view_members(self, ctx, vtuber=None, *member_id: int):
+        if member_id and not vtuber:
             logging.info("%s used viewMember with ID in %s", ctx.author.id, ctx.guild.id)
-            await self.member_handler.view_membership(ctx.message, member_id[0])
+            await self.member_handler.view_membership(ctx.message, member_id, None)
+        elif vtuber:
+            logging.info("%s viewed all members in %s for %s", ctx.author.id, ctx.guild.id, vtuber)
+            await self.member_handler.view_membership(ctx.message, None, vtuber)
         else:
             logging.info("%s viewed all members in %s", ctx.author.id, ctx.guild.id)
-            await self.member_handler.view_membership(ctx.message, None)
+            await self.member_handler.view_membership(ctx.message, None, None)
 
 
     @commands.command(name="addMember", aliases=["set_membership", "setMember"],
