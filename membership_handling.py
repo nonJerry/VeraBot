@@ -439,7 +439,7 @@ class MembershipHandler:
             server_db.update_member_multi(member_id, db_date, vtuber)
         else:
             server_db.update_member(member_id, db_date)
-        
+
         # if multi-server get role depending on name
         if Utility.is_multi_server(res.guild.id):
             role_id = server_db.get_multi_talent_role_from_name(vtuber)
