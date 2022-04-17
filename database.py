@@ -228,11 +228,6 @@ class ServerDatabase:
             return
         return self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'idol' : name.lower()}}})['values'][0]
 
-    def get_multi_talent_infos_from_channel(self, log_channel_id: int) -> Optional[dict]:
-        if not self.get_multi_talents():
-            return
-        return self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'log_channel' : log_channel_id}}})['values'][0]
-
     def get_multi_talent_log_channel(self, name: str) -> Optional[int]:
         infos = self.get_multi_talent_infos(name)
         if infos:
@@ -240,16 +235,6 @@ class ServerDatabase:
 
     def get_multi_talent_role_from_name(self, name: str) -> Optional[int]:
         infos = self.get_multi_talent_infos(name)
-        if infos:
-            return infos['role_id']
-
-    def get_multi_talent_vtuber(self, log_channel_id: int) -> Optional[str]:
-        infos = self.get_multi_talent_infos_from_channel(log_channel_id)
-        if infos:
-            return infos['idol']
-
-    def get_multi_talent_role(self, log_channel_id: int) -> Optional[int]:
-        infos = self.get_multi_talent_infos_from_channel(log_channel_id)
         if infos:
             return infos['role_id']
 
