@@ -386,8 +386,6 @@ async def verify(ctx, *args):
         await ctx.message.channel.send(NO_PICTURE_TEXT.format(ctx.author))
         logging.info("Verify without screenshot from %s.", ctx.author.id)
         return
-    for attachment in ctx.message.attachments:
-        await dm_lg_ch.send(attachment.url)
 
     if args:
         server = Utility.map_vtuber_to_server(args[0])
