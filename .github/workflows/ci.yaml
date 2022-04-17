@@ -54,8 +54,10 @@ jobs:
           heroku git:remote -a "$HEROKU_APP_NAME"
 
       - name: Push and Run Main Bot
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: |
-          git push heroku ${GITHUB_REF##*/}:main --force
+          git push heroku $BRANCH_NAME:main --force
           heroku ps:scale worker=1
           sleep 20
 
