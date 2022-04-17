@@ -55,7 +55,7 @@ jobs:
 
       - name: Push and Run Main Bot
         run: |
-          git push heroku ${GITHUB_REF##*/}:master --force
+          git push heroku ${GITHUB_REF##*/}:main --force
           heroku ps:scale worker=1
           sleep 20
 
