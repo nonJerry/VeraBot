@@ -57,7 +57,7 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: |
-          git push heroku $BRANCH_NAME:main --force
+          git push heroku $BRANCH_NAME:master --force
           heroku ps:scale worker=1
           sleep 20
 
