@@ -55,7 +55,7 @@ jobs:
 
       - name: Push and Run Main Bot
         env:
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
           git push heroku origin/$BRANCH_NAME:master --force
           heroku ps:scale worker=1
