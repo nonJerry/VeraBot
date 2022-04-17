@@ -508,9 +508,9 @@ class MembershipHandler:
                     else:
                         await target_member.send("Your membership for " + server_db.get_vtuber() + " was deleted!")
             except (discord.errors.Forbidden, discord.HTTPException):
-                res.channel.send("Removing the role failed, please remove the role manually and check my permissions.")
+                await res.channel.send("Removing the role failed, please remove the role manually and check my permissions.")
         else:
-            res.channel.send("User is not on this server!")
+            await res.channel.send("User is not on this server!")
             logging.info("%s not on server %s.", member_id, res.guild.id)
 
     async def purge_memberships(self, server_id: int):
