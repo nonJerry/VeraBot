@@ -285,7 +285,7 @@ class MembershipHandler:
             
         
         if not member_veri_ch:
-            res.channel.send("Please contact the staff of your server, they forgot to set some settings")
+            await res.channel.send("Please contact the staff of your server, they forgot to set some settings")
             return
 
         automatic_role = server_db.get_automatic()
