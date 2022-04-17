@@ -336,7 +336,7 @@ async def handle_denied(channel, msg, reaction, embed, target_member_id: int, us
         if Utility.is_multi_server(msg.guild.id):
             server = msg.guild.name
         else:
-            server = Utility.get_vtuber(msg.guild.id) + server
+            server = Utility.get_vtuber(msg.guild.id)
         await target_member.send("{}:\n{}".format(server, text_msg.content))
         await channel.send("Message was sent to {}.".format(target_member.mention), reference=text_msg, mention_author=False)
 
