@@ -515,7 +515,10 @@ class MembershipHandler:
                     if text:
                         await target_member.send(text)
                     else:
-                        await target_member.send("Your membership for " + server_db.get_vtuber() + " was deleted!")
+                        if vtuber:
+                            await target_member.send("Your membership for " + vtuber + " was deleted!")
+                        else:
+                            await target_member.send("Your membership for " + server_db.get_vtuber() + " was deleted!")
             except (discord.errors.Forbidden, discord.HTTPException):
                 if isinstance(res, discord.Interaction):
                     await res.response.send_message("Removing the role failed, please remove the role manually and check my permissions.", ephemeral=True)
