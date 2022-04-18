@@ -3,6 +3,7 @@ import asyncio
 from database import Database
 from dateutil.relativedelta import relativedelta
 import discord
+from discord import app_commands
 from discord.ext import commands
 import gspread
 # Python
@@ -17,84 +18,75 @@ class Membership(commands.Cog):
         self.bot = bot
         self.member_handler = member_handler
         
-    @commands.command(name="viewMembers", aliases=["members","member", "viewMember"],
-        help = "Shows all user with the membership role. Or if a id is given this users data.",
-        brief = "Show membership(s)")
-    @commands.has_permissions(manage_messages=True)
-    @commands.guild_only()
-    async def view_members(self, ctx, *member_id: int):
+    @app_commands.command(name="viewMembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def view_members(self, interaction: discord.Interaction, *member_id: int):
         if member_id:
-            logging.info(f"{ctx.author.id} used viewMember with ID in {ctx.guild.id}")
-            await self.member_handler.view_membership(ctx.message, member_id[0], None)
+            logging.info(f"{interaction.user.id} used viewMember with ID in {interaction.guild_id}")
+            await self.member_handler.view_membership(interaction.message, member_id[0], None)
         else:
-            logging.info(f"{ctx.author.id} viewed all members in {ctx.guild.id}")
-            await self.member_handler.view_membership(ctx.message, None)
+            logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
+            await self.member_handler.view_membership(interaction.message, None)
 
-    @commands.command(name="viewMembersFor",
-        help = "Shows all user with the membership role. Or if a vtuber is given for that VTuber. Or if a id is given additionally this users data.",
-        brief = "Show membership(s)")
-    @commands.has_permissions(manage_messages=True)
-    @commands.guild_only()
-    async def view_members_multi(self, ctx, vtuber=None, *member_id: int):
+    @app_commands.command(name="viewMembersFor",
+        description = "Shows all user with the membership role. Or if a vtuber is given for that VTuber. Or if a id is given additionally this users data.")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def view_members_multi(self, interaction: discord.Interaction, vtuber=None, *member_id: int):
         if vtuber:
-            logging.info("%s viewed all members in %s for %s", ctx.author.id, ctx.guild.id, vtuber)
-            await self.member_handler.view_membership(ctx.message, None, vtuber)
+            logging.info("%s viewed all members in %s for %s", interaction.user.id, interaction.guild_id, vtuber)
+            await self.member_handler.view_membership(interaction.message, None, vtuber)
         else:
-            logging.info("%s viewed all members in %s", ctx.author.id, ctx.guild.id)
-            await self.member_handler.view_membership(ctx.message, None, None)
+            logging.info("%s viewed all members in %s", interaction.user.id, interaction.guild_id)
+            await self.member_handler.view_membership(interaction.message, None, None)
 
 
-    @commands.command(name="addMember", aliases=["set_membership", "setMember"],
-        help="Gives the membership role to the user whose ID was given.\n" + 
-        "<date> has to be in the format dd/mm/yyyy.\n" +
-        "It equals the date shown on the sent screenshot",
-        brief="Gives the membership role to a user")
-    @commands.has_permissions(manage_messages=True)
-    @commands.guild_only()
-    async def set_membership(self, ctx, member_id: int, date, vtuber=None):
-        logging.info("%s used addMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.set_membership(ctx.message, member_id, date, manual = True, vtuber = vtuber)
+    @app_commands.command(name="addMember",
+        description="Gives the membership role to the user whose ID was given. " + 
+        "<date> has to be in the format dd/mm/yyyy. " +
+        "It equals the date shown on the sent screenshot")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def set_membership(self, interaction: discord.Interaction, member_id: int, date, vtuber=None):
+        logging.info("%s used addMember in %s", interaction.user.id, interaction.guild_id)
+        await self.member_handler.set_membership(interaction.message, member_id, date, manual = True, vtuber = vtuber)
 
     @set_membership.error
-    async def set_membership_error(self, ctx, error):
+    async def set_membership_error(self, interaction: discord.Interaction, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            logging.debug("%s forgot argument for addMember", ctx.author.id)
-            await ctx.send("Please include at least two arguments!")
+            logging.debug("%s forgot argument for addMember", interaction.user.id)
+            await interaction.response.send_message("Please include at least two arguments!", ephemeral=True)
         elif isinstance(error, commands.BadArgument):
-            logging.debug("%s used an invalid argument for addMember.", ctx.author.id)
-            await ctx.send("One of the arguments has the wrong data type!")
+            logging.debug("%s used an invalid argument for addMember.", interaction.user.id)
+            await interaction.response.send_message("One of the arguments has the wrong data type!", ephemeral=True)
 
 
-    @commands.command(name="delMember",
-        help="Removes the membership role from the user whose ID was given.\n" +
-        "A text which is sent to the user as DM can be given but is optional.",
-        brief="Removes the membership role from the user")
-    @commands.has_permissions(manage_messages=True)
-    @commands.guild_only()
-    async def del_membership(self, ctx, member_id: int, vtuber=None, *text):
-        logging.info("%s used delMember in %s", ctx.author.id, ctx.guild.id)
-        await self.member_handler.del_membership(ctx.message, member_id, text, manual = True, vtuber = vtuber)
+    @app_commands.command(name="delMember",
+        description="Removes the membership role from the user whose ID was given. " +
+        "A text which is sent to the user as DM can be given but is optional.")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def del_membership(self, interaction: discord.Interaction, member_id: int, vtuber=None, *text):
+        logging.info("%s used delMember in %s", interaction.user.id, interaction.guild_id)
+        await self.member_handler.del_membership(interaction.message, member_id, text, manual = True, vtuber = vtuber)
 
 
-    @commands.command(name="purgeMember", aliases=["purge"],
-    brief="Initiates a Membership Check",
-    help="This will initiate a membership check which also removes members that MIGHT already have lost their membership.\n" +
+    @app_commands.command(name="purgeMember",
+    description="This will initiate a membership check which also removes members that MIGHT already have lost their membership. " +
     "CAUTION: This will also hit many members that are still valid (Timezones and exact time of membering ...)")
-    @commands.has_permissions(manage_messages=True)
-    @commands.guild_only()
-    async def purge_members(self, ctx):
-        await self.member_handler.purge_memberships(ctx.guild.id)
-        await ctx.send("This was a hard check, it might have hit many members that still have a valid membership.")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def purge_members(self, interaction: discord.Interaction):
+        await self.member_handler.purge_memberships(interaction.guild_id)
+        await interaction.response.send_message("This was a hard check, it might have hit many members that still have a valid membership.", ephemeral=True)
 
     @del_membership.error
     @view_members.error
-    async def id_error(self, ctx, error):
+    async def id_error(self, interaction: discord.Interaction, error):
         if isinstance(error, commands.BadArgument):
-            logging.debug("%s used invalid ID for delMember or viewMember.", ctx.author.id)
-            await ctx.send("Please provide a valid id!")
+            logging.debug("%s used invalid ID for delMember or viewMember.", interaction.user.id)
+            await interaction.response.send_message("Please provide a valid id!", ephemeral=True)
         elif isinstance(error, commands.MissingRequiredArgument):
-            logging.debug("%s forgot argument for delMember or viewMember.", ctx.author.id)
-            await ctx.send("Please include the argument!")
+            logging.debug("%s forgot argument for delMember or viewMember.", interaction.user.id)
+            await interaction.response.send_message("Please include the argument!", ephemeral=True)
+
+# hidden commands are not possible with slash commands (todo: figure out what to do with these)
 
     @commands.command(hidden = True, name = "queue")
     @commands.is_owner()
@@ -178,7 +170,7 @@ class Membership(commands.Cog):
             logging.info("%s tried to use dump sheet too often.", ctx.author.id)
             await ctx.send(f"Try again in {error.retry_after:.0f}s.")
         elif isinstance(error, commands.BadArgument):
-            logging.debug("%s used invalid Link (not string) for %s", ctx.author.id, ctx.command)
+            logging.debug("%s used invalid Link (not string) for %s", ctx, ctx.command)
             await ctx.send("Please provide a valid link!")
         elif isinstance(error, commands.MissingRequiredArgument):
             logging.debug("%s forgot link for %s", ctx.author.id, ctx.command)

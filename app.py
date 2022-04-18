@@ -1,6 +1,7 @@
 #External
 from database import Database
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands.errors import CommandNotFound
 from pymongo import MongoClient
@@ -494,6 +495,21 @@ async def proof_error(ctx, error):
     embed = Utility.create_supported_vtuber_embed()
     await ctx.send(content=None, embed=embed)
 
+# slash commands must be synced manually, guild for the current guild (good for testing), and global for all servers
+
+@bot.command(name="syncGuild")
+@commands.is_owner()
+@commands.guild_only()
+async def syncGuild(ctx):
+    await ctx.bot.tree.sync(guild=ctx.guild)
+    await ctx.send("commands synced to guild")
+
+@bot.command(name="syncGlobal")
+@commands.is_owner()
+@commands.guild_only()
+async def syncGlobal(ctx):
+    await ctx.bot.tree.sync()
+    await ctx.send("commands synced globally")
 
 #Time in status
 async def jst_clock():
