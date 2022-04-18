@@ -140,14 +140,15 @@ class MembershipHandler:
         # Returns expired_memberships list
         return expired_memberships
 
-    #todo: make sure this doesn't break when it reaches the 2000 character limit
     async def view_membership(self, interaction, member_id=None, vtuber=None):
         # if msg is empty, show all members
         server_db = self.db.get_server_db(interaction.guild_id)
 
         if not member_id:
             count = 0
+            embed_count = 0
             m = ""
+            embeds = []
             for member in server_db.get_members():
                 if Utility.is_multi_server(interaction.guild_id) and vtuber is not None and member.idol != vtuber:
                     continue
@@ -156,11 +157,22 @@ class MembershipHandler:
                 membership_date = member.last_membership + relativedelta(months=1)
                 membership_date = membership_date.strftime(self.DATE_FORMAT)
                 new_line = "{}: {}\n".format(member_id, membership_date)
-                if len(m) + len(new_line) > 2000:
+                if len(m) + len(new_line) > 4096:
+                    if embed_count == 0:
+                        embed = discord.Embed(title = "Membership List", description = m)
+                    else:
+                        embed = discord.Embed(description = m)
+                    embeds.append(embed)
+                    embed_count += 1
                     m +=  ""
                 m += new_line
             if m != "":
-                await interaction.response.send_message(m + "Member count: " + str(count), ephemeral=True)
+                if embed_count == 0:
+                    embed = discord.Embed(title = "Membership List", description = m + "Member count: " + str(count))
+                else:
+                    embed = discord.Embed(description = m + "Member count: " + str(count))
+                embeds.append(embed)
+                await interaction.response.send_message(content = None, embeds = embeds, ephemeral=True)
             else:
                 await interaction.response.send_message("No active memberships!", ephemeral=True)
             return
