@@ -17,21 +17,18 @@ class Membership(commands.Cog):
     def __init__(self, bot, member_handler: MembershipHandler):
         self.bot = bot
         self.member_handler = member_handler
-        
+
+    # postional varaiables are not supported in slash commands, so these commands will only view all members for now (todo: make these commands a group)    
     @app_commands.command(name="viewmembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def view_members(self, interaction: discord.Interaction, *member_id: int):
-        if member_id:
-            logging.info(f"{interaction.user.id} used viewMember with ID in {interaction.guild_id}")
-            await self.member_handler.view_membership(interaction.message, member_id[0], None)
-        else:
-            logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
-            await self.member_handler.view_membership(interaction.message, None)
+    async def view_members(self, interaction: discord.Interaction):
+        logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
+        await self.member_handler.view_membership(interaction.message, None)
 
     @app_commands.command(name="viewmembersfor",
         description = "Shows all user with the membership role. Or if a vtuber is given for that VTuber. Or if a id is given additionally this users data.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def view_members_multi(self, interaction: discord.Interaction, vtuber=None, *member_id: int):
+    async def view_members_multi(self, interaction: discord.Interaction, vtuber :str=None):
         if vtuber:
             logging.info("%s viewed all members in %s for %s", interaction.user.id, interaction.guild_id, vtuber)
             await self.member_handler.view_membership(interaction.message, None, vtuber)
@@ -45,7 +42,7 @@ class Membership(commands.Cog):
         "<date> has to be in the format dd/mm/yyyy. " +
         "It equals the date shown on the sent screenshot")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def set_membership(self, interaction: discord.Interaction, member_id: int, date, vtuber=None):
+    async def set_membership(self, interaction: discord.Interaction, member_id: int, date: int, vtuber: str=None):
         logging.info("%s used addMember in %s", interaction.user.id, interaction.guild_id)
         await self.member_handler.set_membership(interaction.message, member_id, date, manual = True, vtuber = vtuber)
 
@@ -63,7 +60,7 @@ class Membership(commands.Cog):
         description="Removes the membership role from the user whose ID was given. " +
         "A text which is sent to the user as DM can be given but is optional.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def del_membership(self, interaction: discord.Interaction, member_id: int, vtuber=None, *text):
+    async def del_membership(self, interaction: discord.Interaction, member_id: int, vtuber: str=None, text: str=None):
         logging.info("%s used delMember in %s", interaction.user.id, interaction.guild_id)
         await self.member_handler.del_membership(interaction.message, member_id, text, manual = True, vtuber = vtuber)
 
