@@ -348,31 +348,6 @@ class Settings(commands.Cog):
         else:
             await interaction.response.send_message("Could not remove {}!".format(name), ephemeral=True)
 
-# todo: remove these command errors (should no longer be needed with slash commands auto-complete feature)
-
-    @set_idol.error
-    @set_log_channel.error
-    @set_member_role.error
-    @set_automatic_role.error
-    @set_require_additional_proof.error
-    @set_tolerance_duration.error
-    @set_inform_duration.error
-    @set_picture.error
-    @set_logging.error
-    @toggle_threads.error
-    @set_proof_channel.error
-    @enable_multi_server.error
-    @disable_multi_server.error
-    @add_idol.error
-    #@toggle_threads.error
-    async def general_error(self, interaction: discord.Interaction, error):
-        if isinstance(error, commands.BadArgument):
-            logging.debug("%s used invalid ID for %s", interaction.user.id, interaction.command)
-            await interaction.response.send_message("Please provide a valid id!")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            logging.debug("%s forgot argument for %s", interaction.user.id, interaction.command)
-            await interaction.response.send_message("Please include the argument!")
-
     def check_role_integrity(self, interaction: discord.Interaction, role_id: int):
         if interaction.guild.get_role(role_id):
             return True
