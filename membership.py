@@ -63,6 +63,13 @@ class Membership(commands.Cog):
             await self.member_handler.view_membership(interaction, None, None)
 
 
+    @view_members_multi.autocomplete('vtuber')
+    async def view_members_multi_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_db = Database().get_server_db(interaction.guild_id)
+        multi_talents = server_db.get_multi_talents()
+        vtubers = [m['idol'] for m in multi_talents]
+        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
+
     @app_commands.command(name="addmember",
         description="Gives the membership role to the user whose ID was given.")
     @app_commands.checks.has_permissions(manage_messages=True)
@@ -70,6 +77,14 @@ class Membership(commands.Cog):
     async def set_membership(self, interaction: discord.Interaction, member: discord.User, date: str, vtuber: str=None):
         logging.info("%s used addMember in %s", interaction.user.id, interaction.guild_id)
         await self.member_handler.set_membership(interaction, member.id, date, manual = True, vtuber = vtuber)
+    
+        
+    @set_membership.autocomplete('vtuber')
+    async def set_membership_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_db = Database().get_server_db(interaction.guild_id)
+        multi_talents = server_db.get_multi_talents()
+        vtubers = [m['idol'] for m in multi_talents]
+        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
 
 
     @app_commands.command(name="delmember",
@@ -77,7 +92,14 @@ class Membership(commands.Cog):
     @app_commands.checks.has_permissions(manage_messages=True)
     async def del_membership(self, interaction: discord.Interaction, member: discord.User, vtuber: str=None, text: str=None):
         logging.info("%s used delMember in %s", interaction.user.id, interaction.guild_id)
-        await self.member_handler.del_membership(interaction.message, member.id, text, manual = True, vtuber = vtuber)
+        await self.member_handler.del_membership(interaction, member.id, text, manual = True, vtuber = vtuber)
+
+    @del_membership.autocomplete('vtuber')
+    async def del_membership_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_db = Database().get_server_db(interaction.guild_id)
+        multi_talents = server_db.get_multi_talents()
+        vtubers = [m['idol'] for m in multi_talents]
+        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
 
 
     @app_commands.command(name="purgemember",
