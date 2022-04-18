@@ -14,7 +14,7 @@ class Settings(commands.Cog):
         self.bot = bot
         self.db = Database()
 
-    @app_commands.command(name="viewSettings", description="Shows all settings of this server.")
+    @app_commands.command(name="viewsettings", description="Shows all settings of this server.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def show_settings(self, interaction: discord.Interaction):
         logging.debug("%s called viewSettings.", interaction.user.id)
@@ -76,7 +76,7 @@ class Settings(commands.Cog):
         m += "<https://github.com/nonJerry/VeraBot/blob/master/settings.md>"
         await interaction.response.send_message(content=m, embed = embed, ephemeral=True)
 
-    @app_commands.command(name="setVTuber",
+    @app_commands.command(name="setvtuber",
         description="Sets the name of the VTuber of this server.\nThe screenshot sent for the verification is scanned for this name. Therefore this name should be identical with the name in the membership tab.")
     @app_commands.check.has_permissions(administrator=True)
     async def set_idol(self, interaction: discord.Interaction, vtuber_name: str):
@@ -99,7 +99,7 @@ class Settings(commands.Cog):
         return False
 
 
-    @app_commands.command(name="memberRole",
+    @app_commands.command(name="memberrole",
         description="Sets the role that should be given to a member who has proven that he has valid access to membership content.\nRequires the ID not the role name or anything else!")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_member_role(self, interaction: discord.Interaction, role_id: int):
@@ -112,7 +112,7 @@ class Settings(commands.Cog):
         logging.info("%s set %s as member role.", interaction.guild_id, role_id)
 
 
-    @app_commands.command(name="logChannel", description="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!")
+    @app_commands.command(name="logchannel", description="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_log_channel(self, interaction: discord.Interaction, channel_id: int):
         if self.check_channel_integrity(channel_id):
@@ -139,7 +139,7 @@ class Settings(commands.Cog):
             await interaction.response.send_message("Please send a legit link. Only jpg, jpeg and png are accepted.", ephemeral=True)
 
 
-    @app_commands.command(name="setAuto", description = "Sets whether the bot is allowed to automatically add the membership role. Only allows True or False as input.")
+    @app_commands.command(name="setauto", description = "Sets whether the bot is allowed to automatically add the membership role. Only allows True or False as input.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_automatic_role(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
@@ -153,7 +153,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Flag for automatic role handling set to " + str(flag), ephemeral=True)
 
 
-    @app_commands.command(name="setAdditionalProof", description = "Sets whether the bot will require additional proof from the user. Only allows True or False as input.")
+    @app_commands.command(name="setadditionalproof", description = "Sets whether the bot will require additional proof from the user. Only allows True or False as input.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_require_additional_proof(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
@@ -167,7 +167,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Flag for additional Proof set to " + str(flag), ephemeral=True)
 
 
-    @app_commands.command(name="setTolerance", description = "Sets the time that users will have access to the membership channel after their membership expired.")
+    @app_commands.command(name="settolerance", description = "Sets the time that users will have access to the membership channel after their membership expired.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_tolerance_duration(self, interaction: discord.Interaction, time: int):
         if(time < 0):
@@ -180,7 +180,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)), ephemeral=True)
 
 
-    @app_commands.command(name="setPriorNoticeDuration", description = "Sets how many days before the expiry of their membership a user will be notified to renew their proof.")
+    @app_commands.command(name="setpriornoticeduration", description = "Sets how many days before the expiry of their membership a user will be notified to renew their proof.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_inform_duration(self, interaction: discord.Interaction, time: int):
         if(time < 0):
@@ -192,7 +192,7 @@ class Settings(commands.Cog):
 
         await interaction.response.send_message("Users will be notified " + str(time) + " days before their membership ends.", ephemeral=True)
 
-    @app_commands.command(name="enableLogging", description="Flag which decides whether you will see the logs when the bot checks for expired memberships.")
+    @app_commands.command(name="enablelogging", description="Flag which decides whether you will see the logs when the bot checks for expired memberships.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_logging(self, interaction: discord.Interaction, flag):
         flag = Utility.text_to_boolean(flag)
@@ -206,7 +206,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Flag for logging set to " + str(flag), ephemeral=True)
 
 
-    @app_commands.command(name="proofChannel", description="Sets the Channel to which the threads will be attached.")
+    @app_commands.command(name="proofchannel", description="Sets the Channel to which the threads will be attached.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_proof_channel(self, interaction: discord.Interaction, channel_id: int):
         
@@ -227,7 +227,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Proof Channel id set to " + str(channel_id), ephemeral=True)
 
 
-    @app_commands.command(name="enableThreads", 
+    @app_commands.command(name="enablethreads", 
     description="Will activate the use of threads. The bot will create a Thread for each submitted proof. The log channel will be used to protocol the verified/denied proofs, not as place to verify them anymore. " +
     "Requires a proof channel to be set and use_public_threads to be enabled for this channel.")
     @app_commands.checks.has_permissions(administrator=True)
@@ -272,7 +272,7 @@ class Settings(commands.Cog):
             return False
         return True
 
-    @app_commands.command(name="enableMultiServer", description="Will activate the possibility to support several talents on one server.")
+    @app_commands.command(name="enablemultiserver", description="Will activate the possibility to support several talents on one server.")
     @app_commands.checks.has_permissions(administrator=True)
     async def enable_multi_server(self, interaction: discord.Interaction):
         if Utility.is_multi_server(interaction.guild_id):
@@ -289,7 +289,7 @@ class Settings(commands.Cog):
 
         await interaction.response.send_message("Management of several talents was activated for this server!", ephemeral=True)
 
-    @app_commands.command(name="disableMultiServer", description="Will disable the possibility to support several talents on one server.")
+    @app_commands.command(name="disablemultiserver", description="Will disable the possibility to support several talents on one server.")
     @app_commands.checks.has_permissions(administrator=True)
     async def disable_multi_server(self, interaction: discord.Interaction):
         if not Utility.is_multi_server(interaction.guild_id):
@@ -305,7 +305,7 @@ class Settings(commands.Cog):
     
 
 
-    @app_commands.command(name="addTalent", description="Adds new Talent to be supported. Also needs the log channel and role id. Function only for Multi-Talent servers!")
+    @app_commands.command(name="addtalent", description="Adds new Talent to be supported. Also needs the log channel and role id. Function only for Multi-Talent servers!")
     @app_commands.checks.has_permissions(administrator=True)
     async def add_idol(self, interaction: discord.Interaction, name: str, log_id: int, role_id: int):
         if not Utility.is_multi_server(interaction.guild_id):
@@ -335,7 +335,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Successfully added the new talent!", ephemeral=True)
 
 
-    @app_commands.command(name="removeTalent", description="Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!")
+    @app_commands.command(name="removetalent", description="Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!")
     @app_commands.checks.has_permissions(administrator=True)
     async def remove_idol(self, interaction: discord.Interaction, name: str):
         if not Utility.is_multi_server(interaction.guild_id):

@@ -18,7 +18,7 @@ class Membership(commands.Cog):
         self.bot = bot
         self.member_handler = member_handler
         
-    @app_commands.command(name="viewMembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
+    @app_commands.command(name="viewmembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def view_members(self, interaction: discord.Interaction, *member_id: int):
         if member_id:
@@ -28,7 +28,7 @@ class Membership(commands.Cog):
             logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
             await self.member_handler.view_membership(interaction.message, None)
 
-    @app_commands.command(name="viewMembersFor",
+    @app_commands.command(name="viewmembersfor",
         description = "Shows all user with the membership role. Or if a vtuber is given for that VTuber. Or if a id is given additionally this users data.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def view_members_multi(self, interaction: discord.Interaction, vtuber=None, *member_id: int):
@@ -40,7 +40,7 @@ class Membership(commands.Cog):
             await self.member_handler.view_membership(interaction.message, None, None)
 
 
-    @app_commands.command(name="addMember",
+    @app_commands.command(name="addmember",
         description="Gives the membership role to the user whose ID was given. " + 
         "<date> has to be in the format dd/mm/yyyy. " +
         "It equals the date shown on the sent screenshot")
@@ -59,7 +59,7 @@ class Membership(commands.Cog):
             await interaction.response.send_message("One of the arguments has the wrong data type!", ephemeral=True)
 
 
-    @app_commands.command(name="delMember",
+    @app_commands.command(name="delmember",
         description="Removes the membership role from the user whose ID was given. " +
         "A text which is sent to the user as DM can be given but is optional.")
     @app_commands.checks.has_permissions(manage_messages=True)
@@ -68,7 +68,7 @@ class Membership(commands.Cog):
         await self.member_handler.del_membership(interaction.message, member_id, text, manual = True, vtuber = vtuber)
 
 
-    @app_commands.command(name="purgeMember",
+    @app_commands.command(name="purgemember",
     description="This will initiate a membership check which also removes members that MIGHT already have lost their membership. " +
     "CAUTION: This will also hit many members that are still valid (Timezones and exact time of membering ...)")
     @app_commands.checks.has_permissions(manage_messages=True)
