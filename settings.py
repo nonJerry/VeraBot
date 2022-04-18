@@ -78,7 +78,7 @@ class Settings(commands.Cog):
 
     @app_commands.command(name="setvtuber",
         description="Sets the name of the VTuber of this server.\nThe screenshot sent for the verification is scanned for this name. Therefore this name should be identical with the name in the membership tab.")
-    @app_commands.check.has_permissions(administrator=True)
+    @app_commands.checks.has_permissions(administrator=True)
     async def set_idol(self, interaction: discord.Interaction, vtuber_name: str):
 
         # always only one entry
