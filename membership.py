@@ -17,30 +17,31 @@ class Membership(commands.Cog):
     def __init__(self, bot, member_handler: MembershipHandler):
         self.bot = bot
         self.member_handler = member_handler
-
-    # postional varaiables are not supported in slash commands, so these commands will only view all members for now (todo: make these commands a group)    
+   
     @app_commands.command(name="viewmembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def view_members(self, interaction: discord.Interaction):
-        logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
-        await self.member_handler.view_membership(interaction.message, None)
+    async def view_members(self, interaction: discord.Interaction, member_id: str=None):
+        if member_id:
+            logging.info(f"{interaction.user.id} used viewMember with ID in {interaction.guild_id}")
+            await self.member_handler.view_membership(interaction, int(member_id), None)
+        else:
+            logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
+            await self.member_handler.view_membership(interaction, None)
 
     @app_commands.command(name="viewmembersfor",
-        description = "Shows all user with the membership role. Or if a vtuber is given for that VTuber. Or if a id is given additionally this users data.")
+        description = "Shows all user with the membership role. Or if a vtuber is given for that VTuber.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def view_members_multi(self, interaction: discord.Interaction, vtuber :str=None):
         if vtuber:
             logging.info("%s viewed all members in %s for %s", interaction.user.id, interaction.guild_id, vtuber)
-            await self.member_handler.view_membership(interaction.message, None, vtuber)
+            await self.member_handler.view_membership(interaction, None, vtuber)
         else:
             logging.info("%s viewed all members in %s", interaction.user.id, interaction.guild_id)
-            await self.member_handler.view_membership(interaction.message, None, None)
+            await self.member_handler.view_membership(interaction, None, None)
 
 
     @app_commands.command(name="addmember",
-        description="Gives the membership role to the user whose ID was given. " + 
-        "<date> has to be in the format dd/mm/yyyy. " +
-        "It equals the date shown on the sent screenshot")
+        description="Gives the membership role to the user whose ID was given.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def set_membership(self, interaction: discord.Interaction, member_id: int, date: int, vtuber: str=None):
         logging.info("%s used addMember in %s", interaction.user.id, interaction.guild_id)
@@ -57,8 +58,7 @@ class Membership(commands.Cog):
 
 
     @app_commands.command(name="delmember",
-        description="Removes the membership role from the user whose ID was given. " +
-        "A text which is sent to the user as DM can be given but is optional.")
+        description="Removes the membership role from the user whose ID was given.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def del_membership(self, interaction: discord.Interaction, member_id: int, vtuber: str=None, text: str=None):
         logging.info("%s used delMember in %s", interaction.user.id, interaction.guild_id)
@@ -66,8 +66,7 @@ class Membership(commands.Cog):
 
 
     @app_commands.command(name="purgemember",
-    description="This will initiate a membership check which also removes members that MIGHT already have lost their membership. " +
-    "CAUTION: This will also hit many members that are still valid (Timezones and exact time of membering ...)")
+    description="Initiates a Membership Check")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def purge_members(self, interaction: discord.Interaction):
         await self.member_handler.purge_memberships(interaction.guild_id)

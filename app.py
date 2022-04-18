@@ -501,7 +501,7 @@ async def proof_error(ctx, error):
 @commands.is_owner()
 @commands.guild_only()
 async def syncGuild(ctx):
-    ctx.tree.copy_global_to(guild=ctx.guild)
+    ctx.bot.tree.copy_global_to(guild=ctx.guild)
     await ctx.bot.tree.sync(guild=ctx.guild)
     await ctx.send("commands synced to guild")
 

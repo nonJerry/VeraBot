@@ -78,7 +78,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message(content=m, embed = embed, ephemeral=True)
 
     @app_commands.command(name="setvtuber",
-        description="Sets the name of the VTuber of this server.\nThe screenshot sent for the verification is scanned for this name. Therefore this name should be identical with the name in the membership tab.")
+        description="Sets the name of the VTuber of this server")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_idol(self, interaction: discord.Interaction, vtuber_name: str):
 
@@ -101,7 +101,7 @@ class Settings(commands.Cog):
 
 
     @app_commands.command(name="memberrole",
-        description="Sets the role that should be given to a member who has proven that he has valid access to membership content.\nRequires the ID not the role name or anything else!")
+        description="Sets the role for membership content")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_member_role(self, interaction: discord.Interaction, role_id: int):
         if self.check_role_integrity(interaction, role_id):
@@ -113,7 +113,7 @@ class Settings(commands.Cog):
         logging.info("%s set %s as member role.", interaction.guild_id, role_id)
 
 
-    @app_commands.command(name="logchannel", description="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!")
+    @app_commands.command(name="logchannel", description="Sets the channel which is used to control the sent memberships.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_log_channel(self, interaction: discord.Interaction, channel_id: int):
         if self.check_channel_integrity(channel_id):
@@ -127,7 +127,7 @@ class Settings(commands.Cog):
 
 
     @app_commands.command(name="picture",
-        description="Sets the image that is sent when a membership is about to expire. It supports link that end with png, jpg or jpeg.")
+        description="Sets the image that is sent when a membership is about to expire.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_picture(self, interaction: discord.Interaction, link: str):
         logging.info("{} set their picture: {}".format(str(interaction.guild_id), link))
@@ -140,7 +140,7 @@ class Settings(commands.Cog):
             await interaction.response.send_message("Please send a legit link. Only jpg, jpeg and png are accepted.", ephemeral=True)
 
 
-    @app_commands.command(name="setauto", description = "Sets whether the bot is allowed to automatically add the membership role. Only allows True or False as input.")
+    @app_commands.command(name="setauto", description = "Sets whether the bot is allowed to automatically add the membership role.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_automatic_role(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
@@ -154,7 +154,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Flag for automatic role handling set to " + str(flag), ephemeral=True)
 
 
-    @app_commands.command(name="setadditionalproof", description = "Sets whether the bot will require additional proof from the user. Only allows True or False as input.")
+    @app_commands.command(name="setadditionalproof", description = "Sets whether the bot will require additional proof from the user.")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_require_additional_proof(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
@@ -181,7 +181,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)), ephemeral=True)
 
 
-    @app_commands.command(name="setpriornoticeduration", description = "Sets how many days before the expiry of their membership a user will be notified to renew their proof.")
+    @app_commands.command(name="setpriornoticeduration", description = "Set time for notice before membership expiry")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_inform_duration(self, interaction: discord.Interaction, time: int):
         if(time < 0):
@@ -228,9 +228,7 @@ class Settings(commands.Cog):
         await interaction.response.send_message("Proof Channel id set to " + str(channel_id), ephemeral=True)
 
 
-    @app_commands.command(name="enablethreads", 
-    description="Will activate the use of threads. The bot will create a Thread for each submitted proof. The log channel will be used to protocol the verified/denied proofs, not as place to verify them anymore. " +
-    "Requires a proof channel to be set and use_public_threads to be enabled for this channel.")
+    @app_commands.command(name="enablethreads", description="Toggles function that the bot creates a thread for each proof.")
     @app_commands.checks.has_permissions(administrator=True)
     async def toggle_threads(self, interaction: discord.Interaction, flag: str):
         # multi-server cannot use threads
@@ -306,7 +304,7 @@ class Settings(commands.Cog):
     
 
 
-    @app_commands.command(name="addtalent", description="Adds new Talent to be supported. Also needs the log channel and role id. Function only for Multi-Talent servers!")
+    @app_commands.command(name="addtalent", description="Adds new Talent to be supported. Function only for Multi-Talent servers!")
     @app_commands.checks.has_permissions(administrator=True)
     async def add_idol(self, interaction: discord.Interaction, name: str, log_id: int, role_id: int):
         if not Utility.is_multi_server(interaction.guild_id):

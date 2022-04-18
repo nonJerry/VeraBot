@@ -140,16 +140,16 @@ class MembershipHandler:
         # Returns expired_memberships list
         return expired_memberships
 
-
-    async def view_membership(self, res, member_id=None, vtuber=None):
+    #todo: make sure this doesn't break when it reaches the 2000 character limit
+    async def view_membership(self, interaction, member_id=None, vtuber=None):
         # if msg is empty, show all members
-        server_db = self.db.get_server_db(res.guild.id)
+        server_db = self.db.get_server_db(interaction.guild_id)
 
         if not member_id:
             count = 0
             m = ""
             for member in server_db.get_members():
-                if Utility.is_multi_server(res.guild.id) and vtuber is not None and member.idol != vtuber:
+                if Utility.is_multi_server(interaction.guild_id) and vtuber is not None and member.idol != vtuber:
                     continue
                 count += 1
                 member_id = member.id
@@ -157,27 +157,25 @@ class MembershipHandler:
                 membership_date = membership_date.strftime(self.DATE_FORMAT)
                 new_line = "{}: {}\n".format(member_id, membership_date)
                 if len(m) + len(new_line) > 2000:
-                    await res.channel.send(m)
-                    m = ""
+                    m +=  ""
                 m += new_line
             if m != "":
-                await res.channel.send(m)
-                await res.channel.send("Member count: " + str(count))
+                await interaction.response.send_message(m + "Member count: " + str(count), ephemeral=True)
             else:
-                await res.channel.send("No active memberships!")
+                await interaction.response.send_message("No active memberships!", ephemeral=True)
             return
 
         # Check if zoopass in database and delete
-        if Utility.is_multi_server(res.guild.id):
+        if Utility.is_multi_server(interaction.guild_id) and vtuber:
             target_membership = server_db.get_member_multi(member_id, vtuber)
         else:
             target_membership = server_db.get_member(member_id)
         if not target_membership:
-            await res.channel.send(self.ID_NOT_FOUND_TEXT)
+            await interaction.response.send_message(self.ID_NOT_FOUND_TEXT, ephemeral=True)
             return
         
         # Send information about membership
-        guild = self.bot.get_guild(res.guild.id)
+        guild = self.bot.get_guild(interaction.guild_id)
         target_member = guild.get_member(member_id)
 
         membership_date = target_membership.last_membership
@@ -191,7 +189,7 @@ class MembershipHandler:
         m = m.format(str(target_member), member_id, membership_date, expiration_date)
         embed = discord.Embed(title = "Membership", description = m)
 
-        await res.channel.send(content=None, embed = embed)
+        await interaction.response.send_message(content=None, embed = embed, ephemeral=True)
         
     """
     {
