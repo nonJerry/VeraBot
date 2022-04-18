@@ -66,18 +66,10 @@ class Membership(commands.Cog):
     @app_commands.command(name="addmember",
         description="Gives the membership role to the user whose ID was given.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def set_membership(self, interaction: discord.Interaction, member: discord.User, date: int, vtuber: str=None):
+    @app_commands.describe(date='Date has to be in the format dd/mm/yyyy.')
+    async def set_membership(self, interaction: discord.Interaction, member: discord.User, date: str, vtuber: str=None):
         logging.info("%s used addMember in %s", interaction.user.id, interaction.guild_id)
-        await self.member_handler.set_membership(interaction.message, member.id, date, manual = True, vtuber = vtuber)
-
-    @set_membership.error
-    async def set_membership_error(self, interaction: discord.Interaction, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            logging.debug("%s forgot argument for addMember", interaction.user.id)
-            await interaction.response.send_message("Please include at least two arguments!", ephemeral=True)
-        elif isinstance(error, commands.BadArgument):
-            logging.debug("%s used an invalid argument for addMember.", interaction.user.id)
-            await interaction.response.send_message("One of the arguments has the wrong data type!", ephemeral=True)
+        await self.member_handler.set_membership(interaction, member.id, date, manual = True, vtuber = vtuber)
 
 
     @app_commands.command(name="delmember",
