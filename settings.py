@@ -1,4 +1,5 @@
 # External
+from xmlrpc.client import Boolean
 from database import Database
 import discord
 from discord import app_commands
@@ -194,7 +195,7 @@ class Settings(commands.Cog):
 
     @app_commands.command(name="enablelogging", description="Flag which decides whether you will see the logs when the bot checks for expired memberships.")
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_logging(self, interaction: discord.Interaction, flag):
+    async def set_logging(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
             await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
@@ -231,7 +232,7 @@ class Settings(commands.Cog):
     description="Will activate the use of threads. The bot will create a Thread for each submitted proof. The log channel will be used to protocol the verified/denied proofs, not as place to verify them anymore. " +
     "Requires a proof channel to be set and use_public_threads to be enabled for this channel.")
     @app_commands.checks.has_permissions(administrator=True)
-    async def toggle_threads(self, interaction: discord.Interaction, flag):
+    async def toggle_threads(self, interaction: discord.Interaction, flag: str):
         # multi-server cannot use threads
         if Utility.is_multi_server(interaction.guild_id):
             await interaction.response.send_message("You cannot enable threads as mutli-server!", ephemeral=True)
