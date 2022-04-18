@@ -359,8 +359,6 @@ class Settings(commands.Cog):
             return False
         return True
 
-# hidden commands are not possible with slash commands (todo: figure out what to do with these)
-
     @commands.command(hidden = True, name = "createNewSetting")
     @commands.is_owner()
     async def create_new_setting(self, ctx, kind: str, value):
