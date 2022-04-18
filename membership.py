@@ -95,18 +95,6 @@ class Membership(commands.Cog):
         await self.member_handler.purge_memberships(interaction.guild_id)
         await interaction.response.send_message("This was a hard check, it might have hit many members that still have a valid membership.", ephemeral=True)
 
-    @del_membership.error
-    @view_members.error
-    async def id_error(self, interaction: discord.Interaction, error):
-        if isinstance(error, commands.BadArgument):
-            logging.debug("%s used invalid ID for delMember or viewMember.", interaction.user.id)
-            await interaction.response.send_message("Please provide a valid id!", ephemeral=True)
-        elif isinstance(error, commands.MissingRequiredArgument):
-            logging.debug("%s forgot argument for delMember or viewMember.", interaction.user.id)
-            await interaction.response.send_message("Please include the argument!", ephemeral=True)
-
-# hidden commands are not possible with slash commands (todo: figure out what to do with these)
-
     @commands.command(hidden = True, name = "queue")
     @commands.is_owner()
     async def queue(self, ctx):
