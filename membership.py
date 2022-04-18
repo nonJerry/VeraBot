@@ -20,10 +20,10 @@ class Membership(commands.Cog):
    
     @app_commands.command(name="viewmembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def view_members(self, interaction: discord.Interaction, member_id: str=None):
-        if member_id:
+    async def view_members(self, interaction: discord.Interaction, member: discord.User=None):
+        if member:
             logging.info(f"{interaction.user.id} used viewMember with ID in {interaction.guild_id}")
-            await self.member_handler.view_membership(interaction, int(member_id), None)
+            await self.member_handler.view_membership(interaction, member.id, None)
         else:
             logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
             await self.member_handler.view_membership(interaction, None)
@@ -43,9 +43,9 @@ class Membership(commands.Cog):
     @app_commands.command(name="addmember",
         description="Gives the membership role to the user whose ID was given.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def set_membership(self, interaction: discord.Interaction, member_id: int, date: int, vtuber: str=None):
+    async def set_membership(self, interaction: discord.Interaction, member: discord.User, date: int, vtuber: str=None):
         logging.info("%s used addMember in %s", interaction.user.id, interaction.guild_id)
-        await self.member_handler.set_membership(interaction.message, member_id, date, manual = True, vtuber = vtuber)
+        await self.member_handler.set_membership(interaction.message, member.id, date, manual = True, vtuber = vtuber)
 
     @set_membership.error
     async def set_membership_error(self, interaction: discord.Interaction, error):
@@ -60,9 +60,9 @@ class Membership(commands.Cog):
     @app_commands.command(name="delmember",
         description="Removes the membership role from the user whose ID was given.")
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def del_membership(self, interaction: discord.Interaction, member_id: int, vtuber: str=None, text: str=None):
+    async def del_membership(self, interaction: discord.Interaction, member: discord.User, vtuber: str=None, text: str=None):
         logging.info("%s used delMember in %s", interaction.user.id, interaction.guild_id)
-        await self.member_handler.del_membership(interaction.message, member_id, text, manual = True, vtuber = vtuber)
+        await self.member_handler.del_membership(interaction.message, member.id, text, manual = True, vtuber = vtuber)
 
 
     @app_commands.command(name="purgemember",

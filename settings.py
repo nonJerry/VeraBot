@@ -103,23 +103,23 @@ class Settings(commands.Cog):
     @app_commands.command(name="memberrole",
         description="Sets the role for membership content")
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_member_role(self, interaction: discord.Interaction, role_id: int):
-        if self.check_role_integrity(interaction, role_id):
-            self.db.get_server_db(interaction.guild_id).set_member_role(role_id)
+    async def set_member_role(self, interaction: discord.Interaction, role: discord.Role):
+        if self.check_role_integrity(interaction, role.id):
+            self.db.get_server_db(interaction.guild_id).set_member_role(role.id)
 
-            await interaction.response.send_message("Member role id set to " + str(role_id), ephemeral=True)
+            await interaction.response.send_message("Member role id set to " + str(role.id), ephemeral=True)
         else:
             await interaction.response.send_message("ID does not refer to a legit role", ephemeral=True)
-        logging.info("%s set %s as member role.", interaction.guild_id, role_id)
+        logging.info("%s set %s as member role.", interaction.guild_id, role.id)
 
 
     @app_commands.command(name="logchannel", description="Sets the channel which is used to control the sent memberships.")
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_log_channel(self, interaction: discord.Interaction, channel_id: int):
-        if self.check_channel_integrity(channel_id):
-            self.db.get_server_db(interaction.guild_id).set_log_channel(channel_id)
-            logging.info("%s set %s as log channel.", interaction.guild_id, channel_id)
-            await interaction.response.send_message("Log Channel id set to " + str(channel_id), ephemeral=True)
+    async def set_log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        if self.check_channel_integrity(channel.id):
+            self.db.get_server_db(interaction.guild_id).set_log_channel(channel.id)
+            logging.info("%s set %s as log channel.", interaction.guild_id, channel.id)
+            await interaction.response.send_message("Log Channel id set to " + str(channel.id), ephemeral=True)
         else:
             await interaction.response.send_message("ID does not refer to a legit channel", ephemeral=True)
             logging.info("%s used a wrong ID as log channel.", interaction.guild_id)
@@ -209,9 +209,9 @@ class Settings(commands.Cog):
 
     @app_commands.command(name="proofchannel", description="Sets the Channel to which the threads will be attached.")
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_proof_channel(self, interaction: discord.Interaction, channel_id: int):
+    async def set_proof_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         
-        channel = self.bot.get_channel(channel_id)
+        channel = self.bot.get_channel(channel.id)
         if not channel:
             await interaction.response.send_message("Please use a valid channel!", ephemeral=True)
             return
@@ -222,10 +222,10 @@ class Settings(commands.Cog):
             await interaction.response.send_message("You need to enable use_public_threads for VeraBot on your proof channel first!", ephemeral=True)
             return
 
-        self.db.get_server_db(interaction.guild_id).set_proof_channel(channel_id)
-        logging.info("%s set %s as proof channel.", interaction.guild_id, channel_id)
+        self.db.get_server_db(interaction.guild_id).set_proof_channel(channel.id)
+        logging.info("%s set %s as proof channel.", interaction.guild_id, channel.id)
 
-        await interaction.response.send_message("Proof Channel id set to " + str(channel_id), ephemeral=True)
+        await interaction.response.send_message("Proof Channel id set to " + str(channel.id), ephemeral=True)
 
 
     @app_commands.command(name="enablethreads", description="Toggles function that the bot creates a thread for each proof.")
@@ -306,7 +306,7 @@ class Settings(commands.Cog):
 
     @app_commands.command(name="addtalent", description="Adds new Talent to be supported. Function only for Multi-Talent servers!")
     @app_commands.checks.has_permissions(administrator=True)
-    async def add_idol(self, interaction: discord.Interaction, name: str, log_id: int, role_id: int):
+    async def add_idol(self, interaction: discord.Interaction, name: str, log: discord.TextChannel, role: discord.Role):
         if not Utility.is_multi_server(interaction.guild_id):
             logging.info("%s: Tried to use mutli-talent ADD without having it enabled.", interaction.guild_id)
             await interaction.response.send_message("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.", ephemeral=True)
@@ -319,17 +319,17 @@ class Settings(commands.Cog):
             await interaction.response.send_message("This Vtuber is already mapped to a server!", ephemeral=True)
             return
 
-        if not self.bot.get_channel(log_id):
+        if not self.bot.get_channel(log.id):
             await interaction.response.send_message("Please use a proper Channel!", ephemeral=True)
             return
 
-        if not self.check_role_integrity(interaction, role_id):
+        if not self.check_role_integrity(interaction, role.id):
             return
 
         # Finally add to db
-        self.db.get_server_db(interaction.guild_id).add_multi_talent(name, log_id, role_id)
+        self.db.get_server_db(interaction.guild_id).add_multi_talent(name, log.id, role.id)
         self.db.set_vtuber(name, interaction.guild_id)
-        logging.info("%s: Added %s with %s as Log Channel and %s as Role.", interaction.guild_id, name, log_id, role_id)
+        logging.info("%s: Added %s with %s as Log Channel and %s as Role.", interaction.guild_id, name, log.id, role.id)
 
         await interaction.response.send_message("Successfully added the new talent!", ephemeral=True)
 
