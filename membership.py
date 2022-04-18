@@ -11,13 +11,36 @@ import logging
 from os import getenv
 # Internal
 from membership_handling import MembershipHandler
+from utility import Utility
 
 class Membership(commands.Cog):
 
     def __init__(self, bot, member_handler: MembershipHandler):
         self.bot = bot
         self.member_handler = member_handler
-   
+
+    @app_commands.command(name="verify", description="Tries to verify a screenshot for membership in the DMs")
+    async def verify(self, interaction: discord.Interaction, attachment: discord.Attachment, vtuber: str=None, language: str=None):
+        if not attachment.content_type.startswith("image"):
+            await interaction.response.send_message("The included attachment is not an image, please attach an image.", ephemeral=True)
+            logging.info("Verify without screenshot from %s.", interaction.user.id)
+        if vtuber or language:
+            if vtuber:
+                server = Utility.map_vtuber_to_server(vtuber)
+
+            if language:
+                language = Utility.map_language(language)
+            else:
+                language = "eng"
+
+            if server:
+                await self.member_handler.add_to_queue(interaction, attachment, server, language, vtuber)
+            else:
+                embed = Utility.create_supported_vtuber_embed()
+                await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed)
+        else:
+            await self.member_handler.add_to_queue(interaction, attachment)
+
     @app_commands.command(name="viewmembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def view_members(self, interaction: discord.Interaction, member: discord.User=None):

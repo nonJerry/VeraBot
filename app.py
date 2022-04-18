@@ -368,46 +368,13 @@ def dm_or_test_only():
     return commands.check(predicate)
 
 @bot.command(
-    help="Can be called with just $verify but also with $verify <VTuber name>\n" +
-    "Both versions require a screenshot sent with it.",
-	brief=" Tries to verify a screenshot for membership in the DMs"
+    help="Obsolete verify command, notifies user to use slash command version instead.",
+	brief="Obsolete verify command."
 )
 @dm_or_test_only()
 @commands.cooldown(verify_tries, 50, commands.BucketType.user)
 async def verify(ctx, *args):
-    """
-    Command in the DMs that tries to verify a screenshot for membership.
-    """
-    # log content to dm log channel for record
-    dm_lg_ch = bot.get_channel(dm_log)
-    await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
-    # check for needed picture
-    if not ctx.message.attachments:
-        NO_PICTURE_TEXT = "I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)"
-        await ctx.message.channel.send(NO_PICTURE_TEXT.format(ctx.author))
-        logging.info("Verify without screenshot from %s.", ctx.author.id)
-        return
-
-    if args:
-        server = Utility.map_vtuber_to_server(args[0])
-
-        if len(args) > 1:
-            language = Utility.map_language(args[1])
-        else:
-            language = "eng"
-
-        if server:
-            if Utility.is_user_on_server(ctx.author.id, server):
-                # only give vtuber name if it is a multi-server
-                await member_handler.add_to_queue(ctx.message, server, language, args[0] if Utility.is_multi_server(server) else None)
-            else:
-                logging.info("%s tried to verify for a server they are not on.", ctx.author.id)
-                await ctx.send("You are not on {} server!".format(args[0].title()))
-        else:
-            embed = Utility.create_supported_vtuber_embed()
-            await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
-    else:
-        await member_handler.add_to_queue(ctx.message)
+    await ctx.send("This command no longer works through DMs, please use the slash command '/verify' in the server instead.")
 
 @verify.error
 async def verify_error(ctx, error):
