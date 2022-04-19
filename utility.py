@@ -161,5 +161,6 @@ class Utility:
     @classmethod
     def is_interaction_not_dm(cls, interaction: discord.Interaction) -> bool:
         if isinstance(interaction.channel, discord.PartialMessageable):
-            return interaction.channel.type != private
+            # reaching here means it's a DM
+            return False
         return True
