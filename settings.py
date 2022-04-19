@@ -26,16 +26,22 @@ class Settings(commands.Cog):
         server_db = self.db.get_server_db(interaction.guild_id)
 
         # VTuber
-        vtuber = server_db.get_vtuber()
-        embed.add_field(name="VTuber", value=vtuber)
+        if Utility.is_multi_server(interaction.guild_id):
+            multi_talents = server_db.get_multi_talents()
+            idols = [m['idol'] for m in multi_talents]
+            vtubers = ', '.join(idols)
+            embed.add_field(name="VTubers", value=vtubers)
+        else:
+            vtuber = server_db.get_vtuber()
+            embed.add_field(name="VTuber", value=vtuber)
 
-        # Member Role
-        member_role = server_db.get_member_role()
-        embed.add_field(name='Member Role ID', value=str(member_role), inline=True)
+            # Member Role
+            member_role = server_db.get_member_role()
+            embed.add_field(name='Member Role ID', value=str(member_role), inline=True)
 
-        # Log Channel
-        log_channel = server_db.get_log_channel()
-        embed.add_field(name='Log Channel ID', value=str(log_channel), inline=True)
+            # Log Channel
+            log_channel = server_db.get_log_channel()
+            embed.add_field(name='Log Channel ID', value=str(log_channel), inline=True)
 
         # current picture (als image anhängen)
         picture_url = server_db.get_picture()
