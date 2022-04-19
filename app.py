@@ -472,6 +472,14 @@ async def syncGuild(ctx):
     await ctx.bot.tree.sync(guild=ctx.guild)
     await ctx.send("commands synced to guild")
 
+@bot.command(name="syncGuildClear")
+@commands.is_owner()
+@commands.guild_only()
+async def syncGuildClear(ctx):
+    # since all commands are global, doing a sync call without the copy_global_to function will clear all guild synced commands
+    await ctx.bot.tree.sync(guild=ctx.guild)
+    await ctx.send("guild commands cleared from sync")
+
 @bot.command(name="syncGlobal")
 @commands.is_owner()
 @commands.guild_only()
