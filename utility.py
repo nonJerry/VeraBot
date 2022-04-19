@@ -1,4 +1,5 @@
 #External
+from random import paretovariate
 import discord
 from dateparser.search import search_dates
 #Python
@@ -155,4 +156,10 @@ class Utility:
     def is_multi_server(cls, guild_id: int) -> bool:
         if not guild_id in cls.db.get_multi_server():
             return False
+        return True
+
+    @classmethod
+    def is_interaction_not_dm(cls, interaction: discord.Interaction) -> bool:
+        if isinstance(interaction.channel, discord.PartialMessageable):
+            return interaction.channel.type != private
         return True
