@@ -29,7 +29,7 @@ class Settings(commands.Cog):
         if Utility.is_multi_server(interaction.guild_id):
             multi_talents = server_db.get_multi_talents()
             idols = [m['idol'] for m in multi_talents]
-            vtubers = ', '.join(idols)
+            vtubers = ', '.join(idols).title()
             embed.add_field(name="VTubers", value=vtubers)
         else:
             vtuber = server_db.get_vtuber()
