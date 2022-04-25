@@ -243,7 +243,8 @@ class Settings(commands.Cog):
         if(time < 0):
             await ctx.send("This value needs to be at least 0 days.")
             return
-
+        if (time > 2):
+            await ctx.send("This value cannot be more than 2 days.")
         self.db.get_server_db(ctx.guild.id).set_tolerance_duration(time)
         logging.info("%s set Tolerance to %s", ctx.guild.id, time)
 
