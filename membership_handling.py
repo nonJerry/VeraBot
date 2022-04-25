@@ -93,7 +93,7 @@ class MembershipHandler:
                     target_member = guild.get_member(member.id)
 
                     if target_member:
-                        if Utility.is_multi_server(guild):
+                        if Utility.is_multi_server(guild.id):
                             role_id = server_db.get_multi_talent_role_from_name(idol)
                         else:
                             role_id = server_db.get_member_role()
