@@ -39,9 +39,9 @@ class Settings(commands.Cog):
             member_role = server_db.get_member_role()
             embed.add_field(name='Member Role ID', value=str(member_role), inline=True)
 
-            # Log Channel
-            log_channel = server_db.get_log_channel()
-            embed.add_field(name='Log Channel ID', value=str(log_channel), inline=True)
+        # Log Channel
+        log_channel = server_db.get_log_channel()
+        embed.add_field(name='Log Channel ID', value=str(log_channel), inline=True)
 
         # current picture (als image anhängen)
         picture_url = server_db.get_picture()
