@@ -28,6 +28,9 @@ class Membership(commands.Cog):
         if vtuber or language:
             if vtuber:
                 server = Utility.map_vtuber_to_server(vtuber)
+            elif Utility.is_multi_server(interaction.guild_id):
+                embed = Utility.create_supported_vtuber_embed()
+                await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed)
 
             if language:
                 language = Utility.map_language(language)
@@ -37,6 +40,9 @@ class Membership(commands.Cog):
             if server:
                 await self.member_handler.add_to_queue(interaction, attachment, server, language, vtuber)
             else:
+                embed = Utility.create_supported_vtuber_embed()
+                await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed)
+        elif Utility.is_multi_server(interaction.guild_id):
                 embed = Utility.create_supported_vtuber_embed()
                 await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed)
         else:
