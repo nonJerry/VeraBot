@@ -49,7 +49,7 @@ class Membership(commands.Cog):
             await self.member_handler.add_to_queue(interaction, attachment)
 
     @app_commands.command(name="viewmembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
-    @app_commands.checks.default_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def view_members(self, interaction: discord.Interaction, member: discord.User=None):
         if member:
@@ -61,7 +61,7 @@ class Membership(commands.Cog):
 
     @app_commands.command(name="viewmembersfor",
         description = "Shows all user with the membership role. Or if a vtuber is given for that VTuber.")
-    @app_commands.checks.default_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def view_members_multi(self, interaction: discord.Interaction, vtuber :str=None):
         if vtuber:
@@ -81,7 +81,7 @@ class Membership(commands.Cog):
 
     @app_commands.command(name="addmember",
         description="Gives the membership role to the user whose ID was given.")
-    @app_commands.checks.default_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     @app_commands.describe(date='Date has to be in the format dd/mm/yyyy.')
     async def set_membership(self, interaction: discord.Interaction, member: discord.User, date: str, vtuber: str=None):
@@ -99,7 +99,7 @@ class Membership(commands.Cog):
 
     @app_commands.command(name="delmember",
         description="Removes the membership role from the user whose ID was given.")
-    @app_commands.checks.default_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def del_membership(self, interaction: discord.Interaction, member: discord.User, vtuber: str=None, text: str=None):
         logging.info("%s used delMember in %s", interaction.user.id, interaction.guild_id)
@@ -115,7 +115,7 @@ class Membership(commands.Cog):
 
     @app_commands.command(name="purgemember",
     description="Initiates a Membership Check")
-    @app_commands.checks.default_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def purge_members(self, interaction: discord.Interaction):
         await self.member_handler.purge_memberships(interaction.guild_id)
