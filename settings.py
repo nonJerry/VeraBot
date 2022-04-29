@@ -188,7 +188,10 @@ class Settings(commands.Cog):
         if(time < 0):
             await interaction.response.send_message("This value needs to be at least 0 days.", ephemeral=True)
             return
-
+        if (time > 2):
+            await interaction.response.send_message("This value cannot be more than 2 days.", ephemeral=True)
+            return
+        
         self.db.get_server_db(interaction.guild_id).set_tolerance_duration(time)
         logging.info("%s set Tolerance to %s", interaction.guild_id, time)
 
