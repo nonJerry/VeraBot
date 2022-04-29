@@ -1,5 +1,4 @@
 #External
-from random import paretovariate
 import discord
 from dateparser.search import search_dates
 #Python

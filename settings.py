@@ -1,5 +1,4 @@
 # External
-from xmlrpc.client import Boolean
 from database import Database
 import discord
 from discord import app_commands
@@ -200,7 +199,11 @@ class Settings(commands.Cog):
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_inform_duration(self, interaction: discord.Interaction, time: int):
         if(time < 0):
-            await interaction.response.send_message("This value needs to be at least 0 days.")
+            await interaction.response.send_message("This value needs to be at least 0 days.", ephemeral=True)
+            return
+        
+        if(time > 2):
+            await interaction.response.send_message("This value cannot be more than 2 days.", ephemeral=True)
             return
 
         self.db.get_server_db(interaction.guild_id).set_inform_duration(time)
