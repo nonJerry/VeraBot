@@ -49,7 +49,7 @@ class Membership(commands.Cog):
             await self.member_handler.add_to_queue(interaction, attachment)
     
     @verify.autocomplete('vtuber')
-    async def view_members_multi_autocomplete(self, interaction: discord.Interaction, current: str):
+    async def verify_autocomplete(self, interaction: discord.Interaction, current: str):
         server_db = Database().get_server_db(interaction.guild_id)
         if Utility.is_multi_server(interaction.guild_id):
             multi_talents = server_db.get_multi_talents()
