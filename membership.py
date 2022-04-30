@@ -47,6 +47,17 @@ class Membership(commands.Cog):
                 await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed)
         else:
             await self.member_handler.add_to_queue(interaction, attachment)
+    
+    @verify.autocomplete('vtuber')
+    async def view_members_multi_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_db = Database().get_server_db(interaction.guild_id)
+        if Utility.is_multi_server(interaction.guild_id):
+            multi_talents = server_db.get_multi_talents()
+            vtubers = [m['idol'] for m in multi_talents]
+            return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
+        else:
+            vtuber = server_db.get_vtuber()
+            return [app_commands.Choice(name=vtuber, value=vtuber)]
 
     @app_commands.command(name="viewmembers", description = "Shows all user with the membership role. Or if a id is given this users data.")
     @app_commands.default_permissions(manage_messages=True)
