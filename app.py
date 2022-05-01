@@ -153,7 +153,8 @@ async def on_guild_remove(guild):
     Removes the guild from the supported idols so that memberships are not checked.
     """
     logging.info("Left Guild: %s (%s)", guild.name , guild.id)
-    database.remove_vtuber(guild.id)
+    database.remove_server(guild.id)
+    logging.info(f"Deleted Collection for {guild.id}")
 
 @bot.event
 async def on_raw_reaction_add(payload):
