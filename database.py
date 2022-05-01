@@ -451,8 +451,6 @@ class Database(metaclass=Singleton):
             new_guild_db.create_new_setting("member_role", 0)
             # default: needs to be set
             new_guild_db.create_new_setting("log_channel", 0)
-            # default: no mod role
-            new_guild_db.create_new_setting("mod_role", 0)
             # default: hololive logo
             new_guild_db.create_new_setting("picture_link","https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg")
             # default: proof needs to be approved of first
