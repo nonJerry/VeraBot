@@ -34,17 +34,17 @@ class Member:
 class ServerDatabase:
 
     def __init__(self, db_cluster, server_id : int):
-        self.db = db_cluster[str(server_id)]
+        self.db = db_cluster['Servers']
         self.server_id = server_id
 
     def _get_settings(self) -> Collection:
-        return self.db["settings"]
+        return self.db[str(self.server_id)]
 
     def __get_setting(self, setting_name: str) -> Any:
         return self._get_settings().find_one({'kind' : setting_name})['value']
 
     def __get_member_collection(self) -> Collection:
-        return self.db['members']
+        return self.db[str(self.server_id)]
 
     # getter settings
 
