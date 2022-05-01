@@ -367,6 +367,7 @@ class Database(metaclass=Singleton):
 
     def remove_vtuber(self, guild_id: int):
         self._get_general_settings().update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild_id}}})
+
         
     def remove_server(self, guild_id: int):
         self.remove_vtuber(guild_id)
