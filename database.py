@@ -148,7 +148,7 @@ class ServerDatabase:
         notify_date = dtime.now(tz = timezone.utc) - relativedelta(months=1) - timedelta(days=1) + timedelta(days=inform_duration)
         member_list = []
         
-        for member in self.db['members'].find():
+        for member in self.__get_member_collection().find({ "kind": { "$exists": False } }):
             member = Member.create_member(member)
             
             if member and member.last_membership <= notify_date or not only_expired:
