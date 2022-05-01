@@ -320,7 +320,7 @@ class Database(metaclass=Singleton):
         self.db_cluster = db_cluster
 
     def list_database_names(self) -> List:
-        return self.db_cluster.list_database_names()
+        return self.db_cluster['Servers'].list_collection_names()
 
     def get_server_db(self, server_id: int) -> ServerDatabase:
         return ServerDatabase(self.db_cluster, server_id)
@@ -360,7 +360,7 @@ class Database(metaclass=Singleton):
         logging.debug("Set VTuber in Database")
         settings = self._get_general_settings()
         # not already set for single talent servers
-        if settings.find_one( { 'supported_idols.guild_id': guild_id}) and not guild_id in self.get_multi_server():
+        if settings.find_one( { 'supported_idols.guild_id': guild_id}) and guild_id not in self.get_multi_server():
             settings.update_one({'supported_idols.guild_id': guild_id}, {'$set': {'supported_idols.$': {"name": name.lower(), "guild_id": guild_id}}})
         else:
             settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": name.lower(), "guild_id": guild_id}}})
@@ -438,7 +438,7 @@ class Database(metaclass=Singleton):
     def create_new_server(self, guild_id: int):
         dbnames = self.list_database_names()
     
-        if not str(guild_id) in dbnames:
+        if str(guild_id) not in dbnames:
             new_guild_db = self.get_server_db(guild_id)
 
             # Create base configuration
