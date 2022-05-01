@@ -125,3 +125,5 @@ dmypy.json
 # Venv
 verabot/
 tests/distest/
+get_guilds.py
+join.py
