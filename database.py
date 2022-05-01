@@ -34,17 +34,17 @@ class Member:
 class ServerDatabase:
 
     def __init__(self, db_cluster, server_id : int):
-        self.db = db_cluster[str(server_id)]
+        self.db = db_cluster['Servers']
         self.server_id = server_id
 
     def _get_settings(self) -> Collection:
-        return self.db["settings"]
+        return self.db[str(self.server_id)]
 
     def __get_setting(self, setting_name: str) -> Any:
         return self._get_settings().find_one({'kind' : setting_name})['value']
 
     def __get_member_collection(self) -> Collection:
-        return self.db['members']
+        return self.db[str(self.server_id)]
 
     # getter settings
 
@@ -148,7 +148,7 @@ class ServerDatabase:
         notify_date = dtime.now(tz = timezone.utc) - relativedelta(months=1) - timedelta(days=1) + timedelta(days=inform_duration)
         member_list = []
         
-        for member in self.db['members'].find():
+        for member in self.__get_member_collection().find({ "kind": { "$exists": False } }):
             member = Member.create_member(member)
             
             if member and member.last_membership <= notify_date or not only_expired:
@@ -320,7 +320,7 @@ class Database(metaclass=Singleton):
         self.db_cluster = db_cluster
 
     def list_database_names(self) -> List:
-        return self.db_cluster.list_database_names()
+        return self.db_cluster['Servers'].list_collection_names()
 
     def get_server_db(self, server_id: int) -> ServerDatabase:
         return ServerDatabase(self.db_cluster, server_id)
@@ -360,13 +360,18 @@ class Database(metaclass=Singleton):
         logging.debug("Set VTuber in Database")
         settings = self._get_general_settings()
         # not already set for single talent servers
-        if settings.find_one( { 'supported_idols.guild_id': guild_id}) and not guild_id in self.get_multi_server():
+        if settings.find_one( { 'supported_idols.guild_id': guild_id}) and guild_id not in self.get_multi_server():
             settings.update_one({'supported_idols.guild_id': guild_id}, {'$set': {'supported_idols.$': {"name": name.lower(), "guild_id": guild_id}}})
         else:
             settings.update_one({"name": "supported_idols"}, {'$push': {'supported_idols': {"name": name.lower(), "guild_id": guild_id}}})
 
     def remove_vtuber(self, guild_id: int):
         self._get_general_settings().update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'guild_id': guild_id}}})
+
+        
+    def remove_server(self, guild_id: int):
+        self.remove_vtuber(guild_id)
+        self.db_cluster['Servers'][str(guild_id)].drop()
 
     def remove_multi_talent_vtuber(self, guild_id: int, name: str):
         self._get_general_settings().update_one({'name': 'supported_idols'}, {'$pull': { 'supported_idols': {'name': name, 'guild_id': guild_id}}})
@@ -438,7 +443,7 @@ class Database(metaclass=Singleton):
     def create_new_server(self, guild_id: int):
         dbnames = self.list_database_names()
     
-        if not str(guild_id) in dbnames:
+        if str(guild_id) not in dbnames:
             new_guild_db = self.get_server_db(guild_id)
 
             # Create base configuration
@@ -451,8 +456,6 @@ class Database(metaclass=Singleton):
             new_guild_db.create_new_setting("member_role", 0)
             # default: needs to be set
             new_guild_db.create_new_setting("log_channel", 0)
-            # default: no mod role
-            new_guild_db.create_new_setting("mod_role", 0)
             # default: hololive logo
             new_guild_db.create_new_setting("picture_link","https://pbs.twimg.com/profile_images/1198438854841094144/y35Fe_Jj.jpg")
             # default: proof needs to be approved of first
