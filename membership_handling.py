@@ -556,7 +556,7 @@ class MembershipHandler:
                 except discord.errors.Forbidden:
                     logging.info("{}: ERROR - Cannot post in Log Channel!!!".format(server_id))
                 except Exception:
-                    logging.info("{}: Other ERROR occured during membership check!".format)
+                    logging.error("{}: Other ERROR occured during membership check!".format(server_id))
 
         # add wait time
         dt = date.today()
