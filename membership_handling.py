@@ -98,13 +98,13 @@ class MembershipHandler:
                         else:
                             role_id = server_db.get_member_role()
                         member_role = guild.get_role(role_id)
+                        if member_role:
+                            await target_member.remove_roles(member_role)
+                            #send dm
+                            await Sending.dm_member(member.id, title, message_desc.format(idol.title(), str(inform_duration)), embed = True, attachment_url = message_image)
 
-                        await target_member.remove_roles(member_role)
-                        #send dm
-                        await Sending.dm_member(member.id, title, message_desc.format(idol.title(), str(inform_duration)), embed = True, attachment_url = message_image)
-
-                        if purge:
-                            expired_memberships.append(member)
+                            if purge:
+                                expired_memberships.append(member)
                 
                 # else notify
                 elif inform_duration != 0 and last_membership <= notify_date and not member.informed:
