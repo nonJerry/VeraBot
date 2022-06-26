@@ -122,7 +122,7 @@ async def on_command_error(ctx, error):
     elif hasattr(ctx.command, 'on_error'):
         #skip already locally handled errors
         pass
-    elif isinstance(error, MissingRequiredArgument):
+    elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("You are missing a required argument!")
     else:
         raise error
