@@ -157,7 +157,7 @@ class MembershipHandler:
                 membership_date = member.last_membership + relativedelta(months=1)
                 membership_date = membership_date.strftime(self.DATE_FORMAT)
                 new_line = "{}: {}\n".format(member_id, membership_date)
-                if len(m) + len(new_line) > 4000:
+                if len(m) + len(new_line) > 2048:
                     if embed_count == 0:
                         embed = discord.Embed(title = "Membership List", description = m)
                     else:
