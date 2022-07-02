@@ -164,7 +164,7 @@ class MembershipHandler:
                         embed = discord.Embed(description = m)
                     embeds.append(embed)
                     embed_count += 1
-                    m +=  ""
+                    m = ""
                 m += new_line
             if m != "":
                 if embed_count == 0:
