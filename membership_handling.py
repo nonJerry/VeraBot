@@ -143,7 +143,7 @@ class MembershipHandler:
     async def view_membership(self, interaction, member_id=None, vtuber=None):
         # if msg is empty, show all members
         server_db = self.db.get_server_db(interaction.guild_id)
-
+        await interaction.response.defer(ephemeral=True, thinking=True)
         if not member_id:
             count = 0
             embed_count = 0
@@ -172,9 +172,9 @@ class MembershipHandler:
                 else:
                     embed = discord.Embed(description = m + "Member count: " + str(count))
                 embeds.append(embed)
-                await interaction.response.send_message(content = None, embeds = embeds, ephemeral=True)
+                await interaction.followup.send(content = None, embeds = embeds, ephemeral=True)
             else:
-                await interaction.response.send_message("No active memberships!", ephemeral=True)
+                await interaction.followup.send("No active memberships!", ephemeral=True)
             return
 
         # Check if zoopass in database and delete
@@ -183,7 +183,7 @@ class MembershipHandler:
         else:
             target_membership = server_db.get_member(member_id)
         if not target_membership:
-            await interaction.response.send_message(self.ID_NOT_FOUND_TEXT, ephemeral=True)
+            await interaction.followup.send(self.ID_NOT_FOUND_TEXT, ephemeral=True)
             return
         
         # Send information about membership
@@ -201,7 +201,7 @@ class MembershipHandler:
         m = m.format(str(target_member), member_id, membership_date, expiration_date)
         embed = discord.Embed(title = "Membership", description = m)
 
-        await interaction.response.send_message(content=None, embed = embed, ephemeral=True)
+        await interaction.followup.send(content=None, embed = embed, ephemeral=True)
         
     """
     {
