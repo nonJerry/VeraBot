@@ -63,7 +63,7 @@ class MembershipHandler:
         notify_date = expiry_date + timedelta(days=inform_duration)
 
         message_title = idol.title() + " Membership {}!"
-        end_text = "You may renew your membership by sending another updated verification photo using the ``$verify`` command.\n"
+        end_text = "You may renew your membership by sending another updated verification photo using the ``/verify`` command.\n"
         end_text += "Thank you so much for your continued support!"
         if purge:
             end_text = "This expiration may be too soon. It was initiated by the server to avoid illegit access during e.g. a membership stream.\n"
