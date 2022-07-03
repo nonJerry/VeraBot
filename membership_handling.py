@@ -148,7 +148,6 @@ class MembershipHandler:
             count = 0
             embed_count = 0
             m = ""
-            embeds = []
             for member in server_db.get_members():
                 if Utility.is_multi_server(interaction.guild_id) and vtuber is not None and member.idol != vtuber:
                     continue
@@ -157,22 +156,23 @@ class MembershipHandler:
                 membership_date = member.last_membership + relativedelta(months=1)
                 membership_date = membership_date.strftime(self.DATE_FORMAT)
                 new_line = "{}: {}\n".format(member_id, membership_date)
-                if len(m) + len(new_line) > 2048:
+                if len(m) + len(new_line) > 4096:
                     if embed_count == 0:
                         embed = discord.Embed(title = "Membership List", description = m)
+                        await interaction.followup.send(content = None, embed = embed, ephemeral=True)
                     else:
                         embed = discord.Embed(description = m)
-                    embeds.append(embed)
+                        await interaction.followup.send(content = None, embed = embed, ephemeral=True)
                     embed_count += 1
                     m = ""
                 m += new_line
             if m != "":
                 if embed_count == 0:
                     embed = discord.Embed(title = "Membership List", description = m + "Member count: " + str(count))
+                    await interaction.followup.send(content = None, embed = embed, ephemeral=True)
                 else:
                     embed = discord.Embed(description = m + "Member count: " + str(count))
-                embeds.append(embed)
-                await interaction.followup.send(content = None, embeds = embeds, ephemeral=True)
+                    await interaction.followup.send(content = None, embed = embed, ephemeral=True)
             else:
                 await interaction.followup.send("No active memberships!", ephemeral=True)
             return
