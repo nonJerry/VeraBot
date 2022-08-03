@@ -1,6 +1,7 @@
 #External
 from database import Database
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands.errors import CommandNotFound
 from pymongo import MongoClient
@@ -368,46 +369,13 @@ def dm_or_test_only():
     return commands.check(predicate)
 
 @bot.command(
-    help="Can be called with just $verify but also with $verify <VTuber name>\n" +
-    "Both versions require a screenshot sent with it.",
-	brief=" Tries to verify a screenshot for membership in the DMs"
+    help="Obsolete verify command, notifies user to use slash command version instead.",
+	brief="Obsolete verify command."
 )
 @dm_or_test_only()
 @commands.cooldown(verify_tries, 50, commands.BucketType.user)
 async def verify(ctx, *args):
-    """
-    Command in the DMs that tries to verify a screenshot for membership.
-    """
-    # log content to dm log channel for record
-    dm_lg_ch = bot.get_channel(dm_log)
-    await dm_lg_ch.send("{} ({})\n{}".format(str(ctx.author), str(ctx.author.id), ctx.message.content))
-    # check for needed picture
-    if not ctx.message.attachments:
-        NO_PICTURE_TEXT = "I'm sorry {}, you need to provide a valid photo along with the ``verify`` command to complete the verification process.\n The image should be a **direct upload** and not a shareable link (Ex. Imgure, lighshot etc)"
-        await ctx.message.channel.send(NO_PICTURE_TEXT.format(ctx.author))
-        logging.info("Verify without screenshot from %s.", ctx.author.id)
-        return
-
-    if args:
-        server = Utility.map_vtuber_to_server(args[0])
-
-        if len(args) > 1:
-            language = Utility.map_language(args[1])
-        else:
-            language = "eng"
-
-        if server:
-            if Utility.is_user_on_server(ctx.author.id, server):
-                # only give vtuber name if it is a multi-server
-                await member_handler.add_to_queue(ctx.message, server, language, args[0] if Utility.is_multi_server(server) else None)
-            else:
-                logging.info("%s tried to verify for a server they are not on.", ctx.author.id)
-                await ctx.send("You are not on {} server!".format(args[0].title()))
-        else:
-            embed = Utility.create_supported_vtuber_embed()
-            await ctx.send(content ="Please use a valid supported VTuber!", embed = embed)
-    else:
-        await member_handler.add_to_queue(ctx.message)
+    await ctx.send("This command no longer works through DMs, please use the slash command '/verify' in the server instead.")
 
 @verify.error
 async def verify_error(ctx, error):
@@ -495,6 +463,30 @@ async def proof_error(ctx, error):
     embed = Utility.create_supported_vtuber_embed()
     await ctx.send(content=None, embed=embed)
 
+# slash commands must be synced manually, guild for the current guild (good for testing), and global for all servers
+
+@bot.command(name="syncGuild")
+@commands.is_owner()
+@commands.guild_only()
+async def syncGuild(ctx):
+    ctx.bot.tree.copy_global_to(guild=ctx.guild)
+    await ctx.bot.tree.sync(guild=ctx.guild)
+    await ctx.send("commands synced to guild")
+
+@bot.command(name="syncGuildClear")
+@commands.is_owner()
+@commands.guild_only()
+async def syncGuildClear(ctx):
+    # since all commands are global, doing a sync call without the copy_global_to function will clear all guild synced commands
+    await ctx.bot.tree.sync(guild=ctx.guild)
+    await ctx.send("guild commands cleared from sync")
+
+@bot.command(name="syncGlobal")
+@commands.is_owner()
+@commands.guild_only()
+async def syncGlobal(ctx):
+    await ctx.bot.tree.sync()
+    await ctx.send("commands synced globally")
 
 #Time in status
 async def jst_clock():
