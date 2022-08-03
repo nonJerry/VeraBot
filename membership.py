@@ -54,7 +54,7 @@ class Membership(commands.Cog):
         if Utility.is_multi_server(interaction.guild_id):
             multi_talents = server_db.get_multi_talents()
             vtubers = [m['idol'] for m in multi_talents]
-            return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
+            return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if current.lower() in vtuber.lower()]
         else:
             vtuber = server_db.get_vtuber()
             return [app_commands.Choice(name=vtuber, value=vtuber)]
@@ -88,7 +88,7 @@ class Membership(commands.Cog):
         server_db = Database().get_server_db(interaction.guild_id)
         multi_talents = server_db.get_multi_talents()
         vtubers = [m['idol'] for m in multi_talents]
-        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
+        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if current.lower() in vtuber.lower()]
 
     @app_commands.command(name="addmember",
         description="Gives the membership role to the user whose ID was given.")
@@ -105,7 +105,7 @@ class Membership(commands.Cog):
         server_db = Database().get_server_db(interaction.guild_id)
         multi_talents = server_db.get_multi_talents()
         vtubers = [m['idol'] for m in multi_talents]
-        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
+        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if current.lower() in vtuber.lower()]
 
 
     @app_commands.command(name="delmember",
@@ -121,7 +121,7 @@ class Membership(commands.Cog):
         server_db = Database().get_server_db(interaction.guild_id)
         multi_talents = server_db.get_multi_talents()
         vtubers = [m['idol'] for m in multi_talents]
-        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers]
+        return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if current.lower() in vtuber.lower()]
 
 
     @app_commands.command(name="purgemember",
