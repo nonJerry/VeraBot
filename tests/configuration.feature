@@ -2,38 +2,32 @@ Feature: Server Setup
 
   Rule: Used IDs need to exist
     Scenario: Member role does not exist
-      # There should be no role with this role id
-      When I set the member role to <role id>
+      When I set the member role to a non-existent role id
       Then the bot replies "ID does not refer to a legit role"
       And the set member role did not change
 
     Scenario: Member role does exist
-      # There should be a role with this role id
-      When I set the member role to <role id>
+      When I set the member role to an existing role id
       Then the bot replies "Member role id set to <role id>"
       And the set member role is <role id>
 
     Scenario: Log Channel does not exist
-      # There should be no channel with this id
-      When I set the log channel to <channel id>
+      When I set the log channel to a non-existent channel id
       Then the bot replies "ID does not refer to a legit channel"
       And the set log channel did not change
 
     Scenario: Log Channel does exist
-      # There should be a channel with this id
-      When I set the log channel to <channel id>
+      When I set the log channel to an existing channel id
       Then the bot replies "Log Channel id set to <channel id>"
       And the set log channel is <log channel>
 
     Scenario: Proof Channel does not exist
-      # There should be no channel with this id
-      When I set the proof channel to <channel id>
+      When I set the proof channel to a non-existent channel id
       Then the bot replies "Please use a valid channel!"
       And the set proof channel did not change
 
     Scenario: Proof Channel does exist
-      # There should be a channel with this id
-      When I set the proof channel to <channel id>
+      When I set the proof channel to an existing channel id
       Then the bot replies "Proof Channel id set to <channel id>"
       And the set proof channel is <log channel>
 
