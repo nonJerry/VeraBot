@@ -179,7 +179,7 @@ class ServerDatabase:
             })
         else:
             logging.info("Updating membership for %s on server %s with last membership: %s.", member_id, self.server_id, db_date)
-            self.__get_member_collection().update_one({"id": member_id}, {"$set": {"last_membership": db_date, "informed": False, "expiry_sent": False}})
+            self.__get_member_collection().update_one({"id": member_id}, {"$set": { "informed": False, "expiry_sent": False}, "$max": {"last_membership": db_date}})
 
     @overload
     def remove_member(self, member: int) -> int:
@@ -252,7 +252,7 @@ class ServerDatabase:
             })
         else:
             logging.info("Updating membership for %s to talent %s on server %s with last membership: %s.", member_id, vtuber, self.server_id, db_date)
-            self.__get_member_collection().update_one({"id": member_id, "idol": vtuber}, {"$set": {"last_membership": db_date, "informed": False, "expiry_sent": False}})
+            self.__get_member_collection().update_one({"id": member_id, "idol": vtuber}, {"$set": { "informed": False, "expiry_sent": False}, "$max": {"last_membership": db_date}})
 
     @overload
     def remove_member_multi(self, member: int, vtuber) -> int:
