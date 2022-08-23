@@ -12,6 +12,7 @@ class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database()
+        self.BOOLEAN_ONLY_TEXT = "The Flag should only be True or False!"
 
     @commands.command(name="viewSettings", aliases=["settings", "allSettings", "showSettings"],
         help="Shows all settings of this server.",
