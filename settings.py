@@ -13,6 +13,7 @@ class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Database()
+        self.BOOLEAN_ONLY_TEXT = "The Flag should only be True or False!"
 
     @app_commands.command(name="viewsettings", description="Shows all settings of this server.")
     @app_commands.default_permissions(manage_messages=True)
