@@ -290,6 +290,8 @@ class MembershipHandler:
             #verification channel of the server
             if vtuber:
                 member_veri_ch = self.bot.get_channel(server_db.get_multi_talent_log_channel(vtuber))
+                if not member_veri_ch:
+                    member_veri_ch = member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
             else:
                 member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
             

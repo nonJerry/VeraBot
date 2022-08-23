@@ -43,10 +43,10 @@ class Membership(commands.Cog):
                 embed = Utility.create_supported_vtuber_embed()
                 await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed, ephemeral=True)
         elif Utility.is_multi_server(interaction.guild_id):
-                embed = Utility.create_supported_vtuber_embed()
-                await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed, ephemeral=True)
+            embed = Utility.create_supported_vtuber_embed()
+            await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed, ephemeral=True)
         else:
-            await self.member_handler.add_to_queue(interaction, attachment)
+            await self.member_handler.add_to_queue(interaction, attachment, interaction.guild_id)
     
     @verify.autocomplete('vtuber')
     async def verify_autocomplete(self, interaction: discord.Interaction, current: str):
