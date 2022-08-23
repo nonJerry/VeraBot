@@ -432,8 +432,11 @@ class MembershipHandler:
 
         if len(dates)!=3 or any(not Utility.is_integer(date) for date in dates):
             logging.info("%s used a wrong date format to set the membership.", author_id)
-
-            await res.response.send_message("Please provide a valid date (dd/mm/yyyy).", ephemeral=True)
+            # Differentiate between reaction and manual add
+            if actor:
+                await res.reply("{} Please use 'no/wrong date recognized' instead".format(actor.mention))
+            else:
+                await res.response.send_message("Please provide a valid date (dd/mm/yyyy).", ephemeral=True)
             return False
         try:
             new_date = dtime(year = int(dates[2]), month = int(dates[1]), day = int(dates[0]), tzinfo = timezone.utc)
