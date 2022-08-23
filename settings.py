@@ -1,6 +1,7 @@
 # External
 from database import Database
 import discord
+from discord import app_commands
 from discord.ext import commands
 # Python
 import logging
@@ -14,30 +15,29 @@ class Settings(commands.Cog):
         self.db = Database()
         self.BOOLEAN_ONLY_TEXT = "The Flag should only be True or False!"
 
-    @commands.command(name="viewSettings", aliases=["settings", "allSettings", "showSettings"],
-        help="Shows all settings of this server.",
-        brief="Shows all settings")
-    @commands.has_permissions(manage_messages=True)
-    @commands.guild_only()
-    async def show_settings(self, ctx):
-        logging.debug("%s called viewSettings.", ctx.author.id)
+    @app_commands.command(name="viewsettings", description="Shows all settings of this server.")
+    @app_commands.default_permissions(manage_messages=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def show_settings(self, interaction: discord.Interaction):
+        logging.debug("%s called viewSettings.", interaction.user.id)
 
         title = "Current Settings"
         embed = discord.Embed(title = title, description = None)
-        server_db = self.db.get_server_db(ctx.guild.id)
+        server_db = self.db.get_server_db(interaction.guild_id)
 
         # VTuber
-        vtuber = server_db.get_vtuber()
-        embed.add_field(name="VTuber", value=vtuber)
-        
-        #get prefixes
-        prefixes = server_db.get_prefixes()
-        prefixes = ', '.join(element for element in prefixes)
-        embed.add_field(name='Prefixes', value=prefixes, inline=True)
+        if Utility.is_multi_server(interaction.guild_id):
+            multi_talents = server_db.get_multi_talents()
+            idols = [m['idol'] for m in multi_talents]
+            vtubers = ', '.join(idols).title()
+            embed.add_field(name="VTubers", value=vtubers)
+        else:
+            vtuber = server_db.get_vtuber()
+            embed.add_field(name="VTuber", value=vtuber)
 
-        # Member Role
-        member_role = server_db.get_member_role()
-        embed.add_field(name='Member Role ID', value=str(member_role), inline=True)
+            # Member Role
+            member_role = server_db.get_member_role()
+            embed.add_field(name='Member Role ID', value=str(member_role), inline=True)
 
         # Log Channel
         log_channel = server_db.get_log_channel()
@@ -76,72 +76,29 @@ class Settings(commands.Cog):
         embed.add_field(name='Proof Channel ID', value=str(proof_channel), inline=True)
         
         # is multi server
-        is_multi = Utility.is_multi_server(ctx.guild.id)
+        is_multi = Utility.is_multi_server(interaction.guild_id)
         embed.add_field(name='Multi Server', value=str(is_multi), inline=True)
 
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
         m += "For a full explanation of the settings please refer to:\n"
         m += "<https://github.com/nonJerry/VeraBot/blob/master/settings.md>"
-        await ctx.send(content=m, embed = embed)
+        await interaction.response.send_message(content=m, embed = embed, ephemeral=True)
 
-    @commands.command(name="prefix",
-        help="Adds the <prefix> that can be used for the bot on this server.",
-        brief="Adds an additional prefix")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_prefix(self, ctx, prefix: str):
-        self.db.get_server_db(ctx.guild.id).set_prefix(prefix)
-
-        await ctx.send("Prefix " + prefix + " added")
-        logging.debug("%s added %s as prefix.", ctx.guild.id, prefix)
-
-    @set_prefix.error
-    async def prefix_error(self, ctx, error):
-        if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send('The argument is invalid')
-
-
-    @commands.command(name="removePrefix",
-        help="Removes the <prefix> so that it is not available as a prefix anymore for this server.",
-        brief="Removes an prefix")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def remove_prefix(self, ctx, prefix: str):
-
-        if self.db.get_server_db(ctx.guild.id).remove_prefix(prefix) == 0:
-            await ctx.send("Prefix not found")
-        else:
-            await ctx.send(prefix +" removed")
-        logging.debug("%s removed %s as prefix.", ctx.guild.id, prefix)
-
-
-    @commands.command(name="showPrefix", aliases=["viewPrefix", "showPrefixes", "viewPrefixes"],
-        help="Shows all prefixes that are available to use commands of this bot on this server.",
-        brief="Shows all prefixes")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def show_prefix(self, ctx):
-
-        await ctx.send("Those prefixes are set: " + str(self.db.get_server_db(ctx.guild.id).get_prefixes()))
-        logging.debug("%s viewed their prefixes.", ctx.guild.id)
-
-
-    @commands.command(name="setVTuber",
-        help="Sets the name of the VTuber of this server.\nThe screenshot sent for the verification is scanned for this name. Therefore this name should be identical with the name in the membership tab.",
-        brief="Sets the name of the VTuber of this server")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_idol(self, ctx, vtuber_name: str):
+    @app_commands.command(name="setvtuber",
+        description="Sets the name of the VTuber of this server")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_idol(self, interaction: discord.Interaction, vtuber_name: str):
 
         # always only one entry
         if self.check_vtuber(vtuber_name):           
-            await ctx.send("This Vtuber is already mapped to a server!")
+            await interaction.response.send_message("This Vtuber is already mapped to a server!")
             return
 
-        self.db.set_vtuber(vtuber_name, ctx.guild.id)
+        self.db.set_vtuber(vtuber_name, interaction.guild_id)
 
-        await ctx.send("Set VTuber name to " + vtuber_name)
-        logging.info("%s (%s) -> New Vtuber added: %s", ctx.guild.name, ctx.guild.id, vtuber_name)
+        await interaction.response.send_message("Set VTuber name to " + vtuber_name, ephemeral=True)
+        logging.info("%s (%s) -> New Vtuber added: %s", interaction.guild.name, interaction.guild_id, vtuber_name)
 
     def check_vtuber(self, vtuber_name) -> bool:
         for element in self.db.get_vtuber_list():
@@ -151,199 +108,181 @@ class Settings(commands.Cog):
         return False
 
 
-    @commands.command(name="memberRole", aliases=["setMemberRole"],
-        help="Sets the role that should be given to a member who has proven that he has valid access to membership content.\nRequires the ID not the role name or anything else!",
-        brief="Sets the role for membership content")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_member_role(self, ctx, role_id: int):
-        if self.check_role_integrity(ctx, role_id):
-            self.db.get_server_db(ctx.guild.id).set_member_role(role_id)
+    @app_commands.command(name="memberrole",
+        description="Sets the role for membership content")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_member_role(self, interaction: discord.Interaction, role: discord.Role):
+        if self.check_role_integrity(interaction, role.id):
+            self.db.get_server_db(interaction.guild_id).set_member_role(role.id)
 
-            await ctx.send("Member role id set to " + str(role_id))
+            await interaction.response.send_message("Member role id set to " + str(role.id), ephemeral=True)
         else:
-            await ctx.send("ID does not refer to a legit role")
-        logging.info("%s set %s as member role.", ctx.guild.id, role_id)
+            await interaction.response.send_message("ID does not refer to a legit role", ephemeral=True)
+        logging.info("%s set %s as member role.", interaction.guild_id, role.id)
 
 
-    @commands.command(name="logChannel", aliases=["setLogChannel"],
-        help="Sets the channel which is used to control the sent memberships.\nRequires the ID not the role name or anything else!",
-        brief="Sets the channel for logging")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_log_channel(self, ctx, channel_id: int):
-        if self.check_channel_integrity(channel_id):
-            self.db.get_server_db(ctx.guild.id).set_log_channel(channel_id)
-            logging.info("%s set %s as log channel.", ctx.guild.id, channel_id)
-            await ctx.send("Log Channel id set to " + str(channel_id))
+    @app_commands.command(name="logchannel", description="Sets the channel which is used to control the sent memberships.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        if self.check_channel_integrity(channel.id):
+            self.db.get_server_db(interaction.guild_id).set_log_channel(channel.id)
+            logging.info("%s set %s as log channel.", interaction.guild_id, channel.id)
+            await interaction.response.send_message("Log Channel id set to " + str(channel.id), ephemeral=True)
         else:
-            await ctx.send("ID does not refer to a legit channel")
-            logging.info("%s used a wrong ID as log channel.", ctx.guild.id)
+            await interaction.response.send_message("ID does not refer to a legit channel", ephemeral=True)
+            logging.info("%s used a wrong ID as log channel.", interaction.guild_id)
 
 
 
-    @commands.command(name="picture", aliases=["setPicture"],
-        help="Sets the image that is sent when a membership is about to expire.\n" +
-        "It supports link that end with png, jpg or jpeg.",
-        brief="Set image for expiration message.")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_picture(self, ctx, link: str):
-        logging.info("{} set their picture: {}".format(str(ctx.guild.id), link))
+    @app_commands.command(name="picture",
+        description="Sets the image that is sent when a membership is about to expire.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_picture(self, interaction: discord.Interaction, link: str):
+        logging.info("{} set their picture: {}".format(str(interaction.guild_id), link))
         from re import fullmatch
         match = fullmatch(r"http[s]?://[a-zA-Z0-9\_\-\.]+/[a-zA-Z0-9\_\-/]+\.(png|jpeg|jpg)", link)
         if match:
-            self.db.get_server_db(ctx.guild.id).set_picture(link)
-            await ctx.send("Image for expiration message set.")
+            self.db.get_server_db(interaction.guild_id).set_picture(link)
+            await interaction.response.send_message("Image for expiration message set.", ephemeral=True)
         else:
-            await ctx.send("Please send a legit link. Only jpg, jpeg and png are accepted.")
+            await interaction.response.send_message("Please send a legit link. Only jpg, jpeg and png are accepted.", ephemeral=True)
 
 
-    @commands.command(name="setAuto", aliases=["auto", "setAutoRole", "setAutomaticRole"],
-        help = "Sets whether the bot is allowed to automatically add the membership role.\n"
-        + "Only allows True or False as input.",
-        brief = "Set flag for automatic role handling")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_automatic_role(self, ctx, flag: str):
+    @app_commands.command(name="setauto", description = "Sets whether the bot is allowed to automatically add the membership role.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_automatic_role(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await ctx.send(self.BOOLEAN_ONLY_TEXT)
+            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
 
-        self.db.get_server_db(ctx.guild.id).set_automatic(flag)
-        logging.info("%s set auto to %s", ctx.guild.id, str(flag))
+        self.db.get_server_db(interaction.guild_id).set_automatic(flag)
+        logging.info("%s set auto to %s", interaction.guild_id, str(flag))
 
-        await ctx.send("Flag for automatic role handling set to " + str(flag))
+        await interaction.response.send_message("Flag for automatic role handling set to " + str(flag), ephemeral=True)
 
 
-    @commands.command(name="setAdditionalProof", aliases=["setProof", "setRequireProof", "additionalProof", "requireAdditionalProof"],
-        help = "Sets whether the bot will require additional proof from the user.\n"
-        + "Only allows True or False as input.",
-        brief = "Set flag for the inquiry of additional Proof")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_require_additional_proof(self, ctx, flag: str):
+    @app_commands.command(name="setadditionalproof", description = "Sets whether the bot will require additional proof from the user.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_require_additional_proof(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await ctx.send(self.BOOLEAN_ONLY_TEXT)
+            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
 
-        self.db.get_server_db(ctx.guild.id).set_additional_proof(flag)
-        logging.info("%s set additional Proof to %s", ctx.guild.id, str(flag))
+        self.db.get_server_db(interaction.guild_id).set_additional_proof(flag)
+        logging.info("%s set additional Proof to %s", interaction.guild_id, str(flag))
 
-        await ctx.send("Flag for additional Proof set to " + str(flag))
+        await interaction.response.send_message("Flag for additional Proof set to " + str(flag), ephemeral=True)
 
 
-    @commands.command(name="setTolerance", aliases=["tolerance", "toleranceDuration"],
-        help = "Sets the time that users will have access to the membership channel after their membership expired.",
-        brief = "Set tolerance time after membership expiry")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_tolerance_duration(self, ctx, time: int):
+    @app_commands.command(name="settolerance", description = "Sets the time that users will have access to the membership channel after their membership expired.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_tolerance_duration(self, interaction: discord.Interaction, time: int):
         if(time < 0):
-            await ctx.send("This value needs to be at least 0 days.")
+            await interaction.response.send_message("This value needs to be at least 0 days.", ephemeral=True)
             return
         if (time > 2):
-            await ctx.send("This value cannot be more than 2 days.")
+            await interaction.response.send_message("This value cannot be more than 2 days.", ephemeral=True)
             return
         
-        self.db.get_server_db(ctx.guild.id).set_tolerance_duration(time)
-        logging.info("%s set Tolerance to %s", ctx.guild.id, time)
+        self.db.get_server_db(interaction.guild_id).set_tolerance_duration(time)
+        logging.info("%s set Tolerance to %s", interaction.guild_id, time)
 
-        await ctx.send("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)))
+        await interaction.response.send_message("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)), ephemeral=True)
 
 
-    @commands.command(name="setPriorNoticeDuration", aliases=["informDuration", "PriorNoticeDuration", "PriorNotice", "setPriorNotice"],
-        help = "Sets how many days before the expiry of their membership a user will be notified to renew their proof.",
-        brief = "Set time for notice before membership expiry")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_inform_duration(self, ctx, time: int):
+    @app_commands.command(name="setpriornoticeduration", description = "Set time for notice before membership expiry")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_inform_duration(self, interaction: discord.Interaction, time: int):
         if(time < 0):
-            await ctx.send("This value needs to be at least 0 days.")
+            await interaction.response.send_message("This value needs to be at least 0 days.", ephemeral=True)
+            return
+        
+        if(time > 2):
+            await interaction.response.send_message("This value cannot be more than 2 days.", ephemeral=True)
             return
 
-        self.db.get_server_db(ctx.guild.id).set_inform_duration(time)
-        logging.info("%s set prior Notice to %s", ctx.guild.id, time)
+        self.db.get_server_db(interaction.guild_id).set_inform_duration(time)
+        logging.info("%s set prior Notice to %s", interaction.guild_id, time)
 
-        await ctx.send("Users will be notified " + str(time) + " days before their membership ends.")
+        await interaction.response.send_message("Users will be notified " + str(time) + " days before their membership ends.", ephemeral=True)
 
-    @commands.command(name="enableLogging",
-        help="Flag which decides whether you will see the logs when the bot checks for expired memberships.",
-        brief="Toggles logging regarding expired memberships")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_logging(self, ctx, flag):
+    @app_commands.command(name="enablelogging", description="Flag which decides whether you will see the logs when the bot checks for expired memberships.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_logging(self, interaction: discord.Interaction, flag: str):
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await ctx.send(self.BOOLEAN_ONLY_TEXT)
+            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
         
-        self.db.get_server_db(ctx.guild.id).set_logging(flag)
-        logging.info("%s set logging to %s", ctx.guild.id, str(flag))
+        self.db.get_server_db(interaction.guild_id).set_logging(flag)
+        logging.info("%s set logging to %s", interaction.guild_id, str(flag))
 
-        await ctx.send("Flag for logging set to " + str(flag))
+        await interaction.response.send_message("Flag for logging set to " + str(flag), ephemeral=True)
 
 
-    @commands.command(name="proofChannel", aliases=["setProofChannel", "threadChannel", "setThreadChannel"],
-    help="Sets the Channel to which the threads will be attached.",
-    brief="Sets the Channel to which the threads will be attached.")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def set_proof_channel(self, ctx, channel_id: int):
+    @app_commands.command(name="proofchannel", description="Sets the Channel to which the threads will be attached.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def set_proof_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         
-        channel = self.bot.get_channel(channel_id)
+        channel = self.bot.get_channel(channel.id)
         if not channel:
-            await ctx.send("Please use a valid channel!")
+            await interaction.response.send_message("Please use a valid channel!", ephemeral=True)
             return
 
         #check whether use_public_thread is allowed
         permissions = channel.permissions_for(channel.guild.me)
         if not permissions.create_public_threads:
-            await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
+            await interaction.response.send_message("You need to enable use_public_threads for VeraBot on your proof channel first!", ephemeral=True)
             return
 
-        self.db.get_server_db(ctx.guild.id).set_proof_channel(channel_id)
-        logging.info("%s set %s as proof channel.", ctx.guild.id, channel_id)
+        self.db.get_server_db(interaction.guild_id).set_proof_channel(channel.id)
+        logging.info("%s set %s as proof channel.", interaction.guild_id, channel.id)
 
-        await ctx.send("Proof Channel id set to " + str(channel_id))
+        await interaction.response.send_message("Proof Channel id set to " + str(channel.id), ephemeral=True)
 
 
-    @commands.command(name="enableThreads", aliases=["threads", "enabledThread", "thread"],
-    help="Will activate the use of threads. The bot will create a Thread for each submitted proof. The log channel will be used to protocol the verified/denied proofs, not as place to verify them anymore.\n" +
-    "Requires a proof channel to be set and use_public_threads to be enabled for this channel.",
-    brief="Toggles function that the bot creates a thread for each proof.")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def toggle_threads(self, ctx, flag):
+    @app_commands.command(name="enablethreads", description="Toggles function that the bot creates a thread for each proof.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def toggle_threads(self, interaction: discord.Interaction, flag: str):
         # multi-server cannot use threads
-        if Utility.is_multi_server(ctx.guild.id):
-            await ctx.send("You cannot enable threads as mutli-server!")
-            logging.info("%s tried to enable Threads as multi-server.", ctx.guild.id)
+        if Utility.is_multi_server(interaction.guild_id):
+            await interaction.response.send_message("You cannot enable threads as mutli-server!", ephemeral=True)
+            logging.info("%s tried to enable Threads as multi-server.", interaction.guild_id)
             return
 
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await ctx.send(self.BOOLEAN_ONLY_TEXT)
+            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
 
         if flag:
-            channel = self.bot.get_channel(self.db.get_server_db(ctx.guild.id).get_proof_channel())
+            channel = self.bot.get_channel(self.db.get_server_db(interaction.guild_id).get_proof_channel())
             if not channel:
-                await ctx.send("Please set a proof channel first!")
+                await interaction.response.send_message("Please set a proof channel first!", ephemeral=True)
                 return
 
             #check whether use_public_thread is allowed
             permissions = channel.permissions_for(channel.guild.me)
             if not permissions.create_public_threads:
-                await ctx.send("You need to enable use_public_threads for VeraBot on your proof channel first!")
+                await interaction.response.send_message("You need to enable use_public_threads for VeraBot on your proof channel first!", ephemeral=True)
                 return
         # set value
-        self.db.get_server_db(ctx.guild.id).set_threads_enabled(flag)
-        logging.info("%s set threads to %s", ctx.guild.id, str(flag))
+        self.db.get_server_db(interaction.guild_id).set_threads_enabled(flag)
+        logging.info("%s set threads to %s", interaction.guild_id, str(flag))
 
-        await ctx.send("Flag for using threads set to " + str(flag))
+        await interaction.response.send_message("Flag for using threads set to " + str(flag), ephemeral=True)
 
     async def check_thread_permissions(self, guild_id: int) -> bool:
         if Utility.is_multi_server(guild_id):
@@ -357,122 +296,89 @@ class Settings(commands.Cog):
             return False
         return True
 
-    @commands.command(name="enableMultiServer", aliases=["enableMulti"],
-    help="Will activate the possibility to support several talents on one server.",
-    brief="Will activate the possibility to support several talents on one server.")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def enable_multi_server(self, ctx):
-        if Utility.is_multi_server(ctx.guild.id):
-            logging.info("%s: Tried to enable the multi-talent function again.", ctx.guild.id)
-            await ctx.send("Your server already has enabled the usage of multiple talents!")
+    @app_commands.command(name="enablemultiserver", description="Will activate the possibility to support several talents on one server.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def enable_multi_server(self, interaction: discord.Interaction):
+        if Utility.is_multi_server(interaction.guild_id):
+            logging.info("%s: Tried to enable the multi-talent function again.", interaction.guild_id)
+            await interaction.response.send_message("Your server already has enabled the usage of multiple talents!", ephemeral=True)
             return
-        if self.db.get_server_db(ctx.guild.id).get_threads_enabled():
-            await ctx.send("You cannot enable multi server with threads enabled!")
-            logging.info("%s: Tried to enable the multi-talent function with threads enabled.", ctx.guild.id)
+        if self.db.get_server_db(interaction.guild_id).get_threads_enabled():
+            await interaction.response.send_message("You cannot enable multi server with threads enabled!", ephemeral=True)
+            logging.info("%s: Tried to enable the multi-talent function with threads enabled.", interaction.guild_id)
             return
 
-        self.db.add_multi_server(ctx.guild.id)
-        logging.info("%s: Enabled the multi-talent function.", ctx.guild.id)
+        self.db.add_multi_server(interaction.guild_id)
+        logging.info("%s: Enabled the multi-talent function.", interaction.guild_id)
 
-        await ctx.send("Management of several talents was activated for this server!")
+        await interaction.response.send_message("Management of several talents was activated for this server!", ephemeral=True)
 
-    @commands.command(name="disableMultiServer", aliases=["disableMulti"],
-    help="Will disable the possibility to support several talents on one server.",
-    brief="Will disable the possibility to support several talents on one server.")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def disable_multi_server(self, ctx):
-        if not Utility.is_multi_server(ctx.guild.id):
-            logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", ctx.guild.id)
-            await ctx.send("Your server has not enabled the usage of multiple talents!")
+    @app_commands.command(name="disablemultiserver", description="Will disable the possibility to support several talents on one server.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def disable_multi_server(self, interaction: discord.Interaction):
+        if not Utility.is_multi_server(interaction.guild_id):
+            logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", interaction.guild_id)
+            await interaction.response.send_message("Your server has not enabled the usage of multiple talents!", ephemeral=True)
             return
         
-        self.db.remove_multi_server(ctx.guild.id)
-        logging.info("%s: Disabled the multi-talent function.", ctx.guild.id)
+        self.db.remove_multi_server(interaction.guild_id)
+        logging.info("%s: Disabled the multi-talent function.", interaction.guild_id)
 
-        await ctx.send("Management of several talents was disabled for this server! For this all added VTubers were removed. Please add the one wanted again using $setVtuber")
+        await interaction.response.send_message("Management of several talents was disabled for this server! For this all added VTubers were removed. Please add the one wanted again using $setVtuber", ephemeral=True)
 
     
 
 
-    @commands.command(name="addTalent", aliases=["addVTuber", "addIdol"],
-    help="Adds new Talent to be supported. Also needs the log channel and role id. Function only for Multi-Talent servers!",
-    brief="Adds new Talent to be supported. Function only for Multi-Talent servers!")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def add_idol(self, ctx, name: str, log_id: int, role_id: int):
-        if not Utility.is_multi_server(ctx.guild.id):
-            logging.info("%s: Tried to use mutli-talent ADD without having it enabled.", ctx.guild.id)
-            await ctx.send("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.")
+    @app_commands.command(name="addtalent", description="Adds new Talent to be supported. Function only for Multi-Talent servers!")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def add_idol(self, interaction: discord.Interaction, name: str, log: discord.TextChannel, role: discord.Role):
+        if not Utility.is_multi_server(interaction.guild_id):
+            logging.info("%s: Tried to use mutli-talent ADD without having it enabled.", interaction.guild_id)
+            await interaction.response.send_message("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.", ephemeral=True)
             return
-        logging.info("Multi-Server %s: Trying to add %s as talent.", ctx.guild.id, name)
+        logging.info("Multi-Server %s: Trying to add %s as talent.", interaction.guild_id, name)
 
         # Check for integrity
         if self.check_vtuber(name):       
-            logging.info("%s: Talent %s already exists.", ctx.guild.id, name)   
-            await ctx.send("This Vtuber is already mapped to a server!")
+            logging.info("%s: Talent %s already exists.", interaction.guild_id, name)   
+            await interaction.response.send_message("This Vtuber is already mapped to a server!", ephemeral=True)
             return
 
-        if not self.bot.get_channel(log_id):
-            await ctx.send("Please use a proper Channel!")
+        if not self.bot.get_channel(log.id):
+            await interaction.response.send_message("Please use a proper Channel!", ephemeral=True)
             return
 
-        if not self.check_role_integrity(ctx, role_id):
+        if not self.check_role_integrity(interaction, role.id):
             return
 
         # Finally add to db
-        self.db.get_server_db(ctx.guild.id).add_multi_talent(name, log_id, role_id)
-        self.db.set_vtuber(name, ctx.guild.id)
-        logging.info("%s: Added %s with %s as Log Channel and %s as Role.", ctx.guild.id, name, log_id, role_id)
+        self.db.get_server_db(interaction.guild_id).add_multi_talent(name, log.id, role.id)
+        self.db.set_vtuber(name, interaction.guild_id)
+        logging.info("%s: Added %s with %s as Log Channel and %s as Role.", interaction.guild_id, name, log.id, role.id)
 
-        await ctx.send("Successfully added the new talent!")
+        await interaction.response.send_message("Successfully added the new talent!", ephemeral=True)
 
 
-    @commands.command(name="removeTalent", aliases=["removeVTuber", "removeIdol"],
-    help="Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!",
-    brief="Removes the Talent. Function only for Multi-Talent servers!")
-    @commands.has_permissions(administrator=True)
-    @commands.guild_only()
-    async def remove_idol(self, ctx, name: str):
-        if not Utility.is_multi_server(ctx.guild.id):
-            logging.info("%s: Tried to remove a mutli-talent without having it enabled.", ctx.guild.id)
-            await ctx.send("Your server has not enabled the usage of multiple talents.")
+    @app_commands.command(name="removetalent", description="Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.check(Utility.is_interaction_not_dm)
+    async def remove_idol(self, interaction: discord.Interaction, name: str):
+        if not Utility.is_multi_server(interaction.guild_id):
+            logging.info("%s: Tried to remove a mutli-talent without having it enabled.", interaction.guild_id)
+            await interaction.response.send_message("Your server has not enabled the usage of multiple talents.", ephemeral=True)
             return
-        if self.db.get_server_db(ctx.guild.id).remove_multi_talent(name):
-            self.db.remove_multi_talent_vtuber(ctx.guild.id, name)
+        if self.db.get_server_db(interaction.guild_id).remove_multi_talent(name):
+            self.db.remove_multi_talent_vtuber(interaction.guild_id, name)
             logging.info("Removed %s from VTuber list", name)
-            await ctx.send("Successfully removed {}!".format(name))
+            await interaction.response.send_message("Successfully removed {}!".format(name), ephemeral=True)
         else:
-            await ctx.send("Could not remove {}!".format(name))
+            await interaction.response.send_message("Could not remove {}!".format(name), ephemeral=True)
 
-    @set_idol.error
-    @set_log_channel.error
-    @set_member_role.error
-    @set_prefix.error
-    @remove_prefix.error
-    @set_automatic_role.error
-    @set_require_additional_proof.error
-    @set_tolerance_duration.error
-    @set_inform_duration.error
-    @set_picture.error
-    @set_logging.error
-    @toggle_threads.error
-    @set_proof_channel.error
-    @enable_multi_server.error
-    @disable_multi_server.error
-    @add_idol.error
-    #@toggle_threads.error
-    async def general_error(self, ctx, error):
-        if isinstance(error, commands.BadArgument):
-            logging.debug("%s used invalid ID for %s", ctx.author.id, ctx.command)
-            await ctx.send("Please provide a valid id!")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            logging.debug("%s forgot argument for %s", ctx.author.id, ctx.command)
-            await ctx.send("Please include the argument!")
-
-    def check_role_integrity(self, ctx, role_id: int):
-        if ctx.guild.get_role(role_id):
+    def check_role_integrity(self, interaction: discord.Interaction, role_id: int):
+        if interaction.guild.get_role(role_id):
             return True
         return False
 
