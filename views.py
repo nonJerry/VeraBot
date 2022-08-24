@@ -16,6 +16,14 @@ class DateModal(ui.Modal, title='Date Selection'):
         await interaction.response.defer()
 
 
+class DenialModal(ui.Modal, title='Denial Message'):
+    message = ui.TextInput(label='What do you want to tell the person?', style=discord.TextStyle.paragraph,
+                           required=True)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+
 class PersistentView(discord.ui.View):
     def __init__(self, member_handler):
         super().__init__(timeout=None)
@@ -83,6 +91,41 @@ class PersistentView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.danger, label="Not acceptable!", emoji=u"\U0001F6AB",
                        custom_id="Wrong")
     async def handle_denied(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        modal = DenialModal()
+        await interaction.response.send_modal(modal)
+
+        if await modal.wait():
+            await interaction.response.send_message(f'You took too long, please press the button again!',
+                                                    ephemeral=True)
+        else:
+            msg = interaction.message
+            embed = msg.embeds[0]
+
+            # always only the id
+            target_member_id = int(embed.title)
+
+            target_member = self.member_handler.bot.get_user(target_member_id)
+            if Utility.is_multi_server(msg.guild.id):
+                server = msg.guild.name
+            else:
+                server = Utility.get_vtuber(msg.guild.id) + " server"
+            await target_member.send("{}:\n{}".format(server, modal.message))
+            await interaction.followup.send("Message was sent to {}.".format(target_member.mention))
+
+            if Utility.is_multi_server(interaction.guild.id):
+                vtuber = embed.fields[1].value
+            else:
+                vtuber = None
+
+            if self.database.get_server_db(msg.guild.id).get_automatic():
+                await self.member_handler.del_membership(msg, target_member_id, None, False, False, vtuber)
+                # set embed
+            embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, interaction.user)
+            await msg.edit(content=msg.content, embed=embed)
+            await msg.add_reaction('👎')
+            await self.remove_buttons(interaction)
+            return True
 
     async def remove_buttons(self, interaction: discord.Interaction):
         try:
