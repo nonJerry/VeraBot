@@ -25,7 +25,7 @@ logging.info("Started")
 
 ### Setup data
 # Set variable to true for local testing
-local = True
+local = False
 
 # Customizable Settings
 # For local testing
@@ -49,7 +49,7 @@ intents.integrations = False
 intents.webhooks = False
 intents.voice_states = False
 intents.guild_typing = False
-intents.message_content = False
+intents.message_content = True
 
 
 async def determine_prefix(bot, message):
