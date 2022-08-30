@@ -32,6 +32,7 @@ class PersistentView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.success, label="Everything fine!", emoji="✅", custom_id="Correct")
     async def handle_correct(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
         embed = interaction.message.embeds[0]
         server_db = self.database.get_server_db(interaction.guild.id)
 
@@ -40,7 +41,6 @@ class PersistentView(discord.ui.View):
 
         logging.info("Recognized date correct in %s for user %s.", interaction.guild.id, target_member_id)
 
-        await interaction.response.defer()
         if server_db.get_automatic():
             await interaction.message.add_reaction('👌')
             self.stop()
@@ -61,6 +61,7 @@ class PersistentView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.secondary, label="Wrong Date!", emoji=u"\U0001F4C5",
                        custom_id="Change")
     async def handle_change(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
         modal = DateModal()
         await interaction.response.send_modal(modal)
 
@@ -91,7 +92,7 @@ class PersistentView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.danger, label="Not acceptable!", emoji=u"\U0001F6AB",
                        custom_id="Wrong")
     async def handle_denied(self, interaction: discord.Interaction, button: discord.ui.Button):
-
+        await interaction.response.defer()
         modal = DenialModal()
         await interaction.response.send_modal(modal)
 
