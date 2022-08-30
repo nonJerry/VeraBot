@@ -62,7 +62,6 @@ class PersistentView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.secondary, label="Wrong Date!", emoji=u"\U0001F4C5",
                        custom_id="Change")
     async def handle_change(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
         modal = DateModal()
         await interaction.response.send_modal(modal)
 
@@ -94,12 +93,11 @@ class PersistentView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.danger, label="Not acceptable!", emoji=u"\U0001F6AB",
                        custom_id="Wrong")
     async def handle_denied(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
         modal = DenialModal()
         await interaction.response.send_modal(modal)
 
         if await modal.wait():
-            await interaction.response.send_message(f'You took too long, please press the button again!',
+            await interaction.followup.send(f'You took too long, please press the button again!',
                                                     ephemeral=True)
         else:
             msg = interaction.message
