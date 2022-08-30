@@ -1,5 +1,8 @@
 # External
 import asyncio
+
+from discord.app_commands import CheckFailure
+
 from database import Database
 from dateutil.relativedelta import relativedelta
 import discord
@@ -47,6 +50,15 @@ class Membership(commands.Cog):
             await interaction.response.send_message(content ="Please use a valid supported VTuber!", embed = embed, ephemeral=True)
         else:
             await self.member_handler.add_to_queue(interaction, attachment, interaction.guild_id)
+
+    @verify.error
+    async def verify_error(self, interaction, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            logging.info("%s tried to use verify too often.", interaction.user.id)
+            await interaction.response.send_message(f"Try again in {error.retry_after:.0f}s.")
+        elif isinstance(error, CheckFailure):
+            logging.info("%s tried to use verify in DMs.", interaction.user.id)
+            await interaction.response.send_message(f"Please use this command in the server and not in DMs anymore.")
     
     @verify.autocomplete('vtuber')
     async def verify_autocomplete(self, interaction: discord.Interaction, current: str):
