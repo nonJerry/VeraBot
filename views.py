@@ -32,7 +32,7 @@ class PersistentView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.success, label="Everything fine!", emoji="✅", custom_id="Correct")
     async def handle_correct(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         embed = interaction.message.embeds[0]
         server_db = self.database.get_server_db(interaction.guild.id)
 
@@ -56,12 +56,13 @@ class PersistentView(discord.ui.View):
                                                         False, interaction.user, vtuber):
                 await interaction.message.add_reaction('👌')
                 await self.remove_buttons(interaction)
+                await interaction.followup.send("Finished Verification Process", ephemeral=True)
                 self.stop()
 
     @discord.ui.button(style=discord.ButtonStyle.secondary, label="Wrong Date!", emoji=u"\U0001F4C5",
                        custom_id="Change")
     async def handle_change(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         modal = DateModal()
         await interaction.response.send_modal(modal)
 
@@ -85,6 +86,7 @@ class PersistentView(discord.ui.View):
                                                         interaction.user, vtuber):
                 await msg.add_reaction('👍')
                 await self.remove_buttons(interaction)
+                await interaction.followup.send("Finished Verification Process", ephemeral=True)
                 self.stop()
             else:
                 return False
@@ -92,7 +94,7 @@ class PersistentView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.danger, label="Not acceptable!", emoji=u"\U0001F6AB",
                        custom_id="Wrong")
     async def handle_denied(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         modal = DenialModal()
         await interaction.response.send_modal(modal)
 
@@ -126,6 +128,7 @@ class PersistentView(discord.ui.View):
             await msg.edit(content=msg.content, embed=embed)
             await msg.add_reaction('👎')
             await self.remove_buttons(interaction)
+            await interaction.followup.send("Finished Verification Process", ephemeral=True)
             return True
 
     async def remove_buttons(self, interaction: discord.Interaction):
