@@ -56,6 +56,7 @@ class PersistentView(discord.ui.View):
                                                         False, interaction.user, vtuber):
                 await interaction.message.add_reaction('👌')
                 await self.remove_buttons(interaction)
+                await interaction.response.send_message("Added role", ephemeral=True)
                 self.stop()
 
     @discord.ui.button(style=discord.ButtonStyle.secondary, label="Wrong Date!", emoji=u"\U0001F4C5",
