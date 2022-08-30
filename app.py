@@ -305,15 +305,14 @@ async def syncGlobal(ctx):
 @bot.tree.error
 async def tree_error(interaction, error):
     try:
-      if isinstance(error, Forbidden):
-          logging.info("Could not message the user in command by %s", interaction.user.id)
-          await interaction.response.send_message("Could not message the user.")
-      elif isinstance(error, discord.errors.NotFound):
-          logging.info("Did not find interaction in %s by %s", interaction.guild_id, interaction.user.id)
-          await interaction.response.send_message("Had a problem finding the interaction, please try again",
-                                                ephemeral=True)
-     except discord.errors.NotFound:
-       logging.info("Could not send the info of error")
+        if isinstance(error, Forbidden):
+            logging.info("Could not message the user in command by %s", interaction.user.id)
+            await interaction.response.send_message("Could not message the user.")
+        elif isinstance(error, discord.errors.NotFound):
+            logging.info("Did not find interaction in %s by %s", interaction.guild_id, interaction.user.id)
+            await interaction.response.send_message("Had a problem finding the interaction, please try again", ephemeral=True)
+    except discord.errors.NotFound:
+        logging.info("Could not send the info of error")
 
 
 # Time in status
