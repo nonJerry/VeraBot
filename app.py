@@ -1,7 +1,7 @@
 # External
 from database import Database
 import discord
-from discord import app_commands
+from discord import app_commands, Forbidden
 from discord.ext import commands
 from discord.ext.commands.errors import CommandNotFound
 from pymongo import MongoClient
@@ -300,6 +300,17 @@ async def syncGuildClear(ctx):
 async def syncGlobal(ctx):
     await ctx.bot.tree.sync()
     await ctx.send("commands synced globally")
+
+
+@bot.tree.error
+async def tree_error(interaction, error):
+    if isinstance(error, Forbidden):
+        logging.info("Could not message the user in command by %s", interaction.user.id)
+        await interaction.response.send_message("Could not message the user.")
+    elif isinstance(error, discord.errors.NotFound):
+        logging.info("Did not find interaction in %s by %s", interaction.guild_id, interaction.user.id)
+        await interaction.response.send_message("Had a problem finding the interaction, please try again",
+                                                ephemeral=True)
 
 
 # Time in status
