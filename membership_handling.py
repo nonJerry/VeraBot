@@ -287,7 +287,7 @@ class MembershipHandler:
 
         # check if permissions are okay
         if threads_enabled:
-            if self.bot.get_cog('Settings').check_thread_permissions(server_id):
+            if await self.bot.get_cog('Settings').check_thread_permissions(server_id):
                 member_veri_ch = self.bot.get_channel(server_db.get_proof_channel())
             else:
                 logging.info("%s: Has Threads enabled but perms are missing.", server_id)
@@ -296,7 +296,7 @@ class MembershipHandler:
             if vtuber:
                 member_veri_ch = self.bot.get_channel(server_db.get_multi_talent_log_channel(vtuber))
                 if not member_veri_ch:
-                    member_veri_ch = member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
+                    member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
             else:
                 member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
 
