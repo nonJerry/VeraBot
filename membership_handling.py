@@ -149,7 +149,6 @@ class MembershipHandler:
     async def view_membership(self, interaction, member_id=None, vtuber=None):
         # if msg is empty, show all members
         server_db = self.db.get_server_db(interaction.guild_id)
-        await interaction.response.defer(ephemeral=True, thinking=True)
         if not member_id:
             count = 0
             embed_count = 0
@@ -422,31 +421,29 @@ class MembershipHandler:
 
         return (new_membership_date, membership_date_text, desc)
 
-    async def set_membership(self, res, member_id, date, manual=True, actor=None, vtuber=None) -> bool:
-        if isinstance(res, discord.Interaction):
-            guild_id = res.guild_id
-            author_id = res.user.id
-        elif isinstance(res, discord.Message):
-            guild_id = res.guild.id
-            author_id = res.author.id
+    async def set_membership(self, interaction, member_id, date, manual=True, actor=None, vtuber=None) -> bool:
+        guild_id = interaction.guild_id
+        author_id = interaction.user.id
         dates = date.split("/")
 
         if len(dates) != 3 or any(not Utility.is_integer(date) for date in dates):
             logging.info("%s used a wrong date format to set the membership.", author_id)
             # Differentiate between reaction and manual add
             if actor:
-                await res.reply("{} Please use 'no/wrong date recognized' instead".format(actor.mention))
+                await interaction.followup.send(
+                    "{} Please use 'no/wrong date recognized' instead".format(actor.mention), ephemeral=True)
             else:
-                await res.response.send_message("Please provide a valid date (dd/mm/yyyy).", ephemeral=True)
+                await interaction.followup.send("Please provide a valid date (dd/mm/yyyy).", ephemeral=True)
             return False
         try:
             new_date = dtime(year=int(dates[2]), month=int(dates[1]), day=int(dates[0]), tzinfo=timezone.utc)
         except ValueError:
             logging.info("%s used a invalid number for the date to set the membership.", author_id)
-            await res.response.send_message("Your date was not valid. Please use the format dd/mm/yyyy", ephemeral=True)
+            await interaction.followup.send("Your date was not valid. Please use the format dd/mm/yyyy",
+                                            ephemeral=True)
             return False
 
-        target_member = res.guild.get_member(member_id)
+        target_member = interaction.guild.get_member(member_id)
 
         db_date = new_date - relativedelta(months=1)
         server_db = self.db.get_server_db(guild_id)
@@ -464,7 +461,7 @@ class MembershipHandler:
             role_id = server_db.get_member_role()
             vtuber = server_db.get_vtuber()
 
-        role = res.guild.get_role(role_id)
+        role = interaction.guild.get_role(role_id)
         await target_member.add_roles(role)
         logging.info("Added member role to user %s on server %s.", member_id, guild_id)
 
@@ -474,25 +471,19 @@ class MembershipHandler:
 
         await asyncio.sleep(0.21)
         if manual:
-            await res.response.send_message("New membership date for {} set at {}!".format(target_member.mention,
-                                                                                           new_date.strftime(
-                                                                                               self.DATE_FORMAT)),
-                                            ephemeral=True)
+            await interaction.followup.send(
+                "New membership date for {} set at {}!".format(target_member.mention,
+                                                               new_date.strftime(self.DATE_FORMAT)), ephemeral=True)
         else:
-            embed = res.embeds[0]
+            embed = interaction.embeds[0]
             embed.description = "**VERIFIED:** {}\nUser: {}\nBy: {}".format(new_date.strftime(self.DATE_FORMAT),
                                                                             target_member.mention, actor.mention)
-            await res.edit(content=res.content, embed=embed)
+            await interaction.edit_original_response(content=interaction.content, embed=embed)
         return True
 
-    async def del_membership(self, res, member_id: int, text, dm_flag=True, manual=True, vtuber=None):
-        if isinstance(res, discord.Interaction):
-            guild_id = res.guild_id
-            author_id = res.user.id
-        elif isinstance(res, discord.Message):
-            guild_id = res.guild.id
-            author_id = res.author.id
-
+    async def del_membership(self, interaction, member_id: int, text, dm_flag=True, manual=True, vtuber=None):
+        guild_id = interaction.guild_id
+        author_id = interaction.user.id
         server_db = self.db.get_server_db(guild_id)
         result = 0
 
@@ -503,10 +494,7 @@ class MembershipHandler:
             result = server_db.remove_member(member_id)
         if result == 0:
             logging.info("Requested user does not have membership; by %s.", author_id)
-            if isinstance(res, discord.Interaction):
-                await res.response.send_message(self.ID_NOT_FOUND_TEXT, ephemeral=True)
-            elif isinstance(res, discord.Message):
-                await res.channel.send(self.ID_NOT_FOUND_TEXT)
+            await interaction.followup.send(self.ID_NOT_FOUND_TEXT, ephemeral=True)
             return
         if Utility.is_multi_server(guild_id):
             logging.info("Deleted membership on %s: %s for %s", guild_id, member_id, vtuber)
@@ -514,7 +502,7 @@ class MembershipHandler:
             logging.info("Deleted membership on %s: %s", guild_id, member_id)
 
         # Remove member role from user
-        guild = res.guild
+        guild = interaction.guild
         target_member = guild.get_member(member_id)
 
         if Utility.is_multi_server(guild_id):
@@ -529,7 +517,7 @@ class MembershipHandler:
                 logging.info("Removing role %s from %s on server %s.", role.name, member_id, guild_id)
 
                 if manual:
-                    await res.response.send_message("Membership successfully deleted.", ephemeral=True)
+                    await interaction.followup.send("Membership successfully deleted.", ephemeral=True)
 
                 if dm_flag:
                     # If msg has extra lines, send dm to target user to notify the zoopass deletion
@@ -541,18 +529,11 @@ class MembershipHandler:
                         else:
                             await target_member.send("Your membership for " + server_db.get_vtuber() + " was deleted!")
             except (discord.errors.Forbidden, discord.HTTPException):
-                if isinstance(res, discord.Interaction):
-                    await res.response.send_message(
-                        "Removing the role failed, please remove the role manually and check my permissions.",
-                        ephemeral=True)
-                elif isinstance(res, discord.Message):
-                    await res.channel.send(
-                        "Removing the role failed, please remove the role manually and check my permissions.")
+                await interaction.followup.send(
+                    "Removing the role failed, please remove the role manually and check my permissions.",
+                    ephemeral=True)
         else:
-            if isinstance(res, discord.Interaction):
-                await res.response.send_message("User is not on this server!", ephemeral=True)
-            elif isinstance(res, discord.Message):
-                await res.channel.send("User is not on this server!")
+            await interaction.response.send_message("User is not on this server!", ephemeral=True)
             logging.info("%s not on server %s.", member_id, guild_id)
 
     async def purge_memberships(self, server_id: int):

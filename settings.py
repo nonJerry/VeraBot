@@ -19,6 +19,7 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(manage_messages=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def show_settings(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True, thinking=True)
         logging.debug("%s called viewSettings.", interaction.user.id)
 
         title = "Current Settings"
@@ -82,22 +83,23 @@ class Settings(commands.Cog):
         m = "These are your current settings.\nYour set expiration image is the picture.\n"
         m += "For a full explanation of the settings please refer to:\n"
         m += "<https://github.com/nonJerry/VeraBot/blob/master/settings.md>"
-        await interaction.response.send_message(content=m, embed = embed, ephemeral=True)
+        await interaction.followup.send(content=m, embed = embed, ephemeral=True)
 
     @app_commands.command(name="setvtuber",
         description="Sets the name of the VTuber of this server")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_idol(self, interaction: discord.Interaction, vtuber_name: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
 
         # always only one entry
         if self.check_vtuber(vtuber_name):           
-            await interaction.response.send_message("This Vtuber is already mapped to a server!")
+            await interaction.followup.send("This Vtuber is already mapped to a server!")
             return
 
         self.db.set_vtuber(vtuber_name, interaction.guild_id)
 
-        await interaction.response.send_message("Set VTuber name to " + vtuber_name, ephemeral=True)
+        await interaction.followup.send("Set VTuber name to " + vtuber_name, ephemeral=True)
         logging.info("%s (%s) -> New Vtuber added: %s", interaction.guild.name, interaction.guild_id, vtuber_name)
 
     def check_vtuber(self, vtuber_name) -> bool:
@@ -113,12 +115,14 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_member_role(self, interaction: discord.Interaction, role: discord.Role):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if self.check_role_integrity(interaction, role.id):
             self.db.get_server_db(interaction.guild_id).set_member_role(role.id)
 
-            await interaction.response.send_message("Member role id set to " + str(role.id), ephemeral=True)
+            await interaction.followup.send("Member role id set to " + str(role.id), ephemeral=True)
         else:
-            await interaction.response.send_message("ID does not refer to a legit role", ephemeral=True)
+            await interaction.followup.send("ID does not refer to a legit role", ephemeral=True)
         logging.info("%s set %s as member role.", interaction.guild_id, role.id)
 
 
@@ -126,12 +130,14 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if self.check_channel_integrity(channel.id):
             self.db.get_server_db(interaction.guild_id).set_log_channel(channel.id)
             logging.info("%s set %s as log channel.", interaction.guild_id, channel.id)
-            await interaction.response.send_message("Log Channel id set to " + str(channel.id), ephemeral=True)
+            await interaction.followup.send("Log Channel id set to " + str(channel.id), ephemeral=True)
         else:
-            await interaction.response.send_message("ID does not refer to a legit channel", ephemeral=True)
+            await interaction.followup.send("ID does not refer to a legit channel", ephemeral=True)
             logging.info("%s used a wrong ID as log channel.", interaction.guild_id)
 
 
@@ -141,148 +147,163 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_picture(self, interaction: discord.Interaction, link: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         logging.info("{} set their picture: {}".format(str(interaction.guild_id), link))
         from re import fullmatch
         match = fullmatch(r"http[s]?://[a-zA-Z0-9\_\-\.]+/[a-zA-Z0-9\_\-/]+\.(png|jpeg|jpg)", link)
         if match:
             self.db.get_server_db(interaction.guild_id).set_picture(link)
-            await interaction.response.send_message("Image for expiration message set.", ephemeral=True)
+            await interaction.followup.send("Image for expiration message set.", ephemeral=True)
         else:
-            await interaction.response.send_message("Please send a legit link. Only jpg, jpeg and png are accepted.", ephemeral=True)
+            await interaction.followup.send("Please send a legit link. Only jpg, jpeg and png are accepted.", ephemeral=True)
 
 
     @app_commands.command(name="setauto", description = "Sets whether the bot is allowed to automatically add the membership role.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_automatic_role(self, interaction: discord.Interaction, flag: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
+            await interaction.followup.send(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
 
         self.db.get_server_db(interaction.guild_id).set_automatic(flag)
         logging.info("%s set auto to %s", interaction.guild_id, str(flag))
 
-        await interaction.response.send_message("Flag for automatic role handling set to " + str(flag), ephemeral=True)
+        await interaction.followup.send("Flag for automatic role handling set to " + str(flag), ephemeral=True)
 
 
     @app_commands.command(name="setadditionalproof", description = "Sets whether the bot will require additional proof from the user.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_require_additional_proof(self, interaction: discord.Interaction, flag: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
+            await interaction.followup.send(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
 
         self.db.get_server_db(interaction.guild_id).set_additional_proof(flag)
         logging.info("%s set additional Proof to %s", interaction.guild_id, str(flag))
 
-        await interaction.response.send_message("Flag for additional Proof set to " + str(flag), ephemeral=True)
+        await interaction.followup.send("Flag for additional Proof set to " + str(flag), ephemeral=True)
 
 
     @app_commands.command(name="settolerance", description = "Sets the time that users will have access to the membership channel after their membership expired.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_tolerance_duration(self, interaction: discord.Interaction, time: int):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if(time < 0):
-            await interaction.response.send_message("This value needs to be at least 0 days.", ephemeral=True)
+            await interaction.followup.send("This value needs to be at least 0 days.", ephemeral=True)
             return
         if (time > 2):
-            await interaction.response.send_message("This value cannot be more than 2 days.", ephemeral=True)
+            await interaction.followup.send("This value cannot be more than 2 days.", ephemeral=True)
             return
         
         self.db.get_server_db(interaction.guild_id).set_tolerance_duration(time)
         logging.info("%s set Tolerance to %s", interaction.guild_id, time)
 
-        await interaction.response.send_message("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)), ephemeral=True)
+        await interaction.followup.send("Time that users will still have access to the channel after their membership expired set to {} days.".format(str(time)), ephemeral=True)
 
 
     @app_commands.command(name="setpriornoticeduration", description = "Set time for notice before membership expiry")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_inform_duration(self, interaction: discord.Interaction, time: int):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if(time < 0):
-            await interaction.response.send_message("This value needs to be at least 0 days.", ephemeral=True)
+            await interaction.followup.send("This value needs to be at least 0 days.", ephemeral=True)
             return
         
         if(time > 2):
-            await interaction.response.send_message("This value cannot be more than 2 days.", ephemeral=True)
+            await interaction.followup.send("This value cannot be more than 2 days.", ephemeral=True)
             return
 
         self.db.get_server_db(interaction.guild_id).set_inform_duration(time)
         logging.info("%s set prior Notice to %s", interaction.guild_id, time)
 
-        await interaction.response.send_message("Users will be notified " + str(time) + " days before their membership ends.", ephemeral=True)
+        await interaction.followup.send("Users will be notified " + str(time) + " days before their membership ends.", ephemeral=True)
 
     @app_commands.command(name="enablelogging", description="Flag which decides whether you will see the logs when the bot checks for expired memberships.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_logging(self, interaction: discord.Interaction, flag: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
+            await interaction.followup.send(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
         
         self.db.get_server_db(interaction.guild_id).set_logging(flag)
         logging.info("%s set logging to %s", interaction.guild_id, str(flag))
 
-        await interaction.response.send_message("Flag for logging set to " + str(flag), ephemeral=True)
+        await interaction.followup.send("Flag for logging set to " + str(flag), ephemeral=True)
 
 
     @app_commands.command(name="proofchannel", description="Sets the Channel to which the threads will be attached.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def set_proof_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        await interaction.response.defer(ephemeral=True, thinking=True)
         
         channel = self.bot.get_channel(channel.id)
         if not channel:
-            await interaction.response.send_message("Please use a valid channel!", ephemeral=True)
+            await interaction.followup.send("Please use a valid channel!", ephemeral=True)
             return
 
         #check whether use_public_thread is allowed
         permissions = channel.permissions_for(channel.guild.me)
         if not permissions.create_public_threads:
-            await interaction.response.send_message("You need to enable use_public_threads for VeraBot on your proof channel first!", ephemeral=True)
+            await interaction.followup.send("You need to enable use_public_threads for VeraBot on your proof channel first!", ephemeral=True)
             return
 
         self.db.get_server_db(interaction.guild_id).set_proof_channel(channel.id)
         logging.info("%s set %s as proof channel.", interaction.guild_id, channel.id)
 
-        await interaction.response.send_message("Proof Channel id set to " + str(channel.id), ephemeral=True)
+        await interaction.followup.send("Proof Channel id set to " + str(channel.id), ephemeral=True)
 
 
     @app_commands.command(name="enablethreads", description="Toggles function that the bot creates a thread for each proof.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def toggle_threads(self, interaction: discord.Interaction, flag: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         # multi-server cannot use threads
         if Utility.is_multi_server(interaction.guild_id):
-            await interaction.response.send_message("You cannot enable threads as mutli-server!", ephemeral=True)
+            await interaction.followup.send("You cannot enable threads as mutli-server!", ephemeral=True)
             logging.info("%s tried to enable Threads as multi-server.", interaction.guild_id)
             return
 
         flag = Utility.text_to_boolean(flag)
         if not isinstance(flag, bool):
-            await interaction.response.send_message(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
+            await interaction.followup.send(self.BOOLEAN_ONLY_TEXT, ephemeral=True)
             return
 
         if flag:
             channel = self.bot.get_channel(self.db.get_server_db(interaction.guild_id).get_proof_channel())
             if not channel:
-                await interaction.response.send_message("Please set a proof channel first!", ephemeral=True)
+                await interaction.followup.send("Please set a proof channel first!", ephemeral=True)
                 return
 
             #check whether use_public_thread is allowed
             permissions = channel.permissions_for(channel.guild.me)
             if not permissions.create_public_threads:
-                await interaction.response.send_message("You need to enable use_public_threads for VeraBot on your proof channel first!", ephemeral=True)
+                await interaction.followup.send("You need to enable use_public_threads for VeraBot on your proof channel first!", ephemeral=True)
                 return
         # set value
         self.db.get_server_db(interaction.guild_id).set_threads_enabled(flag)
         logging.info("%s set threads to %s", interaction.guild_id, str(flag))
 
-        await interaction.response.send_message("Flag for using threads set to " + str(flag), ephemeral=True)
+        await interaction.followup.send("Flag for using threads set to " + str(flag), ephemeral=True)
 
     async def check_thread_permissions(self, guild_id: int) -> bool:
         if Utility.is_multi_server(guild_id):
@@ -300,33 +321,37 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def enable_multi_server(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if Utility.is_multi_server(interaction.guild_id):
             logging.info("%s: Tried to enable the multi-talent function again.", interaction.guild_id)
-            await interaction.response.send_message("Your server already has enabled the usage of multiple talents!", ephemeral=True)
+            await interaction.followup.send("Your server already has enabled the usage of multiple talents!", ephemeral=True)
             return
         if self.db.get_server_db(interaction.guild_id).get_threads_enabled():
-            await interaction.response.send_message("You cannot enable multi server with threads enabled!", ephemeral=True)
+            await interaction.followup.send("You cannot enable multi server with threads enabled!", ephemeral=True)
             logging.info("%s: Tried to enable the multi-talent function with threads enabled.", interaction.guild_id)
             return
 
         self.db.add_multi_server(interaction.guild_id)
         logging.info("%s: Enabled the multi-talent function.", interaction.guild_id)
 
-        await interaction.response.send_message("Management of several talents was activated for this server!", ephemeral=True)
+        await interaction.followup.send("Management of several talents was activated for this server!", ephemeral=True)
 
     @app_commands.command(name="disablemultiserver", description="Will disable the possibility to support several talents on one server.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def disable_multi_server(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if not Utility.is_multi_server(interaction.guild_id):
             logging.info("%s: Tried to disabled the multi-talent function without having it enabled.", interaction.guild_id)
-            await interaction.response.send_message("Your server has not enabled the usage of multiple talents!", ephemeral=True)
+            await interaction.followup.send("Your server has not enabled the usage of multiple talents!", ephemeral=True)
             return
         
         self.db.remove_multi_server(interaction.guild_id)
         logging.info("%s: Disabled the multi-talent function.", interaction.guild_id)
 
-        await interaction.response.send_message("Management of several talents was disabled for this server! For this all added VTubers were removed. Please add the one wanted again using $setVtuber", ephemeral=True)
+        await interaction.followup.send("Management of several talents was disabled for this server! For this all added VTubers were removed. Please add the one wanted again using $setVtuber", ephemeral=True)
 
     
 
@@ -335,20 +360,22 @@ class Settings(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def add_idol(self, interaction: discord.Interaction, name: str, log: discord.TextChannel, role: discord.Role):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if not Utility.is_multi_server(interaction.guild_id):
             logging.info("%s: Tried to use mutli-talent ADD without having it enabled.", interaction.guild_id)
-            await interaction.response.send_message("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.", ephemeral=True)
+            await interaction.followup.send("Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use.", ephemeral=True)
             return
         logging.info("Multi-Server %s: Trying to add %s as talent.", interaction.guild_id, name)
 
         # Check for integrity
         if self.check_vtuber(name):       
             logging.info("%s: Talent %s already exists.", interaction.guild_id, name)   
-            await interaction.response.send_message("This Vtuber is already mapped to a server!", ephemeral=True)
+            await interaction.followup.send("This Vtuber is already mapped to a server!", ephemeral=True)
             return
 
         if not self.bot.get_channel(log.id):
-            await interaction.response.send_message("Please use a proper Channel!", ephemeral=True)
+            await interaction.followup.send("Please use a proper Channel!", ephemeral=True)
             return
 
         if not self.check_role_integrity(interaction, role.id):
@@ -359,23 +386,25 @@ class Settings(commands.Cog):
         self.db.set_vtuber(name, interaction.guild_id)
         logging.info("%s: Added %s with %s as Log Channel and %s as Role.", interaction.guild_id, name, log.id, role.id)
 
-        await interaction.response.send_message("Successfully added the new talent!", ephemeral=True)
+        await interaction.followup.send("Successfully added the new talent!", ephemeral=True)
 
 
     @app_commands.command(name="removetalent", description="Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!")
     @app_commands.default_permissions(administrator=True)
     @app_commands.check(Utility.is_interaction_not_dm)
     async def remove_idol(self, interaction: discord.Interaction, name: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         if not Utility.is_multi_server(interaction.guild_id):
             logging.info("%s: Tried to remove a mutli-talent without having it enabled.", interaction.guild_id)
-            await interaction.response.send_message("Your server has not enabled the usage of multiple talents.", ephemeral=True)
+            await interaction.followup.send("Your server has not enabled the usage of multiple talents.", ephemeral=True)
             return
         if self.db.get_server_db(interaction.guild_id).remove_multi_talent(name):
             self.db.remove_multi_talent_vtuber(interaction.guild_id, name)
             logging.info("Removed %s from VTuber list", name)
-            await interaction.response.send_message("Successfully removed {}!".format(name), ephemeral=True)
+            await interaction.followup.send("Successfully removed {}!".format(name), ephemeral=True)
         else:
-            await interaction.response.send_message("Could not remove {}!".format(name), ephemeral=True)
+            await interaction.followup.send("Could not remove {}!".format(name), ephemeral=True)
 
     def check_role_integrity(self, interaction: discord.Interaction, role_id: int):
         if interaction.guild.get_role(role_id):
