@@ -1,4 +1,3 @@
-pkg-config
 libtesseract-dev
 libleptonica-dev
 tesseract-ocr
@@ -6,3 +5,4 @@ tesseract-ocr-eng
 tesseract-ocr-jpn
 tesseract-ocr-rus
 tesseract-ocr-chi-sim
+pkg-config
