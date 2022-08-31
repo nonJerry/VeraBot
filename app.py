@@ -19,8 +19,13 @@ from utility import Utility
 from ocr import OCR
 from sending import Sending
 from views import PersistentView
+from logging.handlers import SysLogHandler
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+log_dest = os.getenv("LOG_LINK")
+log_port = os.getenv("LOG_PORT")
+syslog = SysLogHandler(address=(log_dest, log_port))
+logging.getLogger().addHandler(syslog)
 logging.info("Started")
 
 ### Setup data
