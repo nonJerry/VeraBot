@@ -52,7 +52,7 @@ class PersistentView(discord.ui.View):
                 vtuber = embed.fields[1].value
             else:
                 vtuber = None
-            if await self.member_handler.set_membership(interaction.message, target_member_id, membership_date,
+            if await self.member_handler.set_membership(interaction, target_member_id, membership_date,
                                                         False, interaction.user, vtuber):
                 await interaction.message.add_reaction('👌')
                 await self.remove_buttons(interaction)
@@ -81,7 +81,7 @@ class PersistentView(discord.ui.View):
                 vtuber = embed.fields[1].value
             else:
                 vtuber = None
-            if await self.member_handler.set_membership(msg, target_member_id, modal.date.value, False,
+            if await self.member_handler.set_membership(interaction, target_member_id, modal.date.value, False,
                                                         interaction.user, vtuber):
                 await msg.add_reaction('👍')
                 await self.remove_buttons(interaction)
