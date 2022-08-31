@@ -475,10 +475,10 @@ class MembershipHandler:
                 "New membership date for {} set at {}!".format(target_member.mention,
                                                                new_date.strftime(self.DATE_FORMAT)), ephemeral=True)
         else:
-            embed = interaction.embeds[0]
+            embed = interaction.message.embeds[0]
             embed.description = "**VERIFIED:** {}\nUser: {}\nBy: {}".format(new_date.strftime(self.DATE_FORMAT),
                                                                             target_member.mention, actor.mention)
-            await interaction.edit_original_response(content=interaction.content, embed=embed)
+            await interaction.edit_original_response(embed=embed)
         return True
 
     async def del_membership(self, interaction, member_id: int, text, dm_flag=True, manual=True, vtuber=None):
