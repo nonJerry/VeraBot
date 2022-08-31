@@ -40,7 +40,7 @@ class OCR:
             logging.warn("Using local OCR!!!")
             img_to_txt = partial(Tess.image_to_string, timeout=44)
         else:
-            tess_path = r"/app/.apt/usr/share/tesseract-ocr/4.00/tessdata"
+            tess_path = os.getenv("TESSDATA_PREFIX")
             img_to_txt = partial(tesserocr.image_to_text, lang=lang, path = tess_path)
 
         # Get image from url
