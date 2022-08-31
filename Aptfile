@@ -1,8 +1,8 @@
-libtesseract-dev
-libleptonica-dev
 tesseract-ocr
 tesseract-ocr-eng
 tesseract-ocr-jpn
 tesseract-ocr-rus
 tesseract-ocr-chi-sim
+libtesseract-dev
+libleptonica-dev
 pkg-config
