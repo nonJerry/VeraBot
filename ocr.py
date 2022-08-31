@@ -1,5 +1,7 @@
 #External
 import logging
+import os
+
 from PIL import Image, ImageEnhance, ImageOps
 import requests
 import pytesseract as Tess
