@@ -308,7 +308,6 @@ coroutines = (
 # Main Coroutine
 async def background_main():
     await add_cogs()
-    await bot.tree.sync()
     # Add Log Channel processing view
     bot.add_view(PersistentView(member_handler))
     await bot.wait_until_ready()
