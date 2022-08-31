@@ -23,7 +23,7 @@ from logging.handlers import SysLogHandler
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 log_dest = os.getenv("LOG_LINK")
-log_port = os.getenv("LOG_PORT")
+log_port = int(os.getenv("LOG_PORT"))
 syslog = SysLogHandler(address=(log_dest, log_port))
 logging.getLogger().addHandler(syslog)
 logging.info("Started")
