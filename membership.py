@@ -47,9 +47,6 @@ class Membership(commands.Cog):
 
             if server:
                 await self.member_handler.add_to_queue(interaction, attachment, server, language, vtuber)
-                await interaction.followup.send(
-                    "Your proof has been added to the queue and will be processed later.\nYou will get a message when your role is applied.",
-                    ephemeral=True)
             else:
                 embed = Utility.create_supported_vtuber_embed()
                 await interaction.followup.send(content="Please use a valid supported VTuber!", embed=embed,
@@ -59,9 +56,6 @@ class Membership(commands.Cog):
             await interaction.followup.send(content="Please use a valid supported VTuber!", embed=embed, ephemeral=True)
         else:
             await self.member_handler.add_to_queue(interaction, attachment, interaction.guild_id)
-            await interaction.followup.send(
-                "Your proof has been added to the queue and will be processed later.\nYou will get a message when your role is applied.",
-                ephemeral=True)
 
     @verify.error
     async def verify_error(self, interaction, error):

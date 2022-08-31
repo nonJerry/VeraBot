@@ -39,7 +39,7 @@ class MembershipHandler:
 
         m = "Your proof has been added to the queue and will be processed later.\n"
         m += "You will get a message when your role is applied."
-        await interaction.response.send_message(m, ephemeral=True)
+        await interaction.followup.send(m, ephemeral=True)
 
     async def _check_membership_dates(self, server: dict, purge=False) -> List[Member]:
         # Performs a mass check on membership dates and delete expired membership with a default message
