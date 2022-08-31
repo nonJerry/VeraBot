@@ -72,7 +72,10 @@ class OCR:
                 )
                 enhancer = ImageEnhance.Sharpness(resized)
                 factor = 3
-                img = enhancer.enhance(factor)
+                try:
+                    img = enhancer.enhance(factor)
+                except ValueError:
+                    img = ImageEnhance.Sharpness(img.convert('RGB'))
 
 
                 #remove alpha channel and invert image
