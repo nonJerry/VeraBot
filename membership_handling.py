@@ -466,9 +466,11 @@ class MembershipHandler:
         logging.info("Added member role to user %s on server %s.", member_id, guild_id)
 
         await asyncio.sleep(0.21)
-
-        await target_member.send("You have been granted access to the membership channel of {}.".format(vtuber))
-
+        try:
+            await target_member.send("You have been granted access to the membership channel of {}.".format(vtuber))
+        except discord.errors.Forbidden:
+            await interaction.followup.send("Could not send a message to {}".format(target_member.mention))
+            
         await asyncio.sleep(0.21)
         if manual:
             await interaction.followup.send(
