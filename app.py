@@ -54,7 +54,7 @@ intents.integrations = False
 intents.webhooks = False
 intents.voice_states = False
 intents.guild_typing = False
-intents.message_content = True
+intents.message_content = False
 
 
 async def determine_prefix(bot, message):
