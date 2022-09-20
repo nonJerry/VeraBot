@@ -43,6 +43,12 @@ class PersistentView(discord.ui.View):
 
         if server_db.get_automatic():
             await interaction.message.add_reaction('👌')
+            # track who verifies even if roles are automatically assigned
+            target_member = interaction.guild.get_member(target_member_id)
+            embed = interaction.message.embeds[0]
+            embed.description = "**VERIFIED:** {}\nUser: {}\nBy: {}".format(embed.fields[0].value, target_member.mention, 
+                                                                            interaction.user.mention)
+            await interaction.edit_original_response(embed=embed)
             self.stop()
         else:
             membership_date = embed.fields[0].value
