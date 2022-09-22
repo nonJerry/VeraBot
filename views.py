@@ -118,7 +118,7 @@ class PersistentView(discord.ui.View):
             else:
                 server = Utility.get_vtuber(msg.guild.id) + " server"
             await target_member.send("{}:\n{}".format(server, modal.message))
-            await interaction.followup.send("Message was sent by `{}` to {}:\n```{}```".format(interaction.user.mention, target_member.mention, modal.message))
+            await interaction.followup.send("Message was sent by {} to {}:\n```{}```".format(interaction.user.mention, target_member.mention, modal.message))
 
             if Utility.is_multi_server(interaction.guild.id):
                 vtuber = embed.fields[1].value
