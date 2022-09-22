@@ -485,7 +485,10 @@ class MembershipHandler:
 
     async def del_membership(self, interaction, member_id: int, text, dm_flag=True, manual=True, vtuber=None):
         guild_id = interaction.guild.id
-        author_id = interaction.user.id
+        if isinstance(interaction, discord.Message):
+            author_id = interaction.author.id
+        else:
+            author_id = interaction.user.id
         server_db = self.db.get_server_db(guild_id)
         result = 0
 
