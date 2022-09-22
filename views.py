@@ -43,6 +43,12 @@ class PersistentView(discord.ui.View):
 
         if server_db.get_automatic():
             await interaction.message.add_reaction('👌')
+            # track who verifies even if roles are automatically assigned
+            target_member = interaction.guild.get_member(target_member_id)
+            embed = interaction.message.embeds[0]
+            embed.description = "**VERIFIED:** {}\nUser: {}\nBy: {}".format(embed.fields[0].value, target_member.mention, 
+                                                                            interaction.user.mention)
+            await interaction.edit_original_response(embed=embed)
             self.stop()
         else:
             membership_date = embed.fields[0].value
@@ -112,7 +118,7 @@ class PersistentView(discord.ui.View):
             else:
                 server = Utility.get_vtuber(msg.guild.id) + " server"
             await target_member.send("{}:\n{}".format(server, modal.message))
-            await interaction.followup.send("Message was sent to {}.".format(target_member.mention))
+            await interaction.followup.send("Message was sent by {} to {}:\n```{}```".format(interaction.user.mention, target_member.mention, modal.message))
 
             if Utility.is_multi_server(interaction.guild.id):
                 vtuber = embed.fields[1].value
