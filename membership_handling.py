@@ -148,13 +148,13 @@ class MembershipHandler:
 
     async def view_membership(self, interaction, member_id=None, vtuber=None):
         # if msg is empty, show all members
-        server_db = self.db.get_server_db(interaction.guild_id)
+        server_db = self.db.get_server_db(interaction.guild.id)
         if not member_id:
             count = 0
             embed_count = 0
             m = ""
             for member in server_db.get_members():
-                if Utility.is_multi_server(interaction.guild_id) and vtuber is not None and member.idol != vtuber:
+                if Utility.is_multi_server(interaction.guild.id) and vtuber is not None and member.idol != vtuber:
                     continue
                 count += 1
                 member_id = member.id
@@ -183,7 +183,7 @@ class MembershipHandler:
             return
 
         # Check if zoopass in database and delete
-        if Utility.is_multi_server(interaction.guild_id) and vtuber:
+        if Utility.is_multi_server(interaction.guild.id) and vtuber:
             target_membership = server_db.get_member_multi(member_id, vtuber)
         else:
             target_membership = server_db.get_member(member_id)
@@ -192,7 +192,7 @@ class MembershipHandler:
             return
 
         # Send information about membership
-        guild = self.bot.get_guild(interaction.guild_id)
+        guild = self.bot.get_guild(interaction.guild.id)
         target_member = guild.get_member(member_id)
 
         membership_date = target_membership.last_membership
@@ -422,7 +422,7 @@ class MembershipHandler:
         return (new_membership_date, membership_date_text, desc)
 
     async def set_membership(self, interaction, member_id, date, manual=True, actor=None, vtuber=None) -> bool:
-        guild_id = interaction.guild_id
+        guild_id = interaction.guild.id
         author_id = interaction.user.id
         dates = date.split("/")
 
@@ -484,7 +484,7 @@ class MembershipHandler:
         return True
 
     async def del_membership(self, interaction, member_id: int, text, dm_flag=True, manual=True, vtuber=None):
-        guild_id = interaction.guild_id
+        guild_id = interaction.guild.id
         author_id = interaction.user.id
         server_db = self.db.get_server_db(guild_id)
         result = 0

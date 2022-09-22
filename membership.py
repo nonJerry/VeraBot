@@ -35,7 +35,7 @@ class Membership(commands.Cog):
         if vtuber or language:
             if vtuber:
                 server = Utility.map_vtuber_to_server(vtuber)
-            elif Utility.is_multi_server(interaction.guild_id):
+            elif Utility.is_multi_server(interaction.guild.id):
                 embed = Utility.create_supported_vtuber_embed()
                 await interaction.followup.send(content="Please use a valid supported VTuber!", embed=embed,
                                                 ephemeral=True)
@@ -51,11 +51,11 @@ class Membership(commands.Cog):
                 embed = Utility.create_supported_vtuber_embed()
                 await interaction.followup.send(content="Please use a valid supported VTuber!", embed=embed,
                                                 ephemeral=True)
-        elif Utility.is_multi_server(interaction.guild_id):
+        elif Utility.is_multi_server(interaction.guild.id):
             embed = Utility.create_supported_vtuber_embed()
             await interaction.followup.send(content="Please use a valid supported VTuber!", embed=embed, ephemeral=True)
         else:
-            await self.member_handler.add_to_queue(interaction, attachment, interaction.guild_id)
+            await self.member_handler.add_to_queue(interaction, attachment, interaction.guild.id)
 
     @verify.error
     async def verify_error(self, interaction, error):
@@ -68,8 +68,8 @@ class Membership(commands.Cog):
 
     @verify.autocomplete('vtuber')
     async def verify_autocomplete(self, interaction: discord.Interaction, current: str):
-        server_db = Database().get_server_db(interaction.guild_id)
-        if Utility.is_multi_server(interaction.guild_id):
+        server_db = Database().get_server_db(interaction.guild.id)
+        if Utility.is_multi_server(interaction.guild.id):
             multi_talents = server_db.get_multi_talents()
             vtubers = [m['idol'] for m in multi_talents]
             return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if
@@ -85,10 +85,10 @@ class Membership(commands.Cog):
     async def view_members(self, interaction: discord.Interaction, member: discord.User = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
         if member:
-            logging.info(f"{interaction.user.id} used viewMember with ID in {interaction.guild_id}")
+            logging.info(f"{interaction.user.id} used viewMember with ID in {interaction.guild.id}")
             await self.member_handler.view_membership(interaction, member.id, None)
         else:
-            logging.info(f"{interaction.user.id} viewed all members in {interaction.guild_id}")
+            logging.info(f"{interaction.user.id} viewed all members in {interaction.guild.id}")
             await self.member_handler.view_membership(interaction, None)
 
     @app_commands.command(name="viewmembersfor",
@@ -98,15 +98,15 @@ class Membership(commands.Cog):
     async def view_members_multi(self, interaction: discord.Interaction, vtuber: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
         if vtuber:
-            logging.info("%s viewed all members in %s for %s", interaction.user.id, interaction.guild_id, vtuber)
+            logging.info("%s viewed all members in %s for %s", interaction.user.id, interaction.guild.id, vtuber)
             await self.member_handler.view_membership(interaction, None, vtuber)
         else:
-            logging.info("%s viewed all members in %s", interaction.user.id, interaction.guild_id)
+            logging.info("%s viewed all members in %s", interaction.user.id, interaction.guild.id)
             await self.member_handler.view_membership(interaction, None, None)
 
     @view_members_multi.autocomplete('vtuber')
     async def view_members_multi_autocomplete(self, interaction: discord.Interaction, current: str):
-        server_db = Database().get_server_db(interaction.guild_id)
+        server_db = Database().get_server_db(interaction.guild.id)
         multi_talents = server_db.get_multi_talents()
         vtubers = [m['idol'] for m in multi_talents]
         return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if
@@ -120,12 +120,12 @@ class Membership(commands.Cog):
     async def set_membership(self, interaction: discord.Interaction, member: discord.User, date: str,
                              vtuber: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
-        logging.info("%s used addMember in %s", interaction.user.id, interaction.guild_id)
+        logging.info("%s used addMember in %s", interaction.user.id, interaction.guild.id)
         await self.member_handler.set_membership(interaction, member.id, date, manual=True, vtuber=vtuber)
 
     @set_membership.autocomplete('vtuber')
     async def set_membership_autocomplete(self, interaction: discord.Interaction, current: str):
-        server_db = Database().get_server_db(interaction.guild_id)
+        server_db = Database().get_server_db(interaction.guild.id)
         multi_talents = server_db.get_multi_talents()
         vtubers = [m['idol'] for m in multi_talents]
         return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if
@@ -138,12 +138,12 @@ class Membership(commands.Cog):
     async def del_membership(self, interaction: discord.Interaction, member: discord.User, vtuber: str = None,
                              text: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
-        logging.info("%s used delMember in %s", interaction.user.id, interaction.guild_id)
+        logging.info("%s used delMember in %s", interaction.user.id, interaction.guild.id)
         await self.member_handler.del_membership(interaction, member.id, text, manual=True, vtuber=vtuber)
 
     @del_membership.autocomplete('vtuber')
     async def del_membership_autocomplete(self, interaction: discord.Interaction, current: str):
-        server_db = Database().get_server_db(interaction.guild_id)
+        server_db = Database().get_server_db(interaction.guild.id)
         multi_talents = server_db.get_multi_talents()
         vtubers = [m['idol'] for m in multi_talents]
         return [app_commands.Choice(name=vtuber, value=vtuber) for vtuber in vtubers if
@@ -155,7 +155,7 @@ class Membership(commands.Cog):
     @app_commands.check(Utility.is_interaction_not_dm)
     async def purge_members(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
-        await self.member_handler.purge_memberships(interaction.guild_id)
+        await self.member_handler.purge_memberships(interaction.guild.id)
         await interaction.followup.send(
             "This was a hard check, it might have hit many members that still have a valid membership.", ephemeral=True)
 
