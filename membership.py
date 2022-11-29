@@ -24,7 +24,7 @@ class Membership(commands.Cog):
         self.member_handler = member_handler
 
     @app_commands.command(name="verify", description="Tries to verify a screenshot for membership in the DMs")
-    @app_commands.check(Utility.is_interaction_not_dm)
+    @app_commands.guild_only()
     async def verify(self, interaction: discord.Interaction, attachment: discord.Attachment, vtuber: str = None,
                      language: str = None):
         if not attachment.content_type.startswith("image"):
@@ -81,7 +81,7 @@ class Membership(commands.Cog):
     @app_commands.command(name="viewmembers",
                           description="Shows all user with the membership role. Or if a id is given this users data.")
     @app_commands.default_permissions(manage_messages=True)
-    @app_commands.check(Utility.is_interaction_not_dm)
+    @app_commands.guild_only()
     async def view_members(self, interaction: discord.Interaction, member: discord.User = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
         if member:
@@ -94,7 +94,7 @@ class Membership(commands.Cog):
     @app_commands.command(name="viewmembersfor",
                           description="Shows all user with the membership role. Or if a vtuber is given for that VTuber.")
     @app_commands.default_permissions(manage_messages=True)
-    @app_commands.check(Utility.is_interaction_not_dm)
+    @app_commands.guild_only()
     async def view_members_multi(self, interaction: discord.Interaction, vtuber: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
         if vtuber:
@@ -115,7 +115,7 @@ class Membership(commands.Cog):
     @app_commands.command(name="addmember",
                           description="Gives the membership role to the user whose ID was given.")
     @app_commands.default_permissions(manage_messages=True)
-    @app_commands.check(Utility.is_interaction_not_dm)
+    @app_commands.guild_only()
     @app_commands.describe(date='Date has to be in the format dd/mm/yyyy.')
     async def set_membership(self, interaction: discord.Interaction, member: discord.User, date: str,
                              vtuber: str = None):
@@ -134,7 +134,7 @@ class Membership(commands.Cog):
     @app_commands.command(name="delmember",
                           description="Removes the membership role from the user whose ID was given.")
     @app_commands.default_permissions(manage_messages=True)
-    @app_commands.check(Utility.is_interaction_not_dm)
+    @app_commands.guild_only()
     async def del_membership(self, interaction: discord.Interaction, member: discord.User, vtuber: str = None,
                              text: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
@@ -152,7 +152,7 @@ class Membership(commands.Cog):
     @app_commands.command(name="purgemember",
                           description="Initiates a Membership Check")
     @app_commands.default_permissions(manage_messages=True)
-    @app_commands.check(Utility.is_interaction_not_dm)
+    @app_commands.guild_only()
     async def purge_members(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
         await self.member_handler.purge_memberships(interaction.guild.id)
