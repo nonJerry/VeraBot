@@ -27,8 +27,8 @@ class Translate:
         logging.info('Generating translation files ...')
         dir_path = os.path.dirname(os.path.realpath(__file__))
         locales_path = os.path.join(dir_path, 'locales')
-        if which("msgfmt") is None:
-            logging.error('msgfmt command does not exists.')
+        if which("/usr/bin/msgfmt") is None:
+            logging.error('/usr/bin/msgfmt command does not exists.')
             exit(1)
         elif not os.path.isdir(locales_path):
             logging.error('Locales directory does not exist. Please use generate_locales.py to generate it first.')
@@ -48,7 +48,7 @@ class Translate:
                 if os.path.isfile(mo_path):
                     continue
                 logging.info('Generating %s/LC_MESSAGES/%s ...', entry, mo)
-                result = subprocess.run(["msgfmt", "-o", mo_path, po_path])
+                result = subprocess.run(["/usr/bin/msgfmt", "-o", mo_path, po_path])
                 if result.returncode != 0:
                     logging.error('Failed to generate %s.', mo)
                     exit(1)

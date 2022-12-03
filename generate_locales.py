@@ -30,14 +30,14 @@ if not os.path.isdir(locales_path):
 
 # Generate initial pot files
 logging.info('Generating initial pot files ...')
-if which("pygettext3") is None:
-    logging.error('pygettext3 command does not exists.')
+if which("/usr/bin/pygettext3") is None:
+    logging.error('/usr/bin/pygettext3 command does not exists.')
     exit(1)
 for script in scripts:
     if os.path.isfile(os.path.join(locales_path, f'{script}.pot')):
         continue
     logging.info('Generating %s.pot ...', script)
-    result = subprocess.run(["pygettext3", "-d", script, "-o", os.path.join(locales_path, f"{script}.pot"), f"{script}.py"])
+    result = subprocess.run(["/usr/bin/pygettext3", "-d", script, "-o", os.path.join(locales_path, f"{script}.pot"), f"{script}.py"])
     if result.returncode != 0:
         logging.error('Failed to generate pot files.')
         exit(1)
