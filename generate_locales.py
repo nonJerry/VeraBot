@@ -4,7 +4,15 @@ from shutil import which, copy
 import logging
 
 scripts = [
-  'app'
+  'app',
+  'database',
+  'membership_handling',
+  'membership',
+  'ocr',
+  'sending',
+  'settings',
+  'utility',
+  'views',
 ]
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)

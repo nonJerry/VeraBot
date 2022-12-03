@@ -1,0 +1,175 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2022-12-03 22:51+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: membership.py:30
+msgid "Tries to verify a screenshot for membership in the DMs"
+msgstr ""
+
+#: membership.py:35
+msgid "The included attachment is not an image, please attach an image."
+msgstr ""
+
+#: membership.py:37
+msgid "Verify without screenshot from %s."
+msgstr ""
+
+#: membership.py:44 membership.py:56 membership.py:60
+msgid "Please use a valid supported VTuber!"
+msgstr ""
+
+#: membership.py:67
+msgid "%s tried to use verify too often."
+msgstr ""
+
+#: membership.py:68 membership.py:246
+msgid "Try again in {:.0f}s."
+msgstr ""
+
+#: membership.py:70
+msgid "%s tried to use verify in DMs."
+msgstr ""
+
+#: membership.py:71
+msgid "Please use this command in the server and not in DMs anymore."
+msgstr ""
+
+#: membership.py:86
+msgid "Shows all user with the membership role. Or if a id is given this users data."
+msgstr ""
+
+#: membership.py:92
+msgid "%s used viewMember with ID in %s"
+msgstr ""
+
+#: membership.py:95 membership.py:108
+msgid "%s viewed all members in %s"
+msgstr ""
+
+#: membership.py:99
+msgid "Shows all user with the membership role. Or if a vtuber is given for that VTuber."
+msgstr ""
+
+#: membership.py:105
+msgid "%s viewed all members in %s for %s"
+msgstr ""
+
+#: membership.py:120
+msgid "Gives the membership role to the user whose ID was given."
+msgstr ""
+
+#: membership.py:123
+msgid "Date has to be in the format dd/mm/yyyy."
+msgstr ""
+
+#: membership.py:127
+msgid "%s used addMember in %s"
+msgstr ""
+
+#: membership.py:139
+msgid "Removes the membership role from the user whose ID was given."
+msgstr ""
+
+#: membership.py:145
+msgid "%s used delMember in %s"
+msgstr ""
+
+#: membership.py:157
+msgid "Initiates a Membership Check"
+msgstr ""
+
+#: membership.py:164
+msgid "This was a hard check, it might have hit many members that still have a valid membership."
+msgstr ""
+
+#: membership.py:170
+msgid "Queue count: {}"
+msgstr ""
+
+#: membership.py:181
+msgid "Date not detected"
+msgstr ""
+
+#: membership.py:183
+msgid ""
+"Main Proof\n"
+"User: {}"
+msgstr ""
+
+#: membership.py:184
+msgid "Recognized Date"
+msgstr ""
+
+#: membership.py:189
+msgid "Relayed the verify to %s"
+msgstr ""
+
+#: membership.py:196
+msgid "%s used dump sheet for link %s."
+msgstr ""
+
+#: membership.py:199
+msgid "Starting to dump data now!"
+msgstr ""
+
+#: membership.py:227
+msgid "Hit API rate limit of google sheets"
+msgstr ""
+
+#: membership.py:229
+msgid "%s: Dumped data successfully."
+msgstr ""
+
+#: membership.py:230
+msgid "Finished dumping the data. It is in a sheet called `Member Dump`."
+msgstr ""
+
+#: membership.py:235
+msgid "%s didn't give bot access to sheet."
+msgstr ""
+
+#: membership.py:237
+msgid "Please give the bot access to the sheet. You can either use a link that can be used by everyone or add `verabot@verabot-318714.iam.gserviceaccount.com`."
+msgstr ""
+
+#: membership.py:239
+msgid "%s requested sheet dump with invalid link."
+msgstr ""
+
+#: membership.py:240
+msgid "Your link was not valid. Please use the command with a valid google sheets link."
+msgstr ""
+
+#: membership.py:245
+msgid "%s tried to use dump sheet too often."
+msgstr ""
+
+#: membership.py:248
+msgid "%s used invalid Link (not string) for %s"
+msgstr ""
+
+#: membership.py:249
+msgid "Please provide a valid link!"
+msgstr ""
+
+#: membership.py:251
+msgid "%s forgot link for %s"
+msgstr ""
+
+#: membership.py:252
+msgid "Please include the link to the spreadsheet!"
+msgstr ""
+
