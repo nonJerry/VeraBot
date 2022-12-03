@@ -11,6 +11,7 @@ from datetime import datetime as dtime
 from datetime import timezone, timedelta
 import os
 import logging
+import gettext
 # Internal
 from membership_handling import MembershipHandler
 from settings import Settings
@@ -19,14 +20,20 @@ from utility import Utility
 from ocr import OCR
 from sending import Sending
 from views import PersistentView
+from translate import Translate
 from logging.handlers import SysLogHandler
 
+# Setup i18n
+Translate.generate_translation_files()
+_ = Translate.get_translation_function('app')
+
+# Setup logging
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 log_dest = os.getenv("LOG_LINK")
 log_port = int(os.getenv("LOG_PORT"))
 syslog = SysLogHandler(address=(log_dest, log_port))
 logging.getLogger().addHandler(syslog)
-logging.info("Started")
+logging.info(_("Started"))
 
 ### Setup data
 # Set variable to true for local testing
@@ -73,7 +80,7 @@ async def determine_prefix(bot, message):
 
 # Set up bot
 bot = commands.Bot(command_prefix=determine_prefix,
-                   description='Bot to verify and manage Memberships.\nlogChannel, Vtuber name and memberRole need to be set!',
+                   description=_('Bot to verify and manage Memberships.\nlogChannel, Vtuber name and memberRole need to be set!'),
                    intents=intents, case_insensitive=True, owner_id=owner_id)
 
 # 2 tries per 50s as default
@@ -99,7 +106,7 @@ Sending.setup(bot, embed_color)
 async def add_cogs():
     await bot.add_cog(Settings(bot))
     await bot.add_cog(Membership(bot, member_handler))
-    logging.info("Cogs added")
+    logging.info(_("Cogs added"))
 
 
 @bot.event
@@ -108,23 +115,22 @@ async def on_command_error(ctx, error):
         # Ignore this error
         pass
     elif isinstance(error, commands.MissingPermissions):
-        logging.info("%s tried to invoke %s without the needed permissions!", ctx.author.id, ctx.command)
-        await ctx.send("You are not allowed to use this command!")
+        logging.info(_("%s tried to invoke %s without the needed permissions!"), ctx.author.id, ctx.command)
+        await ctx.send(_("You are not allowed to use this command!"))
     elif isinstance(error, commands.NoPrivateMessage):
-        await ctx.send("This command should not be used in the DMs")
+        await ctx.send(_("This command should not be used in the DMs"))
     elif hasattr(ctx.command, 'on_error'):
         # skip already locally handled errors
         pass
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("You are missing a required argument!")
+        await ctx.send(_("You are missing a required argument!"))
     else:
         raise error
 
 
 @bot.event
 async def on_ready():
-    print('Logged in as')
-    print(bot.user.name)
+    print(_('Logged in as'))
     print(bot.user.id)
     print('------')
 
@@ -134,11 +140,11 @@ async def on_guild_join(guild):
     """
     Creates the database and settings collection when the bot joins a server.
     """
-    logging.info("Joined new Guild: %s (%s)", guild.name, guild.id)
+    logging.info(_("Joined new Guild: %s (%s)"), guild.name, guild.id)
 
     database.create_new_server(guild.id)
 
-    logging.info("Created database for %s", guild.id)
+    logging.info(_("Created database for %s"), guild.id)
 
 
 @bot.event
@@ -146,9 +152,9 @@ async def on_guild_remove(guild):
     """
     Removes the guild from the supported idols so that memberships are not checked.
     """
-    logging.info("Left Guild: %s (%s)", guild.name, guild.id)
+    logging.info(_("Left Guild: %s (%s)"), guild.name, guild.id)
     database.remove_server(guild.id)
-    logging.info(f"Deleted Collection for {guild.id}")
+    logging.info(_("Deleted Collection for %s"), guild.id)
 
 
 def dm_or_test_only():
@@ -159,27 +165,27 @@ def dm_or_test_only():
 
 
 @bot.command(
-    help="Obsolete verify command, notifies user to use slash command version instead.",
-    brief="Obsolete verify command."
+    help=_("Obsolete verify command, notifies user to use slash command version instead."),
+    brief=_("Obsolete verify command.")
 )
 @dm_or_test_only()
 @commands.cooldown(verify_tries, 50, commands.BucketType.user)
 async def verify(ctx, *args):
     await ctx.send(
-        "This command no longer works through DMs, please use the slash command '/verify' in the server instead.")
+        _("This command no longer works through DMs, please use the slash command '/verify' in the server instead."))
 
 
 @verify.error
 async def verify_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
-        logging.info("%s tried to use verify too often.", ctx.author.id)
-        await ctx.send(f"Try again in {error.retry_after:.0f}s.")
+        logging.info(_("%s tried to use verify too often."), ctx.author.id)
+        await ctx.send(_("Try again in %.0fs."), error.retry_after)
 
 
 @bot.command(hidden=True, name="checkIdols")
 @commands.is_owner()
 async def check(ctx):
-    logging.info("Checked supported VTuber!")
+    logging.info(_("Checked supported VTuber!"))
     Utility.create_supported_vtuber_embed()
     await ctx.send(database.get_vtuber_list())
 
@@ -191,7 +197,7 @@ def owner_or_test(ctx):
 @bot.command(hidden=True, name="forceCheck")
 @commands.check(owner_or_test)
 async def force_member_check(ctx):
-    logging.info("Running forced check!")
+    logging.info(_("Running forced check!"))
     await member_handler.delete_expired_memberships(True)
 
 
@@ -209,54 +215,54 @@ async def broadcast(ctx, title, text):
         lg_ch = bot.get_channel(server_db.get_log_channel())
 
         await lg_ch.send(content=None, embed=embed)
-    logging.info("Sent broadcast to all servers.")
+    logging.info(_("Sent broadcast to all servers."))
 
 
 @bot.command(name="dmMe",
-             help="Sends a DM containg \"hi\" to the user using the command.",
-             brief="Sends a DM to the user")
+             help=_("Sends a DM containg \"hi\" to the user using the command."),
+             brief=_("Sends a DM to the user"))
 async def send_dm(ctx):
-    logging.info("%s wanted a DM!", ctx.author.id)
-    await ctx.author.send("Hi")
+    logging.info(_("%s wanted a DM!"), ctx.author.id)
+    await ctx.author.send(_("Hi"))
 
 
 @send_dm.error
 async def dm_error(ctx, error):
     if isinstance(error, discord.errors.Forbidden):
-        logging.info("%s has DMs not allowed.", ctx.author.id)
-        await ctx.send("You need to allow DMs!")
+        logging.info(_("%s has DMs not allowed."), ctx.author.id)
+        await ctx.send(_("You need to allow DMs!"))
 
 
 @bot.command(name="proof",
-             help="Allows to send additional proof. Requires the name of the vtuber. Only available in DMs",
-             brief="Send additional proof")
+             help=_("Allows to send additional proof. Requires the name of the vtuber. Only available in DMs"),
+             brief=_("Send additional proof"))
 @commands.dm_only()
 async def send_proof(ctx, vtuber: str):
     if not ctx.message.attachments:
-        await ctx.send("Please include a screenshot of the proof!")
+        await ctx.send(_("Please include a screenshot of the proof!"))
         return
     server_id = Utility.map_vtuber_to_server(vtuber)
     member_veri_ch = bot.get_channel(database.get_server_db(server_id).get_log_channel())
 
     # Send attachment and message to membership verification channel
-    desc = "{}\n{}".format(str(ctx.author), "Additional proof")
+    desc = "{}\n{}".format(str(ctx.author), _("Additional proof"))
     title = ctx.author.id
     embed = discord.Embed(title=title, description=None, colour=embed_color)
     embed.set_image(url=ctx.message.attachments[0].url)
     await member_veri_ch.send(content="```\n{}\n```".format(desc), embed=embed)
 
     # send confirmation
-    await ctx.send("Your additional proof was delivered safely!")
+    await ctx.send(_("Your additional proof was delivered safely!"))
 
-    logging.info("%s used the proof method for %s", ctx.author.id, vtuber)
+    logging.info(_("%s used the proof method for %s"), ctx.author.id, vtuber)
 
 
 @send_proof.error
 async def proof_error(ctx, error):
     if isinstance(error, commands.BadArgument):
-        await ctx.send("Please do only send a valid name")
+        await ctx.send(_("Please do only send a valid name"))
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please include the server name!")
+        await ctx.send(_("Please include the server name!"))
     embed = Utility.create_supported_vtuber_embed()
     await ctx.send(content=None, embed=embed)
 
@@ -269,7 +275,7 @@ async def proof_error(ctx, error):
 async def syncGuild(ctx):
     ctx.bot.tree.copy_global_to(guild=ctx.guild)
     await ctx.bot.tree.sync(guild=ctx.guild)
-    await ctx.send("commands synced to guild")
+    await ctx.send(_("commands synced to guild"))
 
 
 @bot.command(name="syncGuildClear")
@@ -278,7 +284,7 @@ async def syncGuild(ctx):
 async def syncGuildClear(ctx):
     # since all commands are global, doing a sync call without the copy_global_to function will clear all guild synced commands
     await ctx.bot.tree.sync(guild=ctx.guild)
-    await ctx.send("guild commands cleared from sync")
+    await ctx.send(_("guild commands cleared from sync"))
 
 
 @bot.command(name="syncGlobal")
@@ -286,20 +292,20 @@ async def syncGuildClear(ctx):
 @commands.guild_only()
 async def syncGlobal(ctx):
     await ctx.bot.tree.sync()
-    await ctx.send("commands synced globally")
+    await ctx.send(_("commands synced globally"))
 
 
 @bot.tree.error
 async def tree_error(interaction, error):
     try:
         if isinstance(error, Forbidden):
-            logging.info("Could not message the user in command by %s", interaction.user.id)
-            await interaction.response.send_message("Could not message the user.")
+            logging.info(_("Could not message the user in command by %s"), interaction.user.id)
+            await interaction.response.send_message(_("Could not message the user."))
         elif isinstance(error, discord.errors.NotFound):
-            logging.info("Did not find interaction in %s by %s", interaction.guild.id, interaction.user.id)
-            await interaction.response.send_message("Had a problem finding the interaction, please try again", ephemeral=True)
+            logging.info(_("Did not find interaction in %s by %s"), interaction.guild.id, interaction.user.id)
+            await interaction.response.send_message(_("Had a problem finding the interaction, please try again"), ephemeral=True)
     except discord.errors.NotFound:
-        logging.info("Could not send the info of error")
+        logging.info(_("Could not send the info of error"))
 
 
 
