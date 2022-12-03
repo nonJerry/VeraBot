@@ -42,9 +42,8 @@ class Translate:
             if not os.path.isdir(locales_path):
                 logging.error('LC_MESSAGES directory does not exist. Please use generate_locales.py to generate it first.')
                 exit(1)
-            for po in glob.glob(f'{lc_messages_path}/*.po'):
-                mo = po.split('.')[0] + '.mo'
-                po_path = os.path.join(lc_messages_path, po)
+            for po_path in glob.glob(f'{lc_messages_path}/*.po'):
+                mo = os.path.splitext(os.path.basename(po_path))[0] + '.mo'
                 mo_path = os.path.join(lc_messages_path, mo)
                 if os.path.isfile(mo_path):
                     continue
