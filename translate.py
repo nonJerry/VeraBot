@@ -6,6 +6,9 @@ import subprocess
 from shutil import which
 import gettext
 
+# Note: supported languages are listed in the 'locales' directory.
+language = 'en'
+
 class Translate:
 
 
@@ -16,7 +19,7 @@ class Translate:
         if not os.path.isdir(locales_path):
             logging.error('Locales directory does not exist. Please use generate_locales.py to generate it first.')
             exit(1)
-        translate = gettext.translation('app', locales_path, fallback=True)
+        translate = gettext.translation(namespace, locales_path, fallback=True, languages=[language])
         return translate.gettext
     
     @staticmethod

@@ -23,17 +23,16 @@ from views import PersistentView
 from translate import Translate
 from logging.handlers import SysLogHandler
 
-# Setup i18n
-Translate.generate_translation_files()
-_ = Translate.get_translation_function('app')
-
 # Setup logging
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 log_dest = os.getenv("LOG_LINK")
 log_port = int(os.getenv("LOG_PORT"))
 syslog = SysLogHandler(address=(log_dest, log_port))
 logging.getLogger().addHandler(syslog)
-logging.info(_("Started"))
+
+# Setup i18n
+Translate.generate_translation_files()
+_ = Translate.get_translation_function('app')
 
 ### Setup data
 # Set variable to true for local testing
@@ -79,6 +78,7 @@ async def determine_prefix(bot, message):
 
 
 # Set up bot
+logging.info(_("Started"))
 bot = commands.Bot(command_prefix=determine_prefix,
                    description=_('Bot to verify and manage Memberships.\nlogChannel, Vtuber name and memberRole need to be set!'),
                    intents=intents, case_insensitive=True, owner_id=owner_id)
