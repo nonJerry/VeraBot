@@ -1,11 +1,11 @@
 discord.py>=2.0.0
-dnspython==2.2.1
-gspread==5.3.2
-requests==2.31.0
-tesserocr==2.5.2
+dnspython>=2.2.1
+gspread>=5.3.2
+requests>=2.31.0
+tesserocr>=2.5.2
 pymongo>=4.1.0
-pytesseract==0.3.9
-dateparser==1.1.1
+pytesseract>=0.3.9
+dateparser>=1.1.1
 Pillow>=9.1.0
-python-decouple==3.6
+python-decouple>=3.6
 
