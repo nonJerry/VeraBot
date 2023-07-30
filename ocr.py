@@ -68,7 +68,7 @@ class OCR:
 
                 img = img.crop((3, 0, img.size[0], img.size[1]))
                 resized = img.resize(
-                    (int(img.size[0] * size_factor), int(img.size[1] * size_factor)), Image.ANTIALIAS
+                    (int(img.size[0] * size_factor), int(img.size[1] * size_factor)), Image.LANCZOS
                 )
                 enhancer = ImageEnhance.Sharpness(resized)
                 factor = 3
