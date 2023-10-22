@@ -226,7 +226,10 @@ class ServerDatabase:
     def get_multi_talent_infos(self, name: str) -> Optional[dict]:
         if not self.get_multi_talents():
             return
-        return self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'idol' : name.lower()}}})['values'][0]
+        search_result = self._get_settings().find_one({"kind": "multi_server"}, {'values' : { '$elemMatch': {'idol' : name.lower()}}})
+        if "values" not in search_result:
+            return
+        return search_result['values'][0]
 
     def get_multi_talent_log_channel(self, name: str) -> Optional[int]:
         infos = self.get_multi_talent_infos(name)
