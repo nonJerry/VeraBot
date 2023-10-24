@@ -6,18 +6,22 @@ import discord
 from discord import ui
 
 from utility import Utility
+from translate import Translate
+
+# Setup i18n
+_ = Translate.get_translation_function('utility')
 
 
-class DateModal(ui.Modal, title='Date Selection'):
-    date = ui.TextInput(label='What is the correct date?', style=discord.TextStyle.short, required=True, min_length=8,
+class DateModal(ui.Modal, title=_('Date Selection')):
+    date = ui.TextInput(label=_('What is the correct date?'), style=discord.TextStyle.short, required=True, min_length=8,
                         max_length=10)
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
 
-class DenialModal(ui.Modal, title='Denial Message'):
-    message = ui.TextInput(label='What do you want to tell the person?', style=discord.TextStyle.paragraph,
+class DenialModal(ui.Modal, title=_('Denial Message')):
+    message = ui.TextInput(label=_('What do you want to tell the person?'), style=discord.TextStyle.paragraph,
                            required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -30,7 +34,7 @@ class PersistentView(discord.ui.View):
         self.member_handler = member_handler
         self.database = member_handler.db
 
-    @discord.ui.button(style=discord.ButtonStyle.success, label="Everything fine!", emoji="✅", custom_id="Correct")
+    @discord.ui.button(style=discord.ButtonStyle.success, label=_("Everything fine!"), emoji="✅", custom_id="Correct")
     async def handle_correct(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         embed = interaction.message.embeds[0]
@@ -39,14 +43,14 @@ class PersistentView(discord.ui.View):
         # always only the id
         target_member_id = int(embed.title)
 
-        logging.info("Recognized date correct in %s for user %s.", interaction.guild.id, target_member_id)
+        logging.info(_("Recognized date correct in %s for user %s."), interaction.guild.id, target_member_id)
 
         if server_db.get_automatic():
             await interaction.message.add_reaction('👌')
             # track who verifies even if roles are automatically assigned
             target_member = interaction.guild.get_member(target_member_id)
             embed = interaction.message.embeds[0]
-            embed.description = "**VERIFIED:** {}\nUser: {}\nBy: {}".format(embed.fields[0].value, target_member.mention, 
+            embed.description = _("**VERIFIED:** {}\nUser: {}\nBy: {}").format(embed.fields[0].value, target_member.mention, 
                                                                             interaction.user.mention)
             await interaction.edit_original_response(embed=embed)
             self.stop()
@@ -62,17 +66,17 @@ class PersistentView(discord.ui.View):
                                                         False, interaction.user, vtuber):
                 await interaction.message.add_reaction('👌')
                 await self.remove_buttons(interaction)
-                await interaction.followup.send("Finished Verification Process", ephemeral=True)
+                await interaction.followup.send(_("Finished Verification Process"), ephemeral=True)
                 self.stop()
 
-    @discord.ui.button(style=discord.ButtonStyle.secondary, label="Wrong Date!", emoji=u"\U0001F4C5",
+    @discord.ui.button(style=discord.ButtonStyle.secondary, label=_("Wrong Date!"), emoji=u"\U0001F4C5",
                        custom_id="Change")
     async def handle_change(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = DateModal()
         await interaction.response.send_modal(modal)
 
         if await modal.wait():
-            await interaction.response.send_message(f'You took too long, please press the button again!',
+            await interaction.response.send_message(_('You took too long, please press the button again!'),
                                                     ephemeral=True)
         else:
             msg = interaction.message
@@ -81,8 +85,8 @@ class PersistentView(discord.ui.View):
             # always only the id
             target_member_id = int(embed.title)
 
-            logging.info("Wrong date recognized in %s for user %s.", interaction.guild.id, target_member_id)
-            await interaction.followup.send(f'The used date was {modal.date.value}!')
+            logging.info(_("Wrong date recognized in %s for user %s."), interaction.guild.id, target_member_id)
+            await interaction.followup.send(_('The used date was {}').format(modal.date.value))
             if Utility.is_multi_server(interaction.guild.id):
                 vtuber = embed.fields[1].value
             else:
@@ -91,19 +95,19 @@ class PersistentView(discord.ui.View):
                                                         interaction.user, vtuber):
                 await msg.add_reaction('👍')
                 await self.remove_buttons(interaction)
-                await interaction.followup.send("Finished Verification Process", ephemeral=True)
+                await interaction.followup.send(_("Finished Verification Process"), ephemeral=True)
                 self.stop()
             else:
                 return False
 
-    @discord.ui.button(style=discord.ButtonStyle.danger, label="Not acceptable!", emoji=u"\U0001F6AB",
+    @discord.ui.button(style=discord.ButtonStyle.danger, label=_("Not acceptable!"), emoji=u"\U0001F6AB",
                        custom_id="Wrong")
     async def handle_denied(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = DenialModal()
         await interaction.response.send_modal(modal)
 
         if await modal.wait():
-            await interaction.followup.send(f'You took too long, please press the button again!',
+            await interaction.followup.send(_('You took too long, please press the button again!'),
                                                     ephemeral=True)
         else:
             msg = interaction.message
@@ -116,9 +120,9 @@ class PersistentView(discord.ui.View):
             if Utility.is_multi_server(msg.guild.id):
                 server = msg.guild.name
             else:
-                server = Utility.get_vtuber(msg.guild.id) + " server"
+                server = Utility.get_vtuber(msg.guild.id) + _(" server")
             await target_member.send("{}:\n{}".format(server, modal.message))
-            await interaction.followup.send("Message was sent by {} to {}:\n```{}```".format(interaction.user.mention, target_member.mention, modal.message))
+            await interaction.followup.send(_("Message was sent by {} to {}:\n```{}```").format(interaction.user.mention, target_member.mention, modal.message))
 
             if Utility.is_multi_server(interaction.guild.id):
                 vtuber = embed.fields[1].value
@@ -128,15 +132,15 @@ class PersistentView(discord.ui.View):
             if self.database.get_server_db(msg.guild.id).get_automatic():
                 await self.member_handler.del_membership(msg, target_member_id, None, False, False, vtuber)
                 # set embed
-            embed.description = "**DENIED**\nUser: {}\nBy: {}".format(target_member.mention, interaction.user)
+            embed.description = _("**DENIED**\nUser: {}\nBy: {}").format(target_member.mention, interaction.user)
             await msg.edit(content=msg.content, embed=embed)
             await msg.add_reaction('👎')
             await self.remove_buttons(interaction)
-            await interaction.followup.send("Finished Verification Process", ephemeral=True)
+            await interaction.followup.send(_("Finished Verification Process"), ephemeral=True)
             return True
 
     async def remove_buttons(self, interaction: discord.Interaction):
         try:
             await interaction.edit_original_response(view=None)
         except discord.errors.NotFound:
-            logging.info('Webhook in %s could not be found', interaction.guild.id)
+            logging.info(_('Webhook in %s could not be found'), interaction.guild.id)
