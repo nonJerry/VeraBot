@@ -156,10 +156,3 @@ class Utility:
         if not guild_id in cls.db.get_multi_server():
             return False
         return True
-
-    @classmethod
-    def is_interaction_not_dm(cls, interaction: discord.Interaction) -> bool:
-        if isinstance(interaction.channel, discord.PartialMessageable):
-            if interaction.channel.type is discord.ChannelType.private:
-                return False
-        return True
