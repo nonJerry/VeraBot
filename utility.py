@@ -8,7 +8,11 @@ from dateutil.relativedelta import relativedelta
 import logging
 from typing import Optional, Tuple, Union
 from database import Database
+#Internal
+from translate import Translate
 
+# Setup i18n
+_ = Translate.get_translation_function('utility')
 
 
 class Utility:
@@ -38,7 +42,7 @@ class Utility:
         usual_date = dtime.now() + relativedelta(months=1)
 
         s = Utility.cut_to_date(s, lang)
-        logging.info("Input string for date search: %s", s)
+        logging.info(_("Input string for date search: %s"), s)
 
         # use date in 1 month from now as reference
         dates = search_dates(s, settings={'RELATIVE_BASE': usual_date})
@@ -139,7 +143,7 @@ class Utility:
 
         # list every vtuber like "- <vtuber>"
         vtuber_list = "- " + '\n- '.join(element['name'].title() for element in array)
-        title = "Supported VTuber"
+        title = _("Supported VTuber")
 
         return discord.Embed(title = title, description = vtuber_list, colour = cls.embed_color)
 

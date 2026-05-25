@@ -4,6 +4,10 @@ import discord
 import logging
 #Internal
 from utility import Utility
+from translate import Translate
+
+# Setup i18n
+_ = Translate.get_translation_function('sending')
 
 class Sending:
 
@@ -33,8 +37,8 @@ class Sending:
                 await target_user.send(content = None, embed = embed)
             else:
                 await target_user.send(message)
-            logging.debug("Sent DM to %s", member_id)
+            logging.debug(_("Sent DM to %s"), member_id)
         except AttributeError:
-            logging.info("User {} does not exist.".format(member_id))
+            logging.info(_("User {} does not exist.").format(member_id))
         except Exception:
-            logging.info("Something went wrong with user {} a DM".format(member_id))
+            logging.info(_("Something went wrong with user {} a DM").format(member_id))

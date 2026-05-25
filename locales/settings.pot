@@ -1,0 +1,413 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2022-12-03 22:51+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: settings.py:20
+msgid "The Flag should only be True or False!"
+msgstr ""
+
+#: settings.py:22
+msgid "Shows all settings of this server."
+msgstr ""
+
+#: settings.py:27
+msgid "%s called viewSettings."
+msgstr ""
+
+#: settings.py:29
+msgid "Current Settings"
+msgstr ""
+
+#: settings.py:45
+msgid "Member Role ID"
+msgstr ""
+
+#: settings.py:49
+msgid "Log Channel ID"
+msgstr ""
+
+#: settings.py:57
+msgid "Auto Role Flag"
+msgstr ""
+
+#: settings.py:61
+msgid "Require Additional Proof"
+msgstr ""
+
+#: settings.py:65
+msgid "Tolerance Duration"
+msgstr ""
+
+#: settings.py:69
+msgid "Prior Notice Duration"
+msgstr ""
+
+#: settings.py:73
+msgid "Logging enabled"
+msgstr ""
+
+#: settings.py:77
+msgid "Threads enabled"
+msgstr ""
+
+#: settings.py:81
+msgid "Proof Channel ID"
+msgstr ""
+
+#: settings.py:85
+msgid "Multi Server"
+msgstr ""
+
+#: settings.py:87
+msgid ""
+"These are your current settings.\n"
+"Your set expiration image is the picture.\n"
+msgstr ""
+
+#: settings.py:88
+msgid ""
+"For a full explanation of the settings please refer to:\n"
+msgstr ""
+
+#: settings.py:89
+msgid "<https://github.com/nonJerry/VeraBot/blob/master/settings.md>"
+msgstr ""
+
+#: settings.py:93
+msgid "Sets the name of the VTuber of this server"
+msgstr ""
+
+#: settings.py:101 settings.py:378
+msgid "This Vtuber is already mapped to a server!"
+msgstr ""
+
+#: settings.py:106
+msgid "Set VTuber name to "
+msgstr ""
+
+#: settings.py:107
+msgid "%s (%s) -> New Vtuber added: %s"
+msgstr ""
+
+#: settings.py:118
+msgid "Sets the role for membership content"
+msgstr ""
+
+#: settings.py:127
+msgid "Member role id set to "
+msgstr ""
+
+#: settings.py:129
+msgid "ID does not refer to a legit role"
+msgstr ""
+
+#: settings.py:130
+msgid "%s set %s as member role."
+msgstr ""
+
+#: settings.py:133
+msgid "Sets the channel which is used to control the sent memberships."
+msgstr ""
+
+#: settings.py:141
+msgid "%s set %s as log channel."
+msgstr ""
+
+#: settings.py:142
+msgid "Log Channel id set to "
+msgstr ""
+
+#: settings.py:144
+msgid "ID does not refer to a legit channel"
+msgstr ""
+
+#: settings.py:145
+msgid "%s used a wrong ID as log channel."
+msgstr ""
+
+#: settings.py:150
+msgid "Sets the image that is sent when a membership is about to expire."
+msgstr ""
+
+#: settings.py:156
+msgid "{} set their picture: {}"
+msgstr ""
+
+#: settings.py:161
+msgid "Image for expiration message set."
+msgstr ""
+
+#: settings.py:163
+msgid "Please send a legit link. Only jpg, jpeg and png are accepted."
+msgstr ""
+
+#: settings.py:166
+msgid "Sets whether the bot is allowed to automatically add the membership role."
+msgstr ""
+
+#: settings.py:178
+msgid "%s set auto to %s"
+msgstr ""
+
+#: settings.py:180
+msgid "Flag for automatic role handling set to "
+msgstr ""
+
+#: settings.py:183
+msgid "Sets whether the bot will require additional proof from the user."
+msgstr ""
+
+#: settings.py:195
+msgid "%s set additional Proof to %s"
+msgstr ""
+
+#: settings.py:197
+msgid "Flag for additional Proof set to "
+msgstr ""
+
+#: settings.py:200
+msgid "Sets the time that users will have access to the membership channel after their membership expired."
+msgstr ""
+
+#: settings.py:207 settings.py:226
+msgid "This value needs to be at least 0 days."
+msgstr ""
+
+#: settings.py:210 settings.py:230
+msgid "This value cannot be more than 2 days."
+msgstr ""
+
+#: settings.py:214
+msgid "%s set Tolerance to %s"
+msgstr ""
+
+#: settings.py:216
+msgid "Time that users will still have access to the channel after their membership expired set to {} days."
+msgstr ""
+
+#: settings.py:219
+msgid "Set time for notice before membership expiry"
+msgstr ""
+
+#: settings.py:234
+msgid "%s set prior Notice to %s"
+msgstr ""
+
+#: settings.py:236
+msgid "Users will be notified {} days before their membership ends."
+msgstr ""
+
+#: settings.py:238
+msgid "Flag which decides whether you will see the logs when the bot checks for expired memberships."
+msgstr ""
+
+#: settings.py:250
+msgid "%s set logging to %s"
+msgstr ""
+
+#: settings.py:252
+msgid "Flag for logging set to "
+msgstr ""
+
+#: settings.py:255
+msgid "Sets the Channel to which the threads will be attached."
+msgstr ""
+
+#: settings.py:263
+msgid "Please use a valid channel!"
+msgstr ""
+
+#: settings.py:269 settings.py:304
+msgid "You need to enable use_public_threads for VeraBot on your proof channel first!"
+msgstr ""
+
+#: settings.py:273
+msgid "%s set %s as proof channel."
+msgstr ""
+
+#: settings.py:275
+msgid "Proof Channel id set to "
+msgstr ""
+
+#: settings.py:278
+msgid "Toggles function that the bot creates a thread for each proof."
+msgstr ""
+
+#: settings.py:286
+msgid "You cannot enable threads as mutli-server!"
+msgstr ""
+
+#: settings.py:287
+msgid "%s tried to enable Threads as multi-server."
+msgstr ""
+
+#: settings.py:298
+msgid "Please set a proof channel first!"
+msgstr ""
+
+#: settings.py:308
+msgid "%s set threads to %s"
+msgstr ""
+
+#: settings.py:310
+msgid "Flag for using threads set to "
+msgstr ""
+
+#: settings.py:314
+msgid "%s ended in check thread permission. It is not allowed for multi servers!"
+msgstr ""
+
+#: settings.py:320
+msgid "%s: Did not have Threads permission enabled."
+msgstr ""
+
+#: settings.py:324
+msgid "Will activate the possibility to support several talents on one server."
+msgstr ""
+
+#: settings.py:331
+msgid "%s: Tried to enable the multi-talent function again."
+msgstr ""
+
+#: settings.py:332
+msgid "Your server already has enabled the usage of multiple talents!"
+msgstr ""
+
+#: settings.py:335
+msgid "You cannot enable multi server with threads enabled!"
+msgstr ""
+
+#: settings.py:336
+msgid "%s: Tried to enable the multi-talent function with threads enabled."
+msgstr ""
+
+#: settings.py:340
+msgid "%s: Enabled the multi-talent function."
+msgstr ""
+
+#: settings.py:342
+msgid "Management of several talents was activated for this server!"
+msgstr ""
+
+#: settings.py:344
+msgid "Will disable the possibility to support several talents on one server."
+msgstr ""
+
+#: settings.py:351
+msgid "%s: Tried to disabled the multi-talent function without having it enabled."
+msgstr ""
+
+#: settings.py:352
+msgid "Your server has not enabled the usage of multiple talents!"
+msgstr ""
+
+#: settings.py:356
+msgid "%s: Disabled the multi-talent function."
+msgstr ""
+
+#: settings.py:358
+msgid "Management of several talents was disabled for this server! For this all added VTubers were removed. Please add the one wanted again using $setVtuber"
+msgstr ""
+
+#: settings.py:363
+msgid "Adds new Talent to be supported. Function only for Multi-Talent servers!"
+msgstr ""
+
+#: settings.py:370
+msgid "%s: Tried to use mutli-talent ADD without having it enabled."
+msgstr ""
+
+#: settings.py:371
+msgid "Your server has not enabled the usage of multiple talents. If you intend to use this feature, please use `$enableMultiServer` first. Otherwise `$setVtuber` is the command you wanted to use."
+msgstr ""
+
+#: settings.py:373
+msgid "Multi-Server %s: Trying to add %s as talent."
+msgstr ""
+
+#: settings.py:377
+msgid "%s: Talent %s already exists."
+msgstr ""
+
+#: settings.py:382
+msgid "Please use a proper Channel!"
+msgstr ""
+
+#: settings.py:391
+msgid "%s: Added %s with %s as Log Channel and %s as Role."
+msgstr ""
+
+#: settings.py:393
+msgid "Successfully added the new talent!"
+msgstr ""
+
+#: settings.py:396
+msgid "Removes the Talent. Requires the exact name. Function only for Multi-Talent servers!"
+msgstr ""
+
+#: settings.py:403
+msgid "%s: Tried to remove a mutli-talent without having it enabled."
+msgstr ""
+
+#: settings.py:404
+msgid "Your server has not enabled the usage of multiple talents."
+msgstr ""
+
+#: settings.py:408
+msgid "Removed %s from VTuber list"
+msgstr ""
+
+#: settings.py:409
+msgid "Successfully removed {}!"
+msgstr ""
+
+#: settings.py:411
+msgid "Could not remove {}!"
+msgstr ""
+
+#: settings.py:436
+msgid "Added %s with default value %s"
+msgstr ""
+
+#: settings.py:437
+msgid "Added {} with default value {}"
+msgstr ""
+
+#: settings.py:453
+msgid "Member: Added %s with default value %s"
+msgstr ""
+
+#: settings.py:454
+msgid "Member: Added {} with default value {}"
+msgstr ""
+
+#: settings.py:465
+msgid ""
+"{}: {} ({} user)\n"
+msgstr ""
+
+#: settings.py:466
+msgid "Current Servers"
+msgstr ""
+
+#: settings.py:475
+msgid "Guild does not exist."
+msgstr ""
+
+#: settings.py:479
+msgid "Left guild {}."
+msgstr ""
+

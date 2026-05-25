@@ -18,11 +18,15 @@ from sending import Sending
 # Internal
 from utility import Utility
 from views import PersistentView
+from translate import Translate
 
+
+# Setup i18n
+_ = Translate.get_translation_function('membership_handling')
 
 class MembershipHandler:
     def __init__(self, bot, embed_color):
-        self.ID_NOT_FOUND_TEXT = "Can't find membership id in the database!"
+        self.ID_NOT_FOUND_TEXT = _("Can't find membership id in the database!")
         self.DATE_FORMAT = r"%d/%m/%Y"
 
         self.bot = bot
@@ -35,10 +39,10 @@ class MembershipHandler:
                            lang="eng", vtuber: Optional[str] = None):
         # Check if there is a valid attachment
         self.verify_deque.append([interaction, attachment, server_id, lang, vtuber])
-        logging.info("Proof from %s added to queue for server: %s", interaction.user.id, server_id)
+        logging.info(_("Proof from %s added to queue for server: %s"), interaction.user.id, server_id)
 
-        m = "Your proof has been added to the queue and will be processed later.\n"
-        m += "You will get a message when your role is applied."
+        m = _("Your proof has been added to the queue and will be processed later.\n")
+        m += _("You will get a message when your role is applied.")
         await interaction.followup.send(m, ephemeral=True)
 
     async def _check_membership_dates(self, server: dict, purge=False) -> List[Member]:
@@ -63,11 +67,11 @@ class MembershipHandler:
             tolerance_date = expiry_date - timedelta(days=tolerance_duration)
         notify_date = expiry_date + timedelta(days=inform_duration)
 
-        message_title = idol.title() + " Membership {}!"
-        end_text = "You may renew your membership by sending another updated verification photo using the ``/verify`` command.\n"
-        end_text += "Thank you so much for your continued support!"
+        message_title = idol.title() + _(" Membership {}!")
+        end_text = _("You may renew your membership by sending another updated verification photo using the ``/verify`` command.\n")
+        end_text += _("Thank you so much for your continued support!")
         if purge:
-            end_text = "This expiration may be too soon. It was initiated by the server to avoid illegit access during e.g. a membership stream.\n"
+            end_text = _("This expiration may be too soon. It was initiated by the server to avoid illegit access during e.g. a membership stream.\n")
 
         message_image = server_db.get_picture()
 
@@ -77,13 +81,13 @@ class MembershipHandler:
                 # Get the actual membership which is expiring for multi-server
                 if Utility.is_multi_server(server['guild_id']) and member.idol:
                     idol = member.idol
-                    message_title = idol.title() + " Membership {}!"
+                    message_title = idol.title() + _(" Membership {}!")
                 # For each member
                 last_membership = member.last_membership
                 # need to remove role?
                 if last_membership <= tolerance_date:
-                    title = message_title.format("channel access ended")
-                    message_desc = "You lost your access to {}'s members-only channel!\n"
+                    title = message_title.format(_("channel access ended"))
+                    message_desc = _("You lost your access to {}'s members-only channel!\n")
                     message_desc += end_text
 
                     # Delete from database
@@ -111,9 +115,9 @@ class MembershipHandler:
 
                 # else notify
                 elif inform_duration != 0 and last_membership <= notify_date and not member.informed:
-                    title = message_title.format("expires soon!")
-                    message_desc = "Your membership to {} will expire within the next {} hours.\n"
-                    message_desc += "If you do not want to lose this membership please don't forget to renew it!"
+                    title = message_title.format(_("expires soon!"))
+                    message_desc = _("Your membership to {} will expire within the next {} hours.\n")
+                    message_desc += _("If you do not want to lose this membership please don't forget to renew it!")
                     await Sending.dm_member(member.id, title,
                                             message_desc.format(idol.title(), str(inform_duration * 24)), embed=True,
                                             attachment_url=message_image)
@@ -121,10 +125,10 @@ class MembershipHandler:
                     server_db.informed(member)
 
                 elif last_membership <= expiry_date and not member.expiry_sent:
-                    title = message_title.format("expired")
-                    message_desc = "Your membership to {} should have expired today!\n"
-                    message_desc += "If your billing date has not changed yet, please wait until it does to send your new proof.\n"
-                    message_desc += "You will lose your access to the channel after {} day(s) if you do not renew your membership.\n"
+                    title = message_title.format(_("expired"))
+                    message_desc = _("Your membership to {} should have expired today!\n")
+                    message_desc += _("If your billing date has not changed yet, please wait until it does to send your new proof.\n")
+                    message_desc += _("You will lose your access to the channel after {} day(s) if you do not renew your membership.\n")
                     message_desc += end_text
 
                     # Add to delete list
@@ -138,10 +142,10 @@ class MembershipHandler:
                     server_db.expiry_sent(member)
 
             except discord.errors.Forbidden:
-                logging.warn("Could not send DM to %s", member.id)
+                logging.warn(_("Could not send DM to %s"), member.id)
                 member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
                 user = self.bot.get_user(member.id)
-                await member_veri_ch.send("Could not send reminder to {}.".format(user.mention))
+                await member_veri_ch.send(_("Could not send reminder to {}.").format(user.mention))
 
         # Returns expired_memberships list
         return expired_memberships
@@ -163,7 +167,7 @@ class MembershipHandler:
                 new_line = "{}: {}\n".format(member_id, membership_date)
                 if len(m) + len(new_line) > 4096:
                     if embed_count == 0:
-                        embed = discord.Embed(title="Membership List", description=m)
+                        embed = discord.Embed(title=_("Membership List"), description=m)
                         await interaction.followup.send(content=None, embed=embed, ephemeral=True)
                     else:
                         embed = discord.Embed(description=m)
@@ -173,13 +177,13 @@ class MembershipHandler:
                 m += new_line
             if m != "":
                 if embed_count == 0:
-                    embed = discord.Embed(title="Membership List", description=m + "Member count: " + str(count))
+                    embed = discord.Embed(title=_("Membership List"), description=m + _("Member count: ") + str(count))
                     await interaction.followup.send(content=None, embed=embed, ephemeral=True)
                 else:
-                    embed = discord.Embed(description=m + "Member count: " + str(count))
+                    embed = discord.Embed(description=m + _("Member count: ") + str(count))
                     await interaction.followup.send(content=None, embed=embed, ephemeral=True)
             else:
-                await interaction.followup.send("No active memberships!", ephemeral=True)
+                await interaction.followup.send(_("No active memberships!"), ephemeral=True)
             return
 
         # Check if zoopass in database and delete
@@ -202,9 +206,9 @@ class MembershipHandler:
         membership_date = membership_date.strftime(self.DATE_FORMAT)
         expiration_date = expiration_date.strftime(self.DATE_FORMAT)
 
-        m = "Name: {}\nID: {}\nLast Renewal Date: {}\nMembership End Date: {}"
+        m = _("Name: {}\nID: {}\nLast Renewal Date: {}\nMembership End Date: {}")
         m = m.format(str(target_member), member_id, membership_date, expiration_date)
-        embed = discord.Embed(title="Membership", description=m)
+        embed = discord.Embed(title=_("Membership"), description=m)
 
         await interaction.followup.send(content=None, embed=embed, ephemeral=True)
 
@@ -225,23 +229,23 @@ class MembershipHandler:
         try:
             idol, server = await self.detect_idol_server(attachment.url)
         except Exception:
-            logging.info("Could not detect server for %s.", interaction.user.id)
+            logging.info(_("Could not detect server for %s."), interaction.user.id)
 
         if not server:
-            m = "I am sorry I could not detect a VTuber name on the image you sent earlier.\n"
-            m += "Please send a screenshot with the name of the VTuber on it.\n"
-            m += "If this was the case, please use `/verify <VTuber name>` instead of the normal /verify.\n"
-            m += "You might need to wait as there is a cooldown on this command to avoid spam."
+            m = _("I am sorry I could not detect a VTuber name on the image you sent earlier.\n")
+            m += _("Please send a screenshot with the name of the VTuber on it.\n")
+            m += _("If this was the case, please use `/verify <VTuber name>` instead of the normal /verify.\n")
+            m += _("You might need to wait as there is a cooldown on this command to avoid spam.")
             embed = Utility.create_supported_vtuber_embed()
             await interaction.user.send(content=m, embed=embed)
             return
 
-        logging.info("Detected server for %s: %s (%s)", interaction.user.id, idol, server)
+        logging.info(_("Detected server for %s: %s (%s)"), interaction.user.id, idol, server)
         if Utility.is_user_on_server(interaction.user.id, server):
             await self.verify_membership(interaction, attachment, server, lang)
         else:
-            logging.info("%s tried to verify for a server they are not on.", interaction.user.id)
-            await interaction.user.send("You are not on {} server!".format(idol.title()))
+            logging.info(_("%s tried to verify for a server they are not on."), interaction.user.id)
+            await interaction.user.send(_("You are not on {} server!").format(idol.title()))
 
     async def detect_idol_server(self, url) -> Optional[Tuple[str, int]]:
         # get list from db
@@ -260,9 +264,9 @@ class MembershipHandler:
             img_date = await OCR.detect_image_date(attachment.url, lang)
 
         except asyncio.TimeoutError:
-            logging.info("Timout while detecting image for %s.", interaction.user.id)
+            logging.info(_("Timeout while detecting image for %s."), interaction.user.id)
         except Exception:
-            logging.exception("Date detection failed for %s.", interaction.user.id)
+            logging.exception(_("Date detection failed for %s."), interaction.user.id)
 
         if img_date:
             return (img_date)
@@ -289,7 +293,7 @@ class MembershipHandler:
             if await self.bot.get_cog('Settings').check_thread_permissions(server_id):
                 member_veri_ch = self.bot.get_channel(server_db.get_proof_channel())
             else:
-                logging.info("%s: Has Threads enabled but perms are missing.", server_id)
+                logging.info(_("%s: Has Threads enabled but perms are missing."), server_id)
         else:
             # verification channel of the server
             if vtuber:
@@ -300,7 +304,7 @@ class MembershipHandler:
                 member_veri_ch = self.bot.get_channel(server_db.get_log_channel())
 
         if not member_veri_ch:
-            await interaction.user.send("Please contact the staff of your server, they forgot to set some settings")
+            await interaction.user.send(_("Please contact the staff of your server, they forgot to set some settings"))
             return
 
         automatic_role = server_db.get_automatic()
@@ -316,27 +320,27 @@ class MembershipHandler:
         try:
             if server_db.get_additional_proof():
                 proof_url = await self.handle_additional_proof(interaction, server_id)
-                embed.description = "Additional proof"
+                embed.description = _("Additional proof")
                 embed.set_image(url=proof_url)
                 await member_veri_ch.send(content=None, embed=embed)
                 await interaction.user.send(
-                    "Your additional proof was delivered to the server, please wait for the staff to check your proof.")
+                    _("Your additional proof was delivered to the server, please wait for the staff to check your proof."))
         # if overtime, send timeout message and return
         except asyncio.TimeoutError:
-            logging.info("%s took to long with the proof.", interaction.user.id)
-            await interaction.user.send("I am sorry, you timed out. Please start the verify process again.")
+            logging.info(_("%s took to long with the proof."), interaction.user.id)
+            await interaction.user.send(_("I am sorry, you timed out. Please start the verify process again."))
             return
 
         # Send attachment and message to membership verification channel
 
-        embed.description = "Main Proof\nUser: {}".format(interaction.user.mention)
-        embed.add_field(name="Recognized Date", value=membership_date_text)
+        embed.description = _("Main Proof\nUser: {}").format(interaction.user.mention)
+        embed.add_field(name=_("Recognized Date"), value=membership_date_text)
         if Utility.is_multi_server(server_id):
             embed.add_field(name="VTuber", value=vtuber)
         embed.set_image(url=attachment.url)
 
         await member_veri_ch.send(content="```\n{}\n```".format(desc), embed=embed, view=PersistentView(self))
-        logging.info("Sent embed with reactions to %s", server_id)
+        logging.info(_("Sent embed with reactions to %s"), server_id)
 
         # starting here only if automatic role is enabled
         if not automatic_role:
@@ -344,7 +348,7 @@ class MembershipHandler:
 
         # no date = no automatic role/manual judgement needed
         if not new_membership_date:
-            logging.info("Date for %s on server %s was missing.", interaction.user.id, server_id)
+            logging.info(_("Date for %s on server %s was missing."), interaction.user.id, server_id)
             return
 
         # no need to update if new date is not newer
@@ -364,7 +368,7 @@ class MembershipHandler:
         # if author not part of guild do nothing
         if author:
             server_db = self.db.get_server_db(server_id)
-            logging.info("Adding role automatically for %s on server %s for talent %s", interaction.user.id, server_id,
+            logging.info(_("Adding role automatically for %s on server %s for talent %s"), interaction.user.id, server_id,
                          vtuber)
 
             if Utility.is_multi_server(server_id):
@@ -374,7 +378,7 @@ class MembershipHandler:
             role = guild.get_role(role_id)
 
             if not role:
-                interaction.user.send("Please contact the staff of your server, they forgot to set a membership role")
+                interaction.user.send(_("Please contact the staff of your server, they forgot to set a membership role"))
                 return
 
             # add role and update db entry
@@ -385,19 +389,19 @@ class MembershipHandler:
             await author.add_roles(role)
 
             # DM user that the verification process is complete
-            m = "Membership applied! You now have access to members-excusive content in the server."
-            m += "\nPlease note that our staff will double-confirm the verification photo and may revoke it on a case-by-case basis."
-            m += "\nIf you have encountered any issue with accessing the channels or have a separate enquiry, please contact a mod."
+            m = _("Membership applied! You now have access to members-excusive content in the server.")
+            m += _("\nPlease note that our staff will double-confirm the verification photo and may revoke it on a case-by-case basis.")
+            m += _("\nIf you have encountered any issue with accessing the channels or have a separate enquiry, please contact a mod.")
             await interaction.user.send(m)
         else:
-            logging.info("%s is not part of server %s", interaction.user.id, server_id)
-            await interaction.user.send("You are not part of this server!")
+            logging.info(_("%s is not part of server %s"), interaction.user.id, server_id)
+            await interaction.user.send(_("You are not part of this server!"))
 
     async def handle_additional_proof(self, interaction, server_id):
-        m = "This server requires you to send additional proof.\n"
-        m += "Please send a screenshot as specified by them."
+        m = _("This server requires you to send additional proof.\n")
+        m += _("Please send a screenshot as specified by them.")
         await interaction.user.send(m)
-        logging.info("Requiring additional proof from %s for server %s.", interaction.user.id, server_id)
+        logging.info(_("Requiring additional proof from %s for server %s."), interaction.user.id, server_id)
 
         # check if message by user
         def check(m):
@@ -410,7 +414,7 @@ class MembershipHandler:
 
     def process_date(self, interaction, new_membership_date) -> Tuple[dtime, str, str]:
         if not new_membership_date:
-            desc = "{}\n{}".format(str(interaction.user), "Date not detected")
+            desc = "{}\n{}".format(str(interaction.user), _("Date not detected"))
             membership_date_text = "None"
         else:
             membership_date_text = new_membership_date.strftime(self.DATE_FORMAT)
@@ -427,19 +431,19 @@ class MembershipHandler:
         dates = date.split("/")
 
         if len(dates) != 3 or any(not Utility.is_integer(date) for date in dates):
-            logging.info("%s used a wrong date format to set the membership.", author_id)
+            logging.info(_("%s used a wrong date format to set the membership."), author_id)
             # Differentiate between reaction and manual add
             if actor:
                 await interaction.followup.send(
-                    "{} Please use 'no/wrong date recognized' instead".format(actor.mention), ephemeral=True)
+                    _("{} Please use 'no/wrong date recognized' instead").format(actor.mention), ephemeral=True)
             else:
-                await interaction.followup.send("Please provide a valid date (dd/mm/yyyy).", ephemeral=True)
+                await interaction.followup.send(_("Please provide a valid date (dd/mm/yyyy)."), ephemeral=True)
             return False
         try:
             new_date = dtime(year=int(dates[2]), month=int(dates[1]), day=int(dates[0]), tzinfo=timezone.utc)
         except ValueError:
-            logging.info("%s used a invalid number for the date to set the membership.", author_id)
-            await interaction.followup.send("Your date was not valid. Please use the format dd/mm/yyyy",
+            logging.info(_("%s used a invalid number for the date to set the membership."), author_id)
+            await interaction.followup.send(_("Your date was not valid. Please use the format dd/mm/yyyy"),
                                             ephemeral=True)
             return False
 
@@ -463,22 +467,22 @@ class MembershipHandler:
 
         role = interaction.guild.get_role(role_id)
         await target_member.add_roles(role)
-        logging.info("Added member role to user %s on server %s.", member_id, guild_id)
+        logging.info(_("Added member role to user %s on server %s."), member_id, guild_id)
 
         await asyncio.sleep(0.21)
         try:
-            await target_member.send("You have been granted access to the membership channel of {}.".format(vtuber))
+            await target_member.send(_("You have been granted access to the membership channel of {}.").format(vtuber))
         except discord.errors.Forbidden:
-            await interaction.followup.send("Could not send a message to {}".format(target_member.mention))
+            await interaction.followup.send(_("Could not send a message to {}").format(target_member.mention))
             
         await asyncio.sleep(0.21)
         if manual:
             await interaction.followup.send(
-                "New membership date for {} set at {}!".format(target_member.mention,
+                _("New membership date for {} set at {}!").format(target_member.mention,
                                                                new_date.strftime(self.DATE_FORMAT)), ephemeral=True)
         else:
             embed = interaction.message.embeds[0]
-            embed.description = "**VERIFIED:** {}\nUser: {}\nBy: {}".format(new_date.strftime(self.DATE_FORMAT),
+            embed.description = _("**VERIFIED:** {}\nUser: {}\nBy: {}").format(new_date.strftime(self.DATE_FORMAT),
                                                                             target_member.mention, actor.mention)
             await interaction.edit_original_response(embed=embed)
         return True
@@ -498,13 +502,13 @@ class MembershipHandler:
         else:
             result = server_db.remove_member(member_id)
         if result == 0:
-            logging.info("Requested user does not have membership; by %s.", author_id)
+            logging.info(_("Requested user does not have membership; by %s."), author_id)
             await interaction.followup.send(self.ID_NOT_FOUND_TEXT, ephemeral=True)
             return
         if Utility.is_multi_server(guild_id):
-            logging.info("Deleted membership on %s: %s for %s", guild_id, member_id, vtuber)
+            logging.info(_("Deleted membership on %s: %s for %s"), guild_id, member_id, vtuber)
         else:
-            logging.info("Deleted membership on %s: %s", guild_id, member_id)
+            logging.info(_("Deleted membership on %s: %s"), guild_id, member_id)
 
         # Remove member role from user
         guild = interaction.guild
@@ -519,10 +523,10 @@ class MembershipHandler:
         if target_member:
             try:
                 await target_member.remove_roles(role)
-                logging.info("Removing role %s from %s on server %s.", role.name, member_id, guild_id)
+                logging.info(_("Removing role %s from %s on server %s."), role.name, member_id, guild_id)
 
                 if manual:
-                    await interaction.followup.send("Membership successfully deleted.", ephemeral=True)
+                    await interaction.followup.send(_("Membership successfully deleted."), ephemeral=True)
 
                 if dm_flag:
                     # If msg has extra lines, send dm to target user to notify the zoopass deletion
@@ -530,16 +534,16 @@ class MembershipHandler:
                         await target_member.send(text)
                     else:
                         if vtuber:
-                            await target_member.send("Your membership for " + vtuber + " was deleted!")
+                            await target_member.send(_("Your membership for {} was deleted!").format(vtuber))
                         else:
-                            await target_member.send("Your membership for " + server_db.get_vtuber() + " was deleted!")
+                            await target_member.send(_("Your membership for {} was deleted!").format(server_db.get_vtuber()))
             except (discord.errors.Forbidden, discord.HTTPException):
                 await interaction.followup.send(
-                    "Removing the role failed, please remove the role manually and check my permissions.",
+                    _("Removing the role failed, please remove the role manually and check my permissions."),
                     ephemeral=True)
         else:
-            await interaction.response.send_message("User is not on this server!", ephemeral=True)
-            logging.info("%s not on server %s.", member_id, guild_id)
+            await interaction.response.send_message(_("User is not on this server!"), ephemeral=True)
+            logging.info(_("%s not on server %s."), member_id, guild_id)
 
     async def purge_memberships(self, server_id: int):
         if Utility.is_multi_server(server_id):
@@ -563,7 +567,7 @@ class MembershipHandler:
         # execute for every server
         for server in serverlist:
             server_id = server['guild_id']
-            logging.info("Checking Memberships for %s.", server_id)
+            logging.info(_("Checking Memberships for %s."), server_id)
 
             server_db = self.db.get_server_db(server_id)
             logging_enabled = server_db.get_logging()
@@ -573,27 +577,27 @@ class MembershipHandler:
                 lg_ch = self.bot.get_channel(server_db.get_log_channel())
                 try:
                     if not forced:
-                        await lg_ch.send("Performing membership check, last check was {}".format(last_checked))
+                        await lg_ch.send(_("Performing membership check, last check was {}").format(last_checked))
                     else:
-                        await lg_ch.send("Forced Membership check")
+                        await lg_ch.send(_("Forced Membership check"))
 
                     content = ["{}".format(d.id) for d in expired_memberships]
                     await self.send_expired_info(lg_ch, content)
 
                 except discord.errors.Forbidden:
-                    logging.info("{}: ERROR - Cannot post in Log Channel!!!".format(server_id))
+                    logging.info(_("{}: ERROR - Cannot post in Log Channel!!!").format(server_id))
                 except Exception:
-                    logging.error("{}: Other ERROR occured during membership check!".format(server_id))
+                    logging.error(_("{}: Other ERROR occured during membership check!").format(server_id))
 
         # add wait time
         dt = date.today()
         today = dtime.combine(dt, time(12, 0, 0, tzinfo=timezone.utc))
         self.db.set_last_checked(today)
-        logging.info("Set last membership check to %s.", today)
+        logging.info(_("Set last membership check to %s."), today)
 
     async def send_expired_info(self, lg_ch, content):
         count = 0
-        m = "Expired Memberships:"
+        m = _("Expired Memberships:")
         for member in content:
             count += 1
             new_line = '\n' + member
@@ -607,9 +611,9 @@ class MembershipHandler:
             if m != "":
                 await lg_ch.send(m)
                 # send count
-            await lg_ch.send("Expired membership count: " + str(count))
+            await lg_ch.send(_("Expired membership count: ") + str(count))
         else:
-            await lg_ch.send("No expired memberships!")
+            await lg_ch.send(_("No expired memberships!"))
 
     async def check_membership_routine(self):
         while not self.bot.is_closed():
@@ -621,11 +625,11 @@ class MembershipHandler:
                 last_checked = last_checked.replace(tzinfo=timezone.utc)
 
             if not last_checked or (now - last_checked >= timedelta(hours=24)):
-                logging.info("Checking memberships!")
+                logging.info(_("Checking memberships!"))
                 await self.delete_expired_memberships()
 
             wait_time = 24 * 3600 - (now - last_checked).total_seconds()
-            logging.info("Waiting for %s seconds to next membership check.", wait_time)
+            logging.info(_("Waiting for %s seconds to next membership check."), wait_time)
             await asyncio.sleep(wait_time)
 
     async def handle_verifies(self):
@@ -642,4 +646,4 @@ class MembershipHandler:
                 gc.collect()
                 await asyncio.sleep(10)  # check all 10 seconds
             except Exception:
-                logging.exception("Catched error in deque")
+                logging.exception(_("Catched error in deque"))

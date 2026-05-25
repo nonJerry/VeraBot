@@ -1,0 +1,386 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2022-12-03 22:51+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: membership_handling.py:29
+msgid "Can't find membership id in the database!"
+msgstr ""
+
+#: membership_handling.py:42
+msgid "Proof from %s added to queue for server: %s"
+msgstr ""
+
+#: membership_handling.py:44
+msgid ""
+"Your proof has been added to the queue and will be processed later.\n"
+msgstr ""
+
+#: membership_handling.py:45
+msgid "You will get a message when your role is applied."
+msgstr ""
+
+#: membership_handling.py:70 membership_handling.py:84
+msgid " Membership {}!"
+msgstr ""
+
+#: membership_handling.py:71
+msgid ""
+"You may renew your membership by sending another updated verification photo using the ``/verify`` command.\n"
+msgstr ""
+
+#: membership_handling.py:72
+msgid "Thank you so much for your continued support!"
+msgstr ""
+
+#: membership_handling.py:74
+msgid ""
+"This expiration may be too soon. It was initiated by the server to avoid illegit access during e.g. a membership stream.\n"
+msgstr ""
+
+#: membership_handling.py:89
+msgid "channel access ended"
+msgstr ""
+
+#: membership_handling.py:90
+msgid ""
+"You lost your access to {}'s members-only channel!\n"
+msgstr ""
+
+#: membership_handling.py:118
+msgid "expires soon!"
+msgstr ""
+
+#: membership_handling.py:119
+msgid ""
+"Your membership to {} will expire within the next {} hours.\n"
+msgstr ""
+
+#: membership_handling.py:120
+msgid "If you do not want to lose this membership please don't forget to renew it!"
+msgstr ""
+
+#: membership_handling.py:128
+msgid "expired"
+msgstr ""
+
+#: membership_handling.py:129
+msgid ""
+"Your membership to {} should have expired today!\n"
+msgstr ""
+
+#: membership_handling.py:130
+msgid ""
+"If your billing date has not changed yet, please wait until it does to send your new proof.\n"
+msgstr ""
+
+#: membership_handling.py:131
+msgid ""
+"You will lose your access to the channel after {} day(s) if you do not renew your membership.\n"
+msgstr ""
+
+#: membership_handling.py:145
+msgid "Could not send DM to %s"
+msgstr ""
+
+#: membership_handling.py:148
+msgid "Could not send reminder to {}."
+msgstr ""
+
+#: membership_handling.py:170 membership_handling.py:180
+msgid "Membership List"
+msgstr ""
+
+#: membership_handling.py:180 membership_handling.py:183
+msgid "Member count: "
+msgstr ""
+
+#: membership_handling.py:186
+msgid "No active memberships!"
+msgstr ""
+
+#: membership_handling.py:209
+msgid ""
+"Name: {}\n"
+"ID: {}\n"
+"Last Renewal Date: {}\n"
+"Membership End Date: {}"
+msgstr ""
+
+#: membership_handling.py:211
+msgid "Membership"
+msgstr ""
+
+#: membership_handling.py:232
+msgid "Could not detect server for %s."
+msgstr ""
+
+#: membership_handling.py:235
+msgid ""
+"I am sorry I could not detect a VTuber name on the image you sent earlier.\n"
+msgstr ""
+
+#: membership_handling.py:236
+msgid ""
+"Please send a screenshot with the name of the VTuber on it.\n"
+msgstr ""
+
+#: membership_handling.py:237
+msgid ""
+"If this was the case, please use `/verify <VTuber name>` instead of the normal /verify.\n"
+msgstr ""
+
+#: membership_handling.py:238
+msgid "You might need to wait as there is a cooldown on this command to avoid spam."
+msgstr ""
+
+#: membership_handling.py:243
+msgid "Detected server for %s: %s (%s)"
+msgstr ""
+
+#: membership_handling.py:247
+msgid "%s tried to verify for a server they are not on."
+msgstr ""
+
+#: membership_handling.py:248
+msgid "You are not on {} server!"
+msgstr ""
+
+#: membership_handling.py:267
+msgid "Timeout while detecting image for %s."
+msgstr ""
+
+#: membership_handling.py:269
+msgid "Date detection failed for %s."
+msgstr ""
+
+#: membership_handling.py:296
+msgid "%s: Has Threads enabled but perms are missing."
+msgstr ""
+
+#: membership_handling.py:307
+msgid "Please contact the staff of your server, they forgot to set some settings"
+msgstr ""
+
+#: membership_handling.py:323
+msgid "Additional proof"
+msgstr ""
+
+#: membership_handling.py:327
+msgid "Your additional proof was delivered to the server, please wait for the staff to check your proof."
+msgstr ""
+
+#: membership_handling.py:330
+msgid "%s took to long with the proof."
+msgstr ""
+
+#: membership_handling.py:331
+msgid "I am sorry, you timed out. Please start the verify process again."
+msgstr ""
+
+#: membership_handling.py:336
+msgid ""
+"Main Proof\n"
+"User: {}"
+msgstr ""
+
+#: membership_handling.py:337
+msgid "Recognized Date"
+msgstr ""
+
+#: membership_handling.py:343
+msgid "Sent embed with reactions to %s"
+msgstr ""
+
+#: membership_handling.py:351
+msgid "Date for %s on server %s was missing."
+msgstr ""
+
+#: membership_handling.py:371
+msgid "Adding role automatically for %s on server %s for talent %s"
+msgstr ""
+
+#: membership_handling.py:381
+msgid "Please contact the staff of your server, they forgot to set a membership role"
+msgstr ""
+
+#: membership_handling.py:392
+msgid "Membership applied! You now have access to members-excusive content in the server."
+msgstr ""
+
+#: membership_handling.py:393
+msgid ""
+"\n"
+"Please note that our staff will double-confirm the verification photo and may revoke it on a case-by-case basis."
+msgstr ""
+
+#: membership_handling.py:394
+msgid ""
+"\n"
+"If you have encountered any issue with accessing the channels or have a separate enquiry, please contact a mod."
+msgstr ""
+
+#: membership_handling.py:397
+msgid "%s is not part of server %s"
+msgstr ""
+
+#: membership_handling.py:398
+msgid "You are not part of this server!"
+msgstr ""
+
+#: membership_handling.py:401
+msgid ""
+"This server requires you to send additional proof.\n"
+msgstr ""
+
+#: membership_handling.py:402
+msgid "Please send a screenshot as specified by them."
+msgstr ""
+
+#: membership_handling.py:404
+msgid "Requiring additional proof from %s for server %s."
+msgstr ""
+
+#: membership_handling.py:417
+msgid "Date not detected"
+msgstr ""
+
+#: membership_handling.py:434
+msgid "%s used a wrong date format to set the membership."
+msgstr ""
+
+#: membership_handling.py:438
+msgid "{} Please use 'no/wrong date recognized' instead"
+msgstr ""
+
+#: membership_handling.py:440
+msgid "Please provide a valid date (dd/mm/yyyy)."
+msgstr ""
+
+#: membership_handling.py:445
+msgid "%s used a invalid number for the date to set the membership."
+msgstr ""
+
+#: membership_handling.py:446
+msgid "Your date was not valid. Please use the format dd/mm/yyyy"
+msgstr ""
+
+#: membership_handling.py:470
+msgid "Added member role to user %s on server %s."
+msgstr ""
+
+#: membership_handling.py:474
+msgid "You have been granted access to the membership channel of {}."
+msgstr ""
+
+#: membership_handling.py:476
+msgid "Could not send a message to {}"
+msgstr ""
+
+#: membership_handling.py:481
+msgid "New membership date for {} set at {}!"
+msgstr ""
+
+#: membership_handling.py:485
+msgid ""
+"**VERIFIED:** {}\n"
+"User: {}\n"
+"By: {}"
+msgstr ""
+
+#: membership_handling.py:505
+msgid "Requested user does not have membership; by %s."
+msgstr ""
+
+#: membership_handling.py:509
+msgid "Deleted membership on %s: %s for %s"
+msgstr ""
+
+#: membership_handling.py:511
+msgid "Deleted membership on %s: %s"
+msgstr ""
+
+#: membership_handling.py:526
+msgid "Removing role %s from %s on server %s."
+msgstr ""
+
+#: membership_handling.py:529
+msgid "Membership successfully deleted."
+msgstr ""
+
+#: membership_handling.py:537 membership_handling.py:539
+msgid "Your membership for {} was deleted!"
+msgstr ""
+
+#: membership_handling.py:542
+msgid "Removing the role failed, please remove the role manually and check my permissions."
+msgstr ""
+
+#: membership_handling.py:545
+msgid "User is not on this server!"
+msgstr ""
+
+#: membership_handling.py:546
+msgid "%s not on server %s."
+msgstr ""
+
+#: membership_handling.py:570
+msgid "Checking Memberships for %s."
+msgstr ""
+
+#: membership_handling.py:580
+msgid "Performing membership check, last check was {}"
+msgstr ""
+
+#: membership_handling.py:582
+msgid "Forced Membership check"
+msgstr ""
+
+#: membership_handling.py:588
+msgid "{}: ERROR - Cannot post in Log Channel!!!"
+msgstr ""
+
+#: membership_handling.py:590
+msgid "{}: Other ERROR occured during membership check!"
+msgstr ""
+
+#: membership_handling.py:596
+msgid "Set last membership check to %s."
+msgstr ""
+
+#: membership_handling.py:600
+msgid "Expired Memberships:"
+msgstr ""
+
+#: membership_handling.py:614
+msgid "Expired membership count: "
+msgstr ""
+
+#: membership_handling.py:616
+msgid "No expired memberships!"
+msgstr ""
+
+#: membership_handling.py:628
+msgid "Checking memberships!"
+msgstr ""
+
+#: membership_handling.py:632
+msgid "Waiting for %s seconds to next membership check."
+msgstr ""
+
+#: membership_handling.py:649
+msgid "Catched error in deque"
+msgstr ""
+

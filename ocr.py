@@ -13,6 +13,10 @@ import asyncio
 import gc
 #Internal
 from utility import Utility
+from translate import Translate
+
+# Setup i18n
+_ = Translate.get_translation_function('ocr')
 
 class OCR:
     bot = None
@@ -25,7 +29,7 @@ class OCR:
 
     @staticmethod
     async def detect_image_date(img_url, lang):
-        logging.info("Using %s OCR", lang)
+        logging.info(_("Using %s OCR"), lang)
         text, inverted_text = await asyncio.wait_for(OCR.detect_image_text(img_url, lang), timeout = 90)
 
         img_date = Utility.date_from_txt(inverted_text, lang) or Utility.date_from_txt(text, lang)
@@ -39,7 +43,7 @@ class OCR:
 
         # Set partial function for image_to_text
         if(cls.local):
-            logging.warn("Using local OCR!!!")
+            logging.warn(_("Using local OCR!!!"))
             img_to_txt = partial(Tess.image_to_string, timeout=44)
         else:
             tess_path = os.getenv("TESSDATA_PREFIX")
@@ -86,14 +90,14 @@ class OCR:
 
                 # get text (run as coroutine to not block the event loop)
                 text = await cls.bot.loop.run_in_executor(None, img_to_txt, img)
-                logging.debug("Recognized text on %s:\n%s", img_url, text)
+                logging.debug(_("Recognized text on %s:\n%s"), img_url, text)
 
                 # use inverted image
                 with ImageOps.invert(img) as inverted_img:
 
                     # get inverted text (run as coroutine to not block the event loop)
                     inverted_text = await cls.bot.loop.run_in_executor(None, img_to_txt, inverted_img)
-                    logging.debug("Recognized inverted text on %s:\n%s", img_url, inverted_text)
+                    logging.debug(_("Recognized inverted text on %s:\n%s"), img_url, inverted_text)
                     
         gc.collect()
         return (text, inverted_text)

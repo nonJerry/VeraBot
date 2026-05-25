@@ -1,0 +1,93 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2022-12-03 22:51+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: views.py:15
+msgid "Date Selection"
+msgstr ""
+
+#: views.py:16
+msgid "What is the correct date?"
+msgstr ""
+
+#: views.py:23
+msgid "Denial Message"
+msgstr ""
+
+#: views.py:24
+msgid "What do you want to tell the person?"
+msgstr ""
+
+#: views.py:37
+msgid "Everything fine!"
+msgstr ""
+
+#: views.py:46
+msgid "Recognized date correct in %s for user %s."
+msgstr ""
+
+#: views.py:53
+msgid ""
+"**VERIFIED:** {}\n"
+"User: {}\n"
+"By: {}"
+msgstr ""
+
+#: views.py:69 views.py:98 views.py:139
+msgid "Finished Verification Process"
+msgstr ""
+
+#: views.py:72
+msgid "Wrong Date!"
+msgstr ""
+
+#: views.py:79 views.py:110
+msgid "You took too long, please press the button again!"
+msgstr ""
+
+#: views.py:88
+msgid "Wrong date recognized in %s for user %s."
+msgstr ""
+
+#: views.py:89
+msgid "The used date was {}"
+msgstr ""
+
+#: views.py:103
+msgid "Not acceptable!"
+msgstr ""
+
+#: views.py:123
+msgid " server"
+msgstr ""
+
+#: views.py:125
+msgid ""
+"Message was sent by {} to {}:\n"
+"```{}```"
+msgstr ""
+
+#: views.py:135
+msgid ""
+"**DENIED**\n"
+"User: {}\n"
+"By: {}"
+msgstr ""
+
+#: views.py:146
+msgid "Webhook in %s could not be found"
+msgstr ""
+

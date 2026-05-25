@@ -5,6 +5,10 @@ from typing import Any, List, Optional, overload
 from dateutil.relativedelta import relativedelta
 from pymongo.collection import Collection
 
+from translate import Translate
+
+# Setup i18n
+_ = Translate.get_translation_function('database')
 
 class Member:
 
@@ -170,7 +174,7 @@ class ServerDatabase:
         # Check if id exists
         target_membership = self.get_member(member_id)
         if not target_membership:
-            logging.info("Creating new membership for %s on server %s with last membership: %s.", member_id, self.server_id, db_date)
+            logging.info(_("Creating new membership for %s on server %s with last membership: %s."), member_id, self.server_id, db_date)
             self.__get_member_collection().insert_one({
                 "id": member_id,
                 "last_membership": db_date,
@@ -178,7 +182,7 @@ class ServerDatabase:
                 "expiry_sent": False
             })
         else:
-            logging.info("Updating membership for %s on server %s with last membership: %s.", member_id, self.server_id, db_date)
+            logging.info(_("Updating membership for %s on server %s with last membership: %s."), member_id, self.server_id, db_date)
             self.__get_member_collection().update_one({"id": member_id}, {"$set": { "informed": False, "expiry_sent": False}, "$max": {"last_membership": db_date}})
 
     @overload
@@ -242,7 +246,7 @@ class ServerDatabase:
         # Check if id exists with vtuber
         target_membership = self.get_member_multi(member_id, vtuber)
         if not target_membership:
-            logging.info("Creating new membership for %s to talent %s on server %s with last membership: %s.", member_id, vtuber, self.server_id, db_date)
+            logging.info(_("Creating new membership for %s to talent %s on server %s with last membership: %s."), member_id, vtuber, self.server_id, db_date)
             self.__get_member_collection().insert_one({
                 "id": member_id,
                 "idol": vtuber,
@@ -251,7 +255,7 @@ class ServerDatabase:
                 "expiry_sent": False
             })
         else:
-            logging.info("Updating membership for %s to talent %s on server %s with last membership: %s.", member_id, vtuber, self.server_id, db_date)
+            logging.info(_("Updating membership for %s to talent %s on server %s with last membership: %s."), member_id, vtuber, self.server_id, db_date)
             self.__get_member_collection().update_one({"id": member_id, "idol": vtuber}, {"$set": { "informed": False, "expiry_sent": False}, "$max": {"last_membership": db_date}})
 
     @overload
@@ -348,7 +352,7 @@ class Database(metaclass=Singleton):
         if 'supported_idols' in result:
             return result['supported_idols'][0]['name'].title()
         else:
-            logging.warn("Not supported server on getVtuber!")
+            logging.warn(_("Not supported server on getVtuber!"))
             return "not supported server"
 
     def get_vtuber_guild(self, name: str) -> Optional[int]:
