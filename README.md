@@ -1,9 +1,12 @@
 # VeraBot
 
-[![Invite](https://img.shields.io/badge/Invite%20Link-%40VeraBot-brightgreen)](https://discord.com/api/oauth2/authorize?client_id=844020223913099285&permissions=268823616&scope=bot%20applications.commands)
+![Invite](https://img.shields.io/badge/Invite%20Link-discontinued-lightgrey)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FnonJerry%2FVeraBot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FnonJerry%2FVeraBot?ref=badge_shield)
 [![CodeFactor](https://www.codefactor.io/repository/github/nonjerry/verabot/badge)](https://www.codefactor.io/repository/github/nonjerry/verabot)
 <br>
+
+> **Status:** Retired. VeraBot was shut down in May 2026 and this repository is archived.
+
 
 Anyone can invite this bot as long as their server doesn't share doxxing information and sticks to discord's TOS. I reserve the right to have the bot leave a server and/or close the invite again if I notice abusive beahvior.<br>
 **IMPORTANT**: It is possible that the name you want to use is already taken by another server, if this is the case you will need to think of another name/variation.<br>
@@ -15,7 +18,7 @@ This bot is mainly made for VTuber Fanservers. It does not matter whether Indie 
 
 ## Getting started
 
-[![Invite](https://img.shields.io/badge/Invite%20Link-%40VeraBot-brightgreen)](https://discord.com/api/oauth2/authorize?client_id=844020223913099285&permissions=268823616&scope=bot%20applications.commands)
+![Invite](https://img.shields.io/badge/Invite%20Link-discontinued-lightgrey)
 
 To invite the bot please follow the link above and grant the permissions wanted.
 
